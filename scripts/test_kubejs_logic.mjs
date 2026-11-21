@@ -322,6 +322,10 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
     __customPrices: customPrices,
     __feedbackSent: feedbackSent
   };
+  const expectedSellCount = Object.values(prices.sell_tiers).reduce(
+    (acc, t) => acc + (t.items || []).length,
+    0
+  );
   const src =
     fs.readFileSync('kubejs/server_scripts/economy_anti_exploit.js', 'utf8') +
     `
@@ -333,15 +337,16 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
       const zeros = entries.filter((e) => e.worth === 0);
       const positives = entries.filter((e) => e.worth > 0);
       assert(zeros.length === ${prices.tier_0_blocked.length}, 'all Tier 0 zeroed');
-      assert(positives.length === 72, 'all 72 Tier 1-5 items synced');
+      assert(positives.length === ${expectedSellCount}, 'all Tier 1-5 items synced');
 
       const mockServer = { overworld: () => ({ __isOverworld: true }), runCommandSilent: () => {} };
       const syncRes = applyShoppersTier0ZeroWorth(mockServer);
       assert(syncRes.viaJavaApi === true, 'uses ShoppersWorldData Java API');
       assert(syncRes.tier0 === ${prices.tier_0_blocked.length}, 'all Tier 0 written as 0 via API');
-      assert(syncRes.npc === 72, 'all 72 NPC prices written via API');
+      assert(syncRes.npc === ${expectedSellCount}, 'all NPC prices written via API');
       assert(__customPrices.get('minecraft:cobblestone') === 0, 'cobblestone worth === 0');
       assert(__customPrices.get('minecraft:ancient_debris') === 0, 'ancient_debris worth === 0');
+      assert(__customPrices.get('mekanism:ingot_osmium') === 0, 'osmium worth === 0');
 
       const msgComp = Text.green('OK');
       sendCommandFeedback(

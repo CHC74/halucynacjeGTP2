@@ -2,9 +2,9 @@
   "Traders": [
     {
       "Type": "lightmanscurrency:item_trader",
-      "ID": "halucynacje_stage_tokens",
-      "Name": "Żetony Etapów & Prestiż",
-      "OwnerName": "Giełda HalucynacjeGTP2",
+      "ID": "halucynacje_kup_01_etapy",
+      "Name": "[KUP] 1. Żetony Etapów",
+      "OwnerName": "Stage 1-5 i Creative Motor",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -129,9 +129,9 @@
     },
     {
       "Type": "lightmanscurrency:item_trader",
-      "ID": "halucynacje_starters_early",
-      "Name": "Startery Skyblocka — Rośliny i Hodowla (S0–S1)",
-      "OwnerName": "Giełda HalucynacjeGTP2",
+      "ID": "halucynacje_kup_02_rosliny",
+      "Name": "[KUP] 2. Rośliny i Sadzonki",
+      "OwnerName": "Drzewa, nasiona i uprawy FD",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -202,6 +202,23 @@
         {
           "TradeType": "SALE",
           "SellItem": {
+            "id": "minecraft:acacia_sapling",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
             "id": "minecraft:jungle_sapling",
             "count": 1
           },
@@ -216,6 +233,78 @@
               {
                 "Coin": "lightmanscurrency:coin_iron",
                 "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:dark_oak_sapling",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:cherry_sapling",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 3
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:mangrove_propagule",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 3
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:wheat_seeds",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 1
               }
             ]
           }
@@ -388,6 +477,48 @@
         {
           "TradeType": "SALE",
           "SellItem": {
+            "id": "minecraft:vine",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:lily_pad",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
             "id": "farmersdelight:tomato_seeds",
             "count": 1
           },
@@ -460,7 +591,7 @@
         {
           "TradeType": "SALE",
           "SellItem": {
-            "id": "minecraft:cocoa_beans",
+            "id": "minecraft:brown_mushroom",
             "count": 1
           },
           "Price": {
@@ -469,7 +600,49 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 4
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:red_mushroom",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:sea_pickle",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 3
               }
             ]
           }
@@ -487,6 +660,458 @@
               {
                 "Coin": "lightmanscurrency:coin_gold",
                 "Amount": 3
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:glow_berries",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 3
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:cocoa_beans",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 4
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "lightmanscurrency:item_trader",
+      "ID": "halucynacje_kup_03_hodowla",
+      "Name": "[KUP] 3. Zwierzęta i Hodowla",
+      "OwnerName": "Jajka mobów, pszczoły i ule",
+      "CustomIcon": {
+        "Type": "lightmanscurrency:item",
+        "Item": {
+          "id": "minecraft:bee_nest",
+          "count": 1
+        }
+      },
+      "Trades": [
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:chicken_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 8
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:rabbit_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 9
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:pig_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:sheep_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:cow_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:bee_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:bee_nest",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:cod_bucket",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 6
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:salmon_bucket",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 7
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:squid_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 4
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:glow_squid_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 8
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:wolf_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:cat_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:villager_spawn_egg",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 8
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "lightmanscurrency:item_trader",
+      "ID": "halucynacje_kup_04_skyblock",
+      "Name": "[KUP] 4. Skyblock i Bloki",
+      "OwnerName": "Lawa, lód, mech i startery",
+      "CustomIcon": {
+        "Type": "lightmanscurrency:item",
+        "Item": {
+          "id": "minecraft:lava_bucket",
+          "count": 1
+        }
+      },
+      "Trades": [
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:grass_block",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:ice",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:podzol",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:moss_block",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 3
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:mycelium",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:blue_ice",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
               }
             ]
           }
@@ -524,6 +1149,27 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:soul_sand",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 4
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
                 "Amount": 5
               }
             ]
@@ -574,45 +1220,7 @@
         {
           "TradeType": "SALE",
           "SellItem": {
-            "id": "minecraft:cow_spawn_egg",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_emerald",
-                "Amount": 1
-              },
-              {
-                "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 2
-              }
-            ]
-          }
-        },
-        {
-          "TradeType": "SALE",
-          "SellItem": {
-            "id": "minecraft:pig_spawn_egg",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_emerald",
-                "Amount": 1
-              }
-            ]
-          }
-        },
-        {
-          "TradeType": "SALE",
-          "SellItem": {
-            "id": "minecraft:chicken_spawn_egg",
+            "id": "minecraft:sponge",
             "count": 1
           },
           "Price": {
@@ -629,37 +1237,16 @@
         {
           "TradeType": "SALE",
           "SellItem": {
-            "id": "minecraft:sheep_spawn_egg",
+            "id": "minecraft:calcite",
             "count": 1
           },
           "Price": {
             "type": "lightmanscurrency:coins",
             "Chain": "main",
             "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_emerald",
-                "Amount": 1
-              }
-            ]
-          }
-        },
-        {
-          "TradeType": "SALE",
-          "SellItem": {
-            "id": "minecraft:bee_spawn_egg",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_emerald",
-                "Amount": 1
-              },
               {
                 "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 2
+                "Amount": 4
               }
             ]
           }
@@ -667,7 +1254,24 @@
         {
           "TradeType": "SALE",
           "SellItem": {
-            "id": "minecraft:bee_nest",
+            "id": "minecraft:prismarine_shard",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 4
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:budding_amethyst",
             "count": 1
           },
           "Price": {
@@ -676,7 +1280,7 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_emerald",
-                "Amount": 1
+                "Amount": 3
               },
               {
                 "Coin": "lightmanscurrency:coin_gold",
@@ -685,6 +1289,38 @@
             ]
           }
         },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:heart_of_the_sea",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 4
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "lightmanscurrency:item_trader",
+      "ID": "halucynacje_kup_05_tech",
+      "Name": "[KUP] 5. Maszyny i High-Tech",
+      "OwnerName": "Create, Waystone, AE2, Mekanism",
+      "CustomIcon": {
+        "Type": "lightmanscurrency:item",
+        "Item": {
+          "id": "ae2:flawless_budding_quartz",
+          "count": 1
+        }
+      },
+      "Trades": [
         {
           "TradeType": "SALE",
           "SellItem": {
@@ -705,26 +1341,70 @@
               }
             ]
           }
-        }
-      ]
-    },
-    {
-      "Type": "lightmanscurrency:item_trader",
-      "ID": "halucynacje_starters_tech",
-      "Name": "Startery Logistyki i High-Tech (S2–S3)",
-      "OwnerName": "Giełda HalucynacjeGTP2",
-      "CustomIcon": {
-        "Type": "lightmanscurrency:item",
-        "Item": {
-          "id": "ae2:flawless_budding_quartz",
-          "count": 1
-        }
-      },
-      "Trades": [
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "waystones:warp_stone",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 2
+              }
+            ]
+          }
+        },
         {
           "TradeType": "SALE",
           "SellItem": {
             "id": "lightmanscurrency:terminal",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "lightmanscurrency:portable_terminal",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 4
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "lightmanscurrency:atm",
             "count": 1
           },
           "Price": {
@@ -800,6 +1480,74 @@
         {
           "TradeType": "SALE",
           "SellItem": {
+            "id": "ae2:logic_processor_press",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 4
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "ae2:calculation_processor_press",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 4
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "ae2:engineering_processor_press",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 4
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "ae2:silicon_press",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 4
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
             "id": "mekanism:ingot_osmium",
             "count": 1
           },
@@ -810,6 +1558,44 @@
               {
                 "Coin": "lightmanscurrency:coin_emerald",
                 "Amount": 4
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "mekanism:ingot_tin",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "mekanism:ingot_lead",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 3
               }
             ]
           }
@@ -843,7 +1629,11 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_emerald",
-                "Amount": 6
+                "Amount": 4
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
               }
             ]
           }
@@ -852,9 +1642,9 @@
     },
     {
       "Type": "lightmanscurrency:item_trader",
-      "ID": "halucynacje_skup_tier_1",
-      "Name": "Skup Hurtowy — Tier 1: Wypieki i Start",
-      "OwnerName": "Giełda HalucynacjeGTP2",
+      "ID": "halucynacje_skup_01_start",
+      "Name": "[SKUP] 1. Wypieki i Start",
+      "OwnerName": "Tier 1 | 4-22c -> Stage 1 (10k)",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -976,23 +1766,6 @@
             "Chain": "main",
             "Value": [
               {
-                "Coin": "lightmanscurrency:coin_copper",
-                "Amount": 9
-              }
-            ]
-          }
-        },
-        {
-          "TradeType": "PURCHASE",
-          "SellItem": {
-            "id": "farmersdelight:apple_pie_slice",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
                 "Coin": "lightmanscurrency:coin_iron",
                 "Amount": 1
               }
@@ -1002,7 +1775,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "farmersdelight:sweet_berry_cheesecake_slice",
+            "id": "farmersdelight:apple_pie_slice",
             "count": 1
           },
           "Price": {
@@ -1023,7 +1796,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "farmersdelight:chocolate_pie_slice",
+            "id": "farmersdelight:sweet_berry_cheesecake_slice",
             "count": 1
           },
           "Price": {
@@ -1044,7 +1817,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "createfood:grilled_cheese_sandwich",
+            "id": "farmersdelight:chocolate_pie_slice",
             "count": 1
           },
           "Price": {
@@ -1065,7 +1838,28 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "farmersdelight:chicken_soup",
+            "id": "createfood:grilled_cheese_sandwich",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 7
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "farmersdelight:apple_cider",
             "count": 1
           },
           "Price": {
@@ -1086,6 +1880,23 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
+            "id": "farmersdelight:chicken_soup",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
             "id": "farmersdelight:fish_stew",
             "count": 1
           },
@@ -1095,11 +1906,28 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 1
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "farmersdelight:fried_rice",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 2
               },
               {
                 "Coin": "lightmanscurrency:coin_copper",
-                "Amount": 8
+                "Amount": 2
               }
             ]
           }
@@ -1108,9 +1936,9 @@
     },
     {
       "Type": "lightmanscurrency:item_trader",
-      "ID": "halucynacje_skup_tier_2",
-      "Name": "Skup Hurtowy — Tier 2: Kuchnia FD & Create:Food",
-      "OwnerName": "Giełda HalucynacjeGTP2",
+      "ID": "halucynacje_skup_02_kuchnia",
+      "Name": "[SKUP] 2. Kuchnia i Obiady",
+      "OwnerName": "Tier 2 | 36-100c -> Stage 2 (50k)",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -1265,7 +2093,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "farmersdelight:pasta_with_meatballs",
+            "id": "createfood:cheese_pizza_slice",
             "count": 1
           },
           "Price": {
@@ -1278,7 +2106,7 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_copper",
-                "Amount": 8
+                "Amount": 4
               }
             ]
           }
@@ -1307,7 +2135,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "createfood:cheese_pizza_slice",
+            "id": "farmersdelight:pasta_with_meatballs",
             "count": 1
           },
           "Price": {
@@ -1320,7 +2148,24 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_copper",
-                "Amount": 4
+                "Amount": 8
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "farmersdelight:apple_pie",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 6
               }
             ]
           }
@@ -1391,7 +2236,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "farmersdelight:squid_ink_pasta",
+            "id": "farmersdelight:sweet_berry_cheesecake",
             "count": 1
           },
           "Price": {
@@ -1408,7 +2253,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "farmersdelight:roast_chicken",
+            "id": "farmersdelight:squid_ink_pasta",
             "count": 1
           },
           "Price": {
@@ -1421,7 +2266,45 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "farmersdelight:chocolate_pie",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_iron",
                 "Amount": 8
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "farmersdelight:roast_chicken",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 8
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 2
               }
             ]
           }
@@ -1442,7 +2325,7 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_copper",
-                "Amount": 4
+                "Amount": 8
               }
             ]
           }
@@ -1459,11 +2342,11 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 8
+                "Amount": 9
               },
               {
                 "Coin": "lightmanscurrency:coin_copper",
-                "Amount": 8
+                "Amount": 2
               }
             ]
           }
@@ -1479,12 +2362,8 @@
             "Chain": "main",
             "Value": [
               {
-                "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 9
-              },
-              {
-                "Coin": "lightmanscurrency:coin_copper",
-                "Amount": 5
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 1
               }
             ]
           }
@@ -1493,9 +2372,9 @@
     },
     {
       "Type": "lightmanscurrency:item_trader",
-      "ID": "halucynacje_skup_tier_3",
-      "Name": "Skup Hurtowy — Tier 3: Cukiernia i Słodycze",
-      "OwnerName": "Giełda HalucynacjeGTP2",
+      "ID": "halucynacje_skup_03_cukiernia",
+      "Name": "[SKUP] 3. Cukiernia i Słodycze",
+      "OwnerName": "Tier 3 | 125-285c -> Stage 3 (100k)",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -1521,6 +2400,10 @@
               {
                 "Coin": "lightmanscurrency:coin_iron",
                 "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 5
               }
             ]
           }
@@ -1529,27 +2412,6 @@
           "TradeType": "PURCHASE",
           "SellItem": {
             "id": "create:honeyed_apple",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 1
-              },
-              {
-                "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 3
-              }
-            ]
-          }
-        },
-        {
-          "TradeType": "PURCHASE",
-          "SellItem": {
-            "id": "create:chocolate_glazed_berries",
             "count": 1
           },
           "Price": {
@@ -1574,7 +2436,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "farmersdelight:apple_pie",
+            "id": "create:chocolate_glazed_berries",
             "count": 1
           },
           "Price": {
@@ -1588,48 +2450,6 @@
               {
                 "Coin": "lightmanscurrency:coin_iron",
                 "Amount": 4
-              }
-            ]
-          }
-        },
-        {
-          "TradeType": "PURCHASE",
-          "SellItem": {
-            "id": "farmersdelight:sweet_berry_cheesecake",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 1
-              },
-              {
-                "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 5
-              }
-            ]
-          }
-        },
-        {
-          "TradeType": "PURCHASE",
-          "SellItem": {
-            "id": "farmersdelight:chocolate_pie",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 1
-              },
-              {
-                "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 6
               }
             ]
           }
@@ -1729,6 +2549,27 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
+            "id": "create_confectionery:hot_chocolate_bottle",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 9
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
             "id": "create_confectionery:bar_of_ruby_chocolate",
             "count": 1
           },
@@ -1746,7 +2587,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "create_confectionery:hot_chocolate_bottle",
+            "id": "createaddition:honey_cake",
             "count": 1
           },
           "Price": {
@@ -1755,11 +2596,36 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 1
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "createaddition:chocolate_cake",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 9
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 5
               }
             ]
           }
@@ -1788,7 +2654,32 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "createfood:apple_cream_chocolate_sweet_roll",
+            "id": "createfood:berry_milkshake_bottle",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "createfood:apple_ice_cream_cone",
             "count": 1
           },
           "Price": {
@@ -1813,7 +2704,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "createfood:berry_cream_chocolate_sweet_roll",
+            "id": "createfood:apple_cream_chocolate_sweet_roll",
             "count": 1
           },
           "Price": {
@@ -1838,6 +2729,56 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
+            "id": "createfood:berry_cream_chocolate_sweet_roll",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "createfood:apple_cream_chocolate_donut",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 6
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 5
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
             "id": "create:blaze_cake",
             "count": 1
           },
@@ -1851,7 +2792,11 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 7
+                "Amount": 8
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 5
               }
             ]
           }
@@ -1860,9 +2805,9 @@
     },
     {
       "Type": "lightmanscurrency:item_trader",
-      "ID": "halucynacje_skup_tier_4",
-      "Name": "Skup Hurtowy — Tier 4: Przemysł Create 6",
-      "OwnerName": "Giełda HalucynacjeGTP2",
+      "ID": "halucynacje_skup_04_przemysl",
+      "Name": "[SKUP] 4. Przemysł Create 6",
+      "OwnerName": "Tier 4 | 340-1050c -> Stage 4 (250k)",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -1896,7 +2841,7 @@
           "TradeType": "PURCHASE",
           "SellItem": {
             "id": "create:sturdy_sheet",
-            "count": 1
+            "count": 2
           },
           "Price": {
             "type": "lightmanscurrency:coins",
@@ -1908,7 +2853,7 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 6
+                "Amount": 8
               }
             ]
           }
@@ -1937,8 +2882,8 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "createaddition:cake_base_baked",
-            "count": 4
+            "id": "create:railway_casing",
+            "count": 2
           },
           "Price": {
             "type": "lightmanscurrency:coins",
@@ -1946,11 +2891,11 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 3
+                "Amount": 4
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 9
+                "Amount": 3
               }
             ]
           }
@@ -1971,7 +2916,7 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 2
+                "Amount": 4
               }
             ]
           }
@@ -1992,7 +2937,7 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 4
+                "Amount": 6
               }
             ]
           }
@@ -2009,7 +2954,49 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "createaddition:electrum_ingot",
+            "count": 4
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
                 "Amount": 4
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "create_hypertube:hypertube",
+            "count": 16
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 5
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
@@ -2021,8 +3008,8 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "createaddition:electrum_ingot",
-            "count": 2
+            "id": "create:packager",
+            "count": 1
           },
           "Price": {
             "type": "lightmanscurrency:coins",
@@ -2031,6 +3018,10 @@
               {
                 "Coin": "lightmanscurrency:coin_gold",
                 "Amount": 5
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 8
               }
             ]
           }
@@ -2047,11 +3038,32 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 5
+                "Amount": 6
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "create:stock_link",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
                 "Amount": 6
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 4
               }
             ]
           }
@@ -2068,11 +3080,11 @@
             "Value": [
               {
                 "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 6
+                "Amount": 7
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 8
+                "Amount": 2
               }
             ]
           }
@@ -2093,7 +3105,49 @@
               },
               {
                 "Coin": "lightmanscurrency:coin_iron",
-                "Amount": 6
+                "Amount": 8
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "createaddition:alternator",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 8
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 8
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "createaddition:electric_motor",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 9
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 4
               }
             ]
           }
@@ -2111,6 +3165,31 @@
               {
                 "Coin": "lightmanscurrency:coin_gold",
                 "Amount": 9
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 8
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "createaddition:servo_motor",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 5
               }
             ]
           }
@@ -2119,9 +3198,9 @@
     },
     {
       "Type": "lightmanscurrency:item_trader",
-      "ID": "halucynacje_skup_tier_5",
-      "Name": "Skup Hurtowy — Tier 5: Eksport AE2 & Mekanism",
-      "OwnerName": "Giełda HalucynacjeGTP2",
+      "ID": "halucynacje_skup_05_hightech",
+      "Name": "[SKUP] 5. Eksport High-Tech",
+      "OwnerName": "Tier 5 | 2.4k-13.5k -> Stage 5 (1M)",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -2196,6 +3275,27 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
+            "id": "mekanism:advanced_control_circuit",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 3
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
             "id": "ae2:fluix_pearl",
             "count": 4
           },
@@ -2210,27 +3310,6 @@
               {
                 "Coin": "lightmanscurrency:coin_gold",
                 "Amount": 6
-              }
-            ]
-          }
-        },
-        {
-          "TradeType": "PURCHASE",
-          "SellItem": {
-            "id": "mekanism:advanced_control_circuit",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_emerald",
-                "Amount": 3
-              },
-              {
-                "Coin": "lightmanscurrency:coin_gold",
-                "Amount": 8
               }
             ]
           }
@@ -2322,6 +3401,27 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
+            "id": "mekanism:teleportation_core",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 7
+              },
+              {
+                "Coin": "lightmanscurrency:coin_gold",
+                "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
             "id": "mekanism:ultimate_control_circuit",
             "count": 1
           },
@@ -2385,7 +3485,7 @@
         {
           "TradeType": "PURCHASE",
           "SellItem": {
-            "id": "mekanism:pellet_polonium",
+            "id": "ae2:cell_component_256k",
             "count": 1
           },
           "Price": {
@@ -2399,6 +3499,27 @@
               {
                 "Coin": "lightmanscurrency:coin_emerald",
                 "Amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "mekanism:pellet_polonium",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_diamond",
+                "Amount": 1
+              },
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 3
               },
               {
                 "Coin": "lightmanscurrency:coin_gold",

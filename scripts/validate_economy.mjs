@@ -135,7 +135,8 @@ for (let i = 1; i < tierStats.length; i++) {
   }
 }
 
-// 4. Walidacja katalogu Buy vs Sell (zero bezpośredniego arbitrażu buy <= sell + unikalne aliasy)
+// 4. Walidacja katalogu Buy vs Sell (zero bezpośredniego arbitrażu buy <= sell, unikalne aliasy i poprawne kategorie)
+const ALLOWED_BUY_CATEGORIES = new Set(['plants', 'livestock', 'skyblock', 'tech', 'prestige']);
 const buyById = new Map();
 for (const item of data.buy_catalog ?? []) {
   if (!(item.buy_price > 0)) {
@@ -143,6 +144,11 @@ for (const item of data.buy_catalog ?? []) {
   }
   if (buyById.has(item.id)) {
     errors.push(`Duplikat w buy_catalog: "${item.id}".`);
+  }
+  if (!ALLOWED_BUY_CATEGORIES.has(item.category)) {
+    errors.push(
+      `buy_catalog -> "${item.id}": niepoprawna kategoria "${item.category}" (dozwolone: ${[...ALLOWED_BUY_CATEGORIES].join(', ')}).`
+    );
   }
   if (item.alias) {
     if (seenAliases.has(item.alias)) {
@@ -156,6 +162,25 @@ for (const item of data.buy_catalog ?? []) {
     errors.push(
       `Arbitraż bezpośredni dla "${item.id}": buy=${item.buy_price} <= sell=${Math.max(sell.wholesale_gui, sell.npc_shoppers)}.`
     );
+  }
+}
+
+// 4b. Spójność całych ciast Farmer's Delight względem 4 kawałków (1.0x..1.5x, brak anomalii 3.5x)
+const piePairs = [
+  ['farmersdelight:apple_pie', 'farmersdelight:apple_pie_slice'],
+  ['farmersdelight:sweet_berry_cheesecake', 'farmersdelight:sweet_berry_cheesecake_slice'],
+  ['farmersdelight:chocolate_pie', 'farmersdelight:chocolate_pie_slice']
+];
+for (const [pieId, sliceId] of piePairs) {
+  const pie = sellById.get(pieId);
+  const slice = sellById.get(sliceId);
+  if (pie && slice) {
+    const fourSlices = slice.wholesale_gui * 4;
+    if (pie.wholesale_gui < fourSlices || pie.wholesale_gui > fourSlices * 1.5) {
+      errors.push(
+        `Niespójna wycena ciasta "${pieId}" (${pie.wholesale_gui}c) względem 4x "${sliceId}" (${fourSlices}c) — oczekiwano 1.0x–1.5x.`
+      );
+    }
   }
 }
 
