@@ -423,16 +423,19 @@ if (typeof NativeEvents !== 'undefined') {
 //    i tasków FTB Quests (przeniesiona z zamkniętego PR #16 bez konfliktów).
 // ----------------------------------------------------------------------------
 function sendStageCommandFeedback(ctx, component) {
+  // W KubeJS 7.2 (`CommandSourceStackMixin.kjs$sendSuccess(Component, boolean)`)
+  // przekazanie funkcji strzałkowej `() => component` powoduje konwersję `ArrowFunction.toString()`
+  // na czacie. Przekazujemy `Component` bezpośrednio!
   try {
-    ctx.source.sendSuccess(() => component, true);
-  } catch (e) {
-    try {
+    if (ctx && ctx.source && typeof ctx.source.sendSuccess === 'function') {
       ctx.source.sendSuccess(component, true);
-    } catch (e2) {
-      if (ctx.source.player) {
-        ctx.source.player.tell(component);
-      }
+      return;
     }
+  } catch (e) {
+    // Fallback na player.tell poniżej
+  }
+  if (ctx && ctx.source && ctx.source.player && typeof ctx.source.player.tell === 'function') {
+    ctx.source.player.tell(component);
   }
 }
 
