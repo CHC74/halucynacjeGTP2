@@ -1,0 +1,31 @@
+// ============================================================================
+// HalucynacjeGTP2 — Skyblock Builder: Uprawnienia i teleporty (PermissionsConfig)
+// Platforma: Minecraft 1.21.1 | NeoForge | SkyblockBuilder 21.1.37
+// Schemat zweryfikowany ze źródłem: MelanX/SkyblockBuilder (1.21.x) PermissionsConfig.java
+// ============================================================================
+{
+  forceSkyblockCheck: false,
+  minimumPermissionLevelToBypass: 2,
+  minimumPermissionLevelToBypassLimitations: 3,
+  minimumPermissionLevelToExecuteCommands: 4,
+
+  Teleports: {
+    // Bezpieczne teleporty bez obrażeń od upadku (przyjazny co-op na Skyblocku).
+    negateFallDamage: true,
+    disallowTeleportationDuringFalling: false,
+    teleportationDimensions: {
+      allow_list: false,
+      elements: []
+    },
+    Cooldowns: {
+      // Skrócone cooldowny dla kooperacji znajomych: 200 ticków = 10 sekund (domyślnie 3 min).
+      spawnCooldown: 200,
+      visitCooldown: 200,
+      homeCooldown: 200
+    }
+  },
+
+  Spawns: {
+    range: 50
+  }
+}

@@ -1,50 +1,19 @@
 // ============================================================================
-// HalucynacjeGTP2 — Skyblock Builder: Ekwipunek startowy gracza
-// Platforma: Minecraft 1.21.1 | NeoForge | Skyblock Builder
+// HalucynacjeGTP2 — Skyblock Builder: Ustawienia ekwipunku (InventoryConfig)
+// Platforma: Minecraft 1.21.1 | NeoForge | SkyblockBuilder 21.1.37
+// Schemat zweryfikowany ze źródłem: MelanX/SkyblockBuilder (1.21.x) InventoryConfig.java
 //
-// Zasady projektu (Guardrails):
-// - Zero sit / narzędzi z Ex Deorum / Ex Nihilo.
-// - Zero przedmiotów magicznych i zero przesadzonego (OP) sprzętu na starcie.
-// - Przyjazne dla `keepInventory = true` (gracz nie traci księgi questów ani
-//   podstawowego jedzenia po przypadkowym upadku w pustkę w Stage 0).
-//
-// UWAGA DO WERYFIKACJI NA PIERWSZYM URUCHOMIENIU NEOFORGE 1.21.1:
-// - Potwierdzić dokładny format tablicy `items` w Skyblock Builder 1.21.1
-//   (w MC 1.21.1 część struktur ItemStack używa pola `"id"` + `"count"` zamiast
-//   starszego `"item"` + `"Count"`).
-// - Zweryfikować identyfikator księgi FTB Quests (`ftbquests:book`).
+// UWAGA: Lista samych przedmiotów startowych znajduje się w osobnym pliku:
+// `config/skyblockbuilder/starter_inventory.json5` (SkyPaths.ITEMS_FILE).
 // ============================================================================
 {
-  // Czy wyczyścić ekwipunek przed przyznaniem przedmiotów startowych (tylko raz na wyspę).
-  clear: false,
+  // Nie czyścimy ekwipunku na starcie (zachowujemy kompatybilność z księgami modów).
+  clearInitialInventory: false,
 
-  // Przedmioty startowe przekazywane każdemu graczowi przy pierwszym wejściu na wyspę.
-  // [VERIFY ON 1.21.1 BOOT]: Sprawdzić schemat kluczy (`Slot` + `Item: { id, count }`).
-  items: [
-    {
-      Slot: "mainhand",
-      Item: {
-        id: "ftbquests:book",
-        count: 1
-      }
-    },
-    {
-      Item: {
-        id: "minecraft:bread",
-        count: 6
-      }
-    },
-    {
-      Item: {
-        id: "minecraft:torch",
-        count: 8
-      }
-    },
-    {
-      Item: {
-        id: "minecraft:oak_sapling",
-        count: 2
-      }
-    }
-  ]
+  // Nie wyrzucamy przedmiotów przy opuszczaniu drużyny (spójne z `keepInventory = true`).
+  dropItems: false,
+
+  // Gracz dostaje pakiet startowy z `starter_inventory.json5` przy pierwszym wejściu na świat.
+  // Dozwolone wartości: "spawn", "team".
+  initialInventoryType: "spawn"
 }

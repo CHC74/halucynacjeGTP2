@@ -1,0 +1,39 @@
+// ============================================================================
+// HalucynacjeGTP2 — Skyblock Builder: Przedmioty startowe (SkyPaths.ITEMS_FILE)
+// Platforma: Minecraft 1.21.1 | NeoForge | SkyblockBuilder 21.1.37
+// Schemat zweryfikowany ze źródłem: MelanX/SkyblockBuilder (1.21.x) StartingInventory.java
+// Format ItemStack MC 1.21.1 (`ItemStack.CODEC`): { "id": "...", "count": N }
+//
+// Guardrails: zero sit Ex Deorum/Ex Nihilo, zero magii, zero przedmiotów OP.
+// Surowce zapobiegające softlockowi (lawa, lód, sadzonki, rośliny) są też w skrzyni
+// na Wyspie Startowej (`starter_island.nbt`).
+// ============================================================================
+{
+  "items": [
+    {
+      "Slot": "mainhand",
+      "Item": {
+        "id": "ftbquests:book",
+        "count": 1
+      }
+    },
+    {
+      "Item": {
+        "id": "minecraft:bread",
+        "count": 6
+      }
+    },
+    {
+      "Item": {
+        "id": "minecraft:torch",
+        "count": 8
+      }
+    },
+    {
+      "Item": {
+        "id": "minecraft:oak_sapling",
+        "count": 2
+      }
+    }
+  ]
+}

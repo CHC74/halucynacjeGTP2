@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   validate-and-build:
-    name: Walidacja KubeJS, Ekonomii, Linków i Eksport Packwiz
+    name: Walidacja KubeJS, Wysp NBT, Ekonomii i Eksport Packwiz + Exaroton
     runs-on: ubuntu-latest
 
     steps:
@@ -29,10 +29,10 @@ jobs:
         with:
           go-version: '1.23'
 
-      - name: 1. Sprawdzenie składni wszystkich skryptów KubeJS
+      - name: 1. Sprawdzenie składni wszystkich skryptów KubeJS i narzędzi Node
         run: |
           shopt -s nullglob
-          for f in kubejs/*/*.js; do
+          for f in kubejs/*/*.js scripts/*.mjs; do
             echo "Checking $f"
             node --check "$f"
           done
@@ -40,7 +40,7 @@ jobs:
       - name: 2. Walidacja względnych linków Markdown
         run: node scripts/check_markdown_links.mjs
 
-      - name: 3. Walidacja cennika i reguł anty-arbitrażowych (jeśli obecny)
+      - name: 3. Walidacja cennika i reguł anty-arbitrażowych
         run: |
           if [ -f scripts/validate_economy.mjs ] && [ -f config/halucynacje_economy/prices.json ]; then
             node scripts/validate_economy.mjs
@@ -48,7 +48,7 @@ jobs:
             echo "Pominięto — brak jeszcze scripts/validate_economy.mjs na tej gałęzi."
           fi
 
-      - name: 4. Walidacja plików JSON i TOML w config/ oraz kubejs/assets/
+      - name: 4. Walidacja plików JSON i TOML w config/, packwiz/ oraz kubejs/assets/
         run: |
           python3 - <<'PY'
           import glob, json, tomllib
@@ -61,27 +61,43 @@ jobs:
           print("✅ Wszystkie pliki JSON i TOML poprawne składniowo.")
           PY
 
-      - name: 5. Instalacja packwiz i odświeżenie indeksu
+      - name: 5. Weryfikacja 3 binarnych szablonów wysp `.nbt` (MC 1.21.1 DataVersion 3955)
+        run: python3 scripts/generate_island_nbt.py --verify
+
+      - name: 6. Instalacja packwiz i odświeżenie indeksu
         run: |
           go install github.com/packwiz/packwiz@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: 6. Weryfikacja packwiz + eksport klienckiego .mrpack
+      - name: 7. Weryfikacja packwiz + eksport klienckiego .mrpack
         working-directory: packwiz
         run: |
           mkdir -p ../dist
           packwiz refresh --build
           packwiz mr export -o ../dist/halucynacjeGTP2.mrpack
 
-      - name: 7. Dołączenie overrides/ (config/ + kubejs/) i weryfikacja .mrpack
+      - name: 8. Dołączenie overrides/ (config/ + 3 wyspy .nbt + kubejs/) i weryfikacja .mrpack
         run: node scripts/bundle_mrpack_overrides.mjs dist/halucynacjeGTP2.mrpack
 
-      - name: 8. Walidacja budżetu modów i listy serwerowej Exaroton (dry-run)
+      - name: 9. Walidacja budżetu modów i listy serwerowej Exaroton (dry-run na PR)
+        if: github.event_name == 'pull_request'
         run: node scripts/export_server_pack.mjs --dry-run
 
-      - name: 9. Publikacja artefaktu .mrpack (Prism Launcher / Modrinth App)
+      - name: 9b. Pełny eksport gotowej paczki serwerowej Exaroton (55/55 JAR + config + kubejs + server.properties)
+        if: github.event_name != 'pull_request'
+        run: node scripts/export_server_pack.mjs
+
+      - name: 10. Publikacja artefaktu klienckiego .mrpack (Prism Launcher / Modrinth App)
         uses: actions/upload-artifact@v4
         with:
           name: halucynacjeGTP2-client-mrpack
           path: dist/halucynacjeGTP2.mrpack
+          if-no-files-found: error
+
+      - name: 11. Publikacja artefaktu serwerowego Exaroton (.zip)
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: halucynacjeGTP2-server-exaroton
+          path: dist/halucynacjeGTP2-server-exaroton.zip
           if-no-files-found: error

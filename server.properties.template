@@ -1,0 +1,19 @@
+# ============================================================================
+# HalucynacjeGTP2 — Szablon server.properties dla Exaroton (NeoForge 1.21.1)
+# ============================================================================
+# KRYTYCZNE:
+# - level-type=skyblockbuilder\:skyblock  (generuje 3 wyspy w Overworldzie;
+#   Nether i End pozostają w 100% normalne dzięki config/skyblockbuilder/dimensions.json5)
+# - allow-flight=true                     (wymagane dla Create Hypertubes / Jetpack / wind)
+# - spawn-protection=0                    (umożliwia budowanie na całej Wyspie Startowej)
+# ============================================================================
+level-type=skyblockbuilder\:skyblock
+allow-flight=true
+difficulty=normal
+gamemode=survival
+view-distance=8
+simulation-distance=6
+spawn-protection=0
+enable-command-block=false
+max-players=10
+motd=HalucynacjeGTP2 — Create Skyblock Tycoon (NeoForge 1.21.1)
