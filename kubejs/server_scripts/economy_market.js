@@ -13,7 +13,8 @@
 // - `/sprzedaj all`         — hurtowa sprzedaż wszystkich towarów Tier 1–5 z ekwipunku
 // - `/kup <alias> [ilość]`  — zakup starterów, Żetonów Etapów (`stage_1`..`stage_5`)
 //                             oraz `creative_motor` (limit drużynowy)
-// - `/sklep [etap 0-5]`     — katalog zakupowy dla danego etapu
+// - `/sklep`                — otwiera prawdziwe, graficzne GUI Trading Terminala LC
+// - `/sklep lista [0-5]`    — tekstowy katalog zakupowy (również `/sklep <0-5>`)
 // - `/cennik [tier 1-5]`    — tabela skupu hurtowego i marży +20% na Wyspie-Rynku
 // - `/ekonomia`             — panel Tycoona (etap, gotówka, statystyki eksportu)
 //
@@ -479,6 +480,60 @@ function handleBuy(player, server, rawKey, rawQty) {
   return qty;
 }
 
+/**
+ * Otwiera natywne graficzne GUI Trading Terminala Lightman's Currency (1.21-2.3.0.6)
+ * z sieciowymi sklepami z `config/lightmanscurrency/PersistentTraders.json`.
+ *
+ * Zweryfikowane w bajtkodzie `CommandTerminal` i `TerminalMenuProvider`:
+ *   `TerminalMenuProvider.OpenMenu(player, SimpleValidator.NULL)`
+ * Jeśli z jakiegoś powodu ładowanie klasy Java się nie powiedzie, próbuje
+ * natywnej komendy `/lcterminal` (włączonej w `config/lightmanscurrency-server.txt`).
+ */
+function openTradingTerminalGui(player, server) {
+  try {
+    if (typeof Java !== 'undefined' && Java.loadClass) {
+      const TerminalMenuProvider = Java.loadClass(
+        'io.github.lightman314.lightmanscurrency.common.menus.providers.TerminalMenuProvider'
+      );
+      const SimpleValidator = Java.loadClass(
+        'io.github.lightman314.lightmanscurrency.common.menus.validation.types.SimpleValidator'
+      );
+      if (TerminalMenuProvider && SimpleValidator && TerminalMenuProvider.OpenMenu) {
+        TerminalMenuProvider.OpenMenu(player, SimpleValidator.NULL);
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn(`[HalucynacjeGTP2] TerminalMenuProvider.OpenMenu nie powiodło się: ${err}`);
+  }
+
+  try {
+    if (server && typeof server.runCommandSilent === 'function' && player && player.username) {
+      const res = server.runCommandSilent(`execute as ${player.username} run lcterminal`);
+      if (res > 0) {
+        return true;
+      }
+    }
+  } catch (err2) {
+    console.warn(`[HalucynacjeGTP2] Fallback /lcterminal nie powiódł się: ${err2}`);
+  }
+
+  return false;
+}
+
+function handleOpenShopGui(player, server) {
+  if (openTradingTerminalGui(player, server)) {
+    return 1;
+  }
+  player.tell(
+    Text.yellow(
+      '[Sklep] Nie udało się otworzyć GUI Trading Terminala — wyświetlam katalog tekstowy (spróbuj też /lcterminal lub bloku Trading Terminal na Wyspie-Rynku).'
+    )
+  );
+  handleShowShop(player, server, null);
+  return 1;
+}
+
 function handleShowShop(player, server, requestedStage) {
   const catalog = getMarketCatalog(false);
   const currentStage = getCurrentUnlockedStage(player, server);
@@ -568,7 +623,11 @@ function handleShowEconomyStatus(player, server) {
       Text.gold('★ Osiągnięto Stage 5! Opcjonalny cel flex: /kup creative_motor (2 000 000 monet, limit 2 szt.).')
     );
   }
-  player.tell(Text.gray('Komendy: /sprzedaj | /sprzedaj all | /sklep [0-5] | /kup <alias> [ilość] | /cennik [1-5]'));
+  player.tell(
+    Text.gray(
+      'Komendy: /sklep (GUI) | /sklep lista [0-5] | /lcterminal | /sprzedaj [all] | /kup <alias> [ilość] | /cennik [1-5]'
+    )
+  );
 }
 
 // ----------------------------------------------------------------------------
@@ -619,9 +678,44 @@ ServerEvents.commandRegistry((event) => {
       .executes((ctx) => {
         const player = ctx.source.player;
         if (!player) return 0;
-        handleShowShop(player, ctx.source.server, null);
-        return 1;
+        return handleOpenShopGui(player, ctx.source.server);
       })
+      .then(
+        Commands.literal('lista')
+          .executes((ctx) => {
+            const player = ctx.source.player;
+            if (!player) return 0;
+            handleShowShop(player, ctx.source.server, null);
+            return 1;
+          })
+          .then(
+            Commands.argument('etap', Arguments.INTEGER.create(event)).executes((ctx) => {
+              const player = ctx.source.player;
+              if (!player) return 0;
+              const stage = Arguments.INTEGER.getResult(ctx, 'etap');
+              handleShowShop(player, ctx.source.server, stage);
+              return 1;
+            })
+          )
+      )
+      .then(
+        Commands.literal('cennik')
+          .executes((ctx) => {
+            const player = ctx.source.player;
+            if (!player) return 0;
+            handleShowPrices(player, 1);
+            return 1;
+          })
+          .then(
+            Commands.argument('tier', Arguments.INTEGER.create(event)).executes((ctx) => {
+              const player = ctx.source.player;
+              if (!player) return 0;
+              const tier = Arguments.INTEGER.getResult(ctx, 'tier');
+              handleShowPrices(player, tier);
+              return 1;
+            })
+          )
+      )
       .then(
         Commands.argument('etap', Arguments.INTEGER.create(event)).executes((ctx) => {
           const player = ctx.source.player;
