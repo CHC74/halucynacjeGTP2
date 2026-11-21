@@ -56,7 +56,7 @@ jobs:
           echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
           echo "🏷️  Docelowy tag Release: $TAG (prerelease=$PRERELEASE)"
 
-      - name: 1. Pełna walidacja repozytorium (KubeJS, Markdown, Ekonomia, NBT)
+      - name: 1. Pełna walidacja repozytorium (KubeJS, Testy jednostkowe, Markdown, Ekonomia, NBT)
         run: |
           shopt -s nullglob
           for f in kubejs/*/*.js scripts/*.mjs; do
@@ -64,6 +64,7 @@ jobs:
           done
           node scripts/check_markdown_links.mjs
           node scripts/validate_economy.mjs
+          node scripts/test_kubejs_logic.mjs
           python3 scripts/generate_island_nbt.py --verify
 
       - name: 2. Instalacja packwiz
@@ -109,6 +110,7 @@ jobs:
                   "manifest.json",
                   "modlist.html",
                   "overrides/kubejs/startup_scripts/stage_tokens.js",
+                  "overrides/kubejs/server_scripts/economy_contracts.js",
                   "overrides/kubejs/assets/kubejs/lang/pl_pl.json",
                   "overrides/config/skyblockbuilder/dimensions.json5",
                   "overrides/config/skyblockbuilder/templates/islands/starter_island.nbt",
@@ -141,7 +143,8 @@ jobs:
                   "config/halucynacje_economy/prices.json",
                   "kubejs/startup_scripts/stage_tokens.js",
                   "kubejs/server_scripts/dimension_gating.js",
-                  "kubejs/server_scripts/economy_market.js"
+                  "kubejs/server_scripts/economy_market.js",
+                  "kubejs/server_scripts/economy_contracts.js"
               ]:
                   assert req in names, f"Brak wymaganego pliku w server zip: {req}"
               print(f"✅ Zweryfikowano serwerowy ZIP: {len(jars)}/{expected} JAR ({manifest['downloaded_modrinth_jars']} Modrinth + {manifest['downloaded_curseforge_jars']} CurseForge ForgeCDN) + 3 wyspy .nbt + server.properties.")
@@ -185,13 +188,13 @@ jobs:
           Pełna instrukcja krok po kroku znajduje się w [docs/QUICKSTART_EXAROTON.md](https://github.com/CHC74/halucynacjeGTP2/blob/main/docs/QUICKSTART_EXAROTON.md):
           1. **Klient — CurseForge App (PC & Mac M2):** Pobierz **`halucynacjeGTP2-curseforge.zip`** → otwórz **CurseForge App** → kliknij **Create Custom Profile** → **Import** → wybierz pobrany plik `.zip` → w ustawieniach profilu ustaw **6 GB RAM (`6144 MB`)** (na **Mac M2** sprawdź użycie natywnej **Java 21 ARM64**) → **Play**!
           2. **Serwer Exaroton:** Software → **NeoForge `1.21.1` (`21.1.267`)** → Options: **RAM 6–8 GB**, **Allow Flight = ON** → Files: wrzuć rozpakowane `mods/`, `config/`, `kubejs/` z `halucynacjeGTP2-server-exaroton.zip` → Worlds → Generate → Worldtype: **`skyblockbuilder:skyblock`** → **Start**!
-          3. **W grze:** Spawn na Wyspie Startowej `(0, 65, 0)` z widokiem wprost na Wyspę-Rynek `(+152E)`. Po postawieniu sklepów wpisz (jako OP) `/halucynacje_apply_shoppers`.
+          3. **W grze:** Spawn na Wyspie Startowej `(0, 65, 0)` z widokiem wprost na Wyspę-Rynek `(+152E)`. Po postawieniu sklepów wpisz (jako OP) `/halucynacje_sync_shoppers`. Dostępne komendy graczy: `/ekonomia`, `/sprzedaj`, `/sklep`, `/kup`, `/cennik`, `/kontrakt`.
 
           ### Co zostało zweryfikowane w tej wersji
           - ✅ Natywny import w **CurseForge App** (`halucynacjeGTP2-curseforge.zip`): wszystkie **65/65 modów** (15 CF + 50 zweryfikowanych JAR-ów Modrinth w `overrides/mods/`), `manifest.json` z `neoforge-21.1.267`, `modlist.html` i pełny `overrides/`.
           - ✅ Schemat `config/skyblockbuilder/*.json5` dopasowany 1:1 do kodu źródłowego `MelanX/SkyblockBuilder` (`21.1.37` / `1.21.x`): Overworld = pustka 3 wysp (`plains`), **Nether i End = 100% normalna generacja waniliowa** (`dimensions.json5`).
           - ✅ 3 binarne pliki struktur Minecraft 1.21.1 (`DataVersion 3955`, czyste bloki waniliowe): `starter_island.nbt` (15×13×15 ze skrzynią anty-softlock i Pirsem Wschodnim), `market_island.nbt` (29×9×25, 100% płaski plac pod `Shoppers`, 8 stoisk z tylną aleją Create, 3 pady ATM), `industrial_island.nbt` (21×7×21, Dok Północny).
-          - ✅ Ekonomia, anty-arbitraż, księga *FTB Quests* (Stage 0–5), `keepInventory = true`, bezpieczeństwo Mac M2 (zero *Valkyrien Skies* / *Clockwork*, zero magii, zero *Ex Deorum*).
+          - ✅ Zweryfikowane na prawdziwych plikach JAR 1.21.1 receptury Create 6.0.10 (`neoforge:single`) i Mechanical Extruder 2.2.2 (`blockIngredients`), dynamiczne kontrakty fabryczne `/kontrakt` (+35%), testy jednostkowe KubeJS, anty-arbitraż, księga *FTB Quests* (Stage 0–5), `keepInventory = true`, bezpieczeństwo Mac M2 (zero *Valkyrien Skies* / *Clockwork*, zero magii, zero *Ex Deorum*).
           """
           print(textwrap.dedent(notes))
           PY

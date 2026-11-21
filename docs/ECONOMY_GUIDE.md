@@ -21,18 +21,19 @@ Cała ekonomia serwera korzysta z 6 fizycznych nominałów monet (przelicznik dz
 
 ---
 
-## 2. Dwa kanały zbytu (dlaczego opłaca się budować logistykę na Wyspę-Rynek?)
+## 2. Trzy kanały zbytu (dlaczego opłaca się budować zróżnicowane fabryki i logistykę?)
 
 | Kanał sprzedaży | Marża | Jak działa | Kiedy używać |
 | :--- | :--- | :--- | :--- |
-| **Fizyczne sklepy NPC na Wyspie-Rynku** (*Lightman's Currency* + *Shoppers*) | **+20% wyższa cena!** | Pociągi Create / Chain Conveyors + Frogporty dowożą towary na tylne korytarze 8 stoisk na Wyspie-Rynku `(152, 64, 0)`. Klienci NPC (`maxShoppers = 10`, bezpieczny promień `4–12` bloków + `VirtualShoppingSimulator` w tle!) kupują towary, a pieniądze trafiają na Wasze **Team Bank Account**. | Główny silnik zarobku w Stage 1–5 — maksymalna marża i żywy świat! |
+| **Dynamiczne Kontrakty Fabryczne (`/kontrakt`)** | **+35% premii!** | System losuje celowane zlecenie eksportowe dopasowane do Waszego aktualnego Etapu (Stage 0–5) prosto z [prices.json](../config/halucynacje_economy/prices.json). Oddanie pełnej partii wypłaca fizyczne monety *Lightman's Currency* z premią `+35%` i automatycznie losuje kolejne zlecenie. | Najwyższa rentowność w grze — motywuje do automatyzacji różnych linii produkcyjnych! |
+| **Fizyczne sklepy NPC na Wyspie-Rynku** (*Lightman's Currency* + *Shoppers*) | **+20% wyższa cena!** | Pociągi Create / Chain Conveyors + Frogporty dowożą towary na tylne korytarze 8 stoisk na Wyspie-Rynku `(152, 64, 0)`. Klienci NPC (`maxShoppers = 10`, bezpieczny promień `4–12` bloków + `VirtualShoppingSimulator` w tle!) kupują towary, a pieniądze trafiają na Wasze **Team Bank Account**. | Główny pasywny silnik zarobku w Stage 1–5 — stały przychód i żywy rynek! |
 | **Rynek Hurtowy (`/sprzedaj` / `/sprzedaj all`)** | **100% (cena bazowa)** | Natychmiastowa sprzedaż z ekwipunku za fizyczne monety *Lightman's Currency* (zasilana bezpośrednio z [prices.json](../config/halucynacje_economy/prices.json)). Działa od 1. minuty gry bez ręcznej konfiguracji. | Szybki start w Stage 0 i zlew gigantycznych nadwyżek w late-game. |
 
 ---
 
 ## 3. Komendy ekonomiczne dla graczy
 
-Wszystkie komendy obsługuje [kubejs/server_scripts/economy_market.js](../kubejs/server_scripts/economy_market.js):
+Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](../kubejs/server_scripts/economy_market.js), a system dynamicznych zleceń — [kubejs/server_scripts/economy_contracts.js](../kubejs/server_scripts/economy_contracts.js):
 
 - **`/ekonomia`** — Twój panel Tycoona: aktualny Etap drużyny, wartość monet w ekwipunku, łączny obrót z eksportu hurtowego oraz ile monet brakuje do kolejnego Żetonu Etapu.
 - **`/cennik [1-5]`** — tabela skupu hurtowego i docelowej ceny NPC `+20%` dla wybranego Tieru (1–5).
@@ -40,6 +41,9 @@ Wszystkie komendy obsługuje [kubejs/server_scripts/economy_market.js](../kubejs
 - **`/sprzedaj all`** — sprzedaje hurtem wszystkie przetworzone towary Tier 1–5 z ekwipunku jednym kliknięciem.
 - **`/sklep [0-5]`** — lista dostępnych starterów Skyblocka (nasiona, sadzonki, jaja hodowlane krów/świń/kur/owiec/pszczół, lawa, Blaze Burner, startery AE2 i Mekanism: Osmium/Fluoryt/Uran), **Żetonów Etapów** oraz prestiżowego `creative_motor`.
 - **`/kup <alias> [ilość]`** — kupuje wybrany towar za monety z ekwipunku i automatycznie wydaje resztę (np. `/kup kelp 2`, `/kup cow 2`, `/kup stage_1`, `/kup creative_motor`).
+- **`/kontrakt`** — pokazuje aktywny kontrakt fabryczny (wymagany towar, ilość i nagrodę `+35%` w monetach *Lightman's Currency*).
+- **`/kontrakt oddaj`** — pobiera wymagane towary z ekwipunku, wypłaca premię `+35%` i automatycznie losuje nowe zlecenie dla Waszego Etapu.
+- **`/kontrakt nowy`** — losuje inny kontrakt na aktualnym Etapie (cooldown `5 minut`).
 
 ---
 

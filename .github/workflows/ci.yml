@@ -48,6 +48,9 @@ jobs:
             echo "Pominięto — brak jeszcze scripts/validate_economy.mjs na tej gałęzi."
           fi
 
+      - name: 3b. Testy jednostkowe skryptów KubeJS (gating, receptury Create 6, rynek, kontrakty)
+        run: node scripts/test_kubejs_logic.mjs
+
       - name: 4. Walidacja plików JSON i TOML w config/, packwiz/ oraz kubejs/assets/
         run: |
           python3 - <<'PY'
