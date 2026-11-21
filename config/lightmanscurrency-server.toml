@@ -1,0 +1,30 @@
+# =============================================================================
+# HalucynacjeGTP2 — Szablon konfiguracji serwerowej Lightman's Currency (1.21.1)
+# Zgodnie z ustaleniami RFC #5 (ochrona ekonomii pure-Create Skyblock Tycoon).
+#
+# [VERIFY ON 1.21.1 BOOT]: Nazwy sekcji i kluczy TOML potwierdzić po pierwszym
+# wygenerowaniu natywnego pliku przez Lightman's Currency na NeoForge 1.21.1.
+# Równolegle blokadę Coin Mint i Slot Machine wymusza `economy_anti_exploit.js`.
+# =============================================================================
+
+[coin_mint]
+# KRYTYCZNE (RFC #5): Wyłączenie wybijania monet ze sztabek żelaza/złota/miedzi,
+# aby automatyczne farmy Create nie zamieniały się w nieskończoną drukarkę pieniędzy.
+canMint = false
+canMelt = false
+
+[coin_mint.mintable]
+copper = false
+iron = false
+gold = false
+emerald = false
+diamond = false
+netherite = false
+
+[bank]
+# Wspólne konta drużynowe (Team Bank Accounts) w kooperacji znajomych
+enableTeamBankAccounts = true
+
+[traders]
+# Brak podatku transakcyjnego na prywatnym serwerze co-op
+enableTaxCollectors = false
