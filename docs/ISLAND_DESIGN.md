@@ -2,6 +2,8 @@
 
 Dokumentacja architektoniczna wielo-wyspowego Overworlda w modpacku **HalucynacjeGTP2** (*Create Skyblock Tycoon*, Minecraft `1.21.1`, NeoForge, Create `6.x`).
 
+> 🖼️ **Podgląd 3D bez uruchamiania serwera:** zobacz gotowe rendery 3D wszystkich 3 wysp w **[docs/ISLAND_PREVIEWS.md](ISLAND_PREVIEWS.md)** oraz interaktywny plik **[docs/renders/island_viewer_3d.html](renders/island_viewer_3d.html)**!
+
 Układ wysp realizuje dwa kluczowe cele projektowe z [VISION.md](VISION.md):
 1. **Naturalna motywacja do logistyki Create 6** — dystans **~150 bloków** przez pustkę sprawia, że budowa **Chain Conveyors + Frogports**, **wiaduktów kolejowych (`Create` / `Steam 'n' Rails`)** oraz **rur `Create: Hypertubes`** jest zarówno praktyczna, jak i widowiskowa.
 2. **Bezpieczne i wydajne środowisko pod ekonomię (`Lightman's Currency` + `Shoppers`)** — Wyspa-Rynek jest w 100% płaska, ma rozproszone bankomaty (ATM) i zaplecze serwisowe pod taśmociągi, zgodnie z ustaleniami z [PROGRESSION_AND_ECONOMY.md](PROGRESSION_AND_ECONOMY.md) oraz RFC #5.
