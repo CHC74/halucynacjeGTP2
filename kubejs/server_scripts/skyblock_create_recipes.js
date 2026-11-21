@@ -14,11 +14,11 @@
 //   i czerwonego barwnika), aby `crimsite` i `netherrack` były osiągalne w Stage 1
 //   jeszcze przed zbudowaniem Crushing Wheels.
 //
-// UWAGA DO WERYFIKACJI I BALANSU NA ŻYWYM SERWERZE 1.21.1 (Issue #4):
-// - [VERIFY ON 1.21.1 BOOT] Sprawdzić dokładny schemat JSON receptur Create 6.0.x
-//   oraz `create_mechanical_extruder:extruding` pod NeoForge 1.21.1
-//   (`"id"` vs `"item"` w wynikach, `{ "type": "fluid_stack", ... }` w Create 6).
-// - Dostroić szanse (`chance`) i ilości po pierwszych playtestach na Exaroton.
+// Zweryfikowane bezpośrednio na prawdziwych plikach JSON z JAR-ów 1.21.1:
+// - `create-1.21.1-6.0.10.jar`: składniki płynne wymagają `"type": "neoforge:single"`
+//   (NIE `"fluid_stack"`!) oraz `"results": [{ "id": "...", "count": ... }]`.
+// - `create_mechanical_extruder-1.21.1-2.2.2-6.0.10.jar`: format `extruding` używa
+//   `blockIngredients: { first: { blocks }, second: { blocks } }` i `catalyst: { blocks }`.
 // ============================================================================
 
 ServerEvents.recipes((event) => {
@@ -32,7 +32,7 @@ ServerEvents.recipes((event) => {
       ingredients: [
         { item: 'minecraft:gravel' },
         { item: 'minecraft:flint' },
-        { type: 'fluid_stack', fluid: 'minecraft:water', amount: 250 }
+        { type: 'neoforge:single', fluid: 'minecraft:water', amount: 250 }
       ],
       results: [{ id: 'minecraft:andesite', count: 2 }]
     })
@@ -74,7 +74,7 @@ ServerEvents.recipes((event) => {
         { item: 'minecraft:gravel' },
         { item: 'minecraft:clay_ball' },
         { item: 'minecraft:sand' },
-        { type: 'fluid_stack', fluid: 'minecraft:water', amount: 250 }
+        { type: 'neoforge:single', fluid: 'minecraft:water', amount: 250 }
       ],
       results: [{ id: 'create:veridium', count: 2 }]
     })
@@ -91,7 +91,7 @@ ServerEvents.recipes((event) => {
         { item: 'minecraft:cobblestone' },
         { item: 'minecraft:clay_ball' },
         { item: 'minecraft:flint' },
-        { type: 'fluid_stack', fluid: 'minecraft:water', amount: 250 }
+        { type: 'neoforge:single', fluid: 'minecraft:water', amount: 250 }
       ],
       results: [{ id: 'create:asurine', count: 1 }]
     })
@@ -109,7 +109,7 @@ ServerEvents.recipes((event) => {
         { item: 'minecraft:cobblestone' },
         { item: 'minecraft:cobblestone' },
         { item: 'minecraft:red_sand' },
-        { type: 'fluid_stack', fluid: 'minecraft:lava', amount: 100 }
+        { type: 'neoforge:single', fluid: 'minecraft:lava', amount: 100 }
       ],
       results: [{ id: 'create:crimsite', count: 2 }]
     })
@@ -125,7 +125,7 @@ ServerEvents.recipes((event) => {
       ingredients: [
         { item: 'minecraft:sandstone' },
         { item: 'minecraft:terracotta' },
-        { type: 'fluid_stack', fluid: 'minecraft:lava', amount: 100 }
+        { type: 'neoforge:single', fluid: 'minecraft:lava', amount: 100 }
       ],
       results: [{ id: 'create:ochrum', count: 2 }]
     })
@@ -142,7 +142,7 @@ ServerEvents.recipes((event) => {
       ingredients: [
         { item: 'minecraft:cobblestone' },
         { item: 'minecraft:red_sand' },
-        { type: 'fluid_stack', fluid: 'minecraft:lava', amount: 250 }
+        { type: 'neoforge:single', fluid: 'minecraft:lava', amount: 250 }
       ],
       results: [{ id: 'minecraft:netherrack', count: 1 }]
     })
@@ -155,16 +155,15 @@ ServerEvents.recipes((event) => {
   //        w czystym Create bez ryzyka martwej receptury w JEI)
   //    7c. Bulk Washing Tuff -> wczesne samorodki Cynku i Miedzi
   // --------------------------------------------------------------------------
-  // [VERIFY ON 1.21.1 BOOT]: Potwierdzić dokładny schemat JSON `create_mechanical_extruder:extruding`
-  // dla `Create: Mechanical Extruder 2.2.2-6.0.10` na NeoForge 1.21.1.
+  // Schemat zweryfikowany w `create_mechanical_extruder-1.21.1-2.2.2-6.0.10.jar`!
   event
     .custom({
       type: 'create_mechanical_extruder:extruding',
-      ingredients: [
-        { type: 'fluid_stack', fluid: 'minecraft:water', amount: 1000 },
-        { type: 'fluid_stack', fluid: 'minecraft:lava', amount: 1000 }
-      ],
-      catalyst: { item: 'minecraft:andesite' },
+      blockIngredients: {
+        first: { blocks: 'minecraft:water' },
+        second: { blocks: 'minecraft:lava' }
+      },
+      catalyst: { blocks: 'minecraft:andesite' },
       result: { id: 'minecraft:tuff', count: 1 }
     })
     .id('halucynacje:mechanical_extruder/skyblock_tuff');
@@ -176,7 +175,7 @@ ServerEvents.recipes((event) => {
         { item: 'minecraft:cobblestone' },
         { item: 'minecraft:cobblestone' },
         { item: 'minecraft:andesite' },
-        { type: 'fluid_stack', fluid: 'minecraft:water', amount: 100 }
+        { type: 'neoforge:single', fluid: 'minecraft:water', amount: 100 }
       ],
       results: [{ id: 'minecraft:tuff', count: 2 }]
     })

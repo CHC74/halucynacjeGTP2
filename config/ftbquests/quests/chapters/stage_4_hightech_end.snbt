@@ -138,7 +138,7 @@
 					id: "C400000000000303"
 					item: {
 						count: 1
-						id: "createappliedkinetics:stress_generator"
+						id: "createappliedkinetics:me_proxy"
 					}
 					type: "item"
 				}

@@ -281,7 +281,7 @@
 					id: "C200000000000603"
 					item: {
 						count: 1
-						id: "hypertubes:hypertube_entrance"
+						id: "create_hypertube:hypertube_entrance"
 					}
 					type: "item"
 				}

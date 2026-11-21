@@ -39,17 +39,17 @@ Każdy główny quest milowy (Etapy 1–5) ma dwa taski:
 
 ---
 
-## 3. Punkty do weryfikacji przy pierwszym starcie serwera (`[VERIFY ON 1.21.1 BOOT]`)
+## 3. Weryfikacja ID przedmiotów na plikach `.jar` (`NeoForge 1.21.1`)
 
-Po złożeniu paczki przez `packwiz` (Issue #6) i pierwszym uruchomieniu NeoForge `1.21.1` należy zweryfikować w logach FTB Quests dokładne ID poniższych przedmiotów z addonów (reszta to standardowe ID Vanilla / Create 6 / Farmer's Delight / AE2 / Mekanism):
+Wszystkie ID przedmiotów z addonów zostały **zweryfikowane bezpośrednio na prawdziwych plikach `.jar`** z naszego `packwiz/`:
 
-- `create_mechanical_extruder:mechanical_extruder` (`stage_0_start.snbt`, `C000000000000202`)
-- `sliceanddice:slicer` (`stage_1_trade.snbt`, `C100000000000201`)
-- `lightmanscurrency:shelf_oak` oraz `lightmanscurrency:wallet_copper` (`stage_1_trade.snbt`, `C100000000000401`..`402`)
-- `create_confectionery:bar_of_black_chocolate` (`stage_2_nether.snbt`, `C200000000000502`)
-- `hypertubes:hypertube_entrance` (`stage_2_nether.snbt`, `C200000000000603` — potwierdzić dokładny namespace `hypertubes:` vs `create_hypertube:` dla wybranego wydania 1.21.1)
-- `trading_floor:trading_depot` (`stage_3_industry.snbt`, `C300000000000401`)
-- `create_enchantment_industry:blaze_enchanter` (`stage_3_industry.snbt`, `C300000000000402` — w CEI 2.x dla Create 6 sprawdzić `blaze_enchanter` vs `blaze_enchanter_block` / `printer`)
-- `create_sa:brass_jetpack_chestplate` (`stage_3_industry.snbt`, `C300000000000501`)
-- `createappliedkinetics:stress_generator` (`stage_4_hightech_end.snbt`, `C400000000000303` — sprawdzić dokładny ID bloku z finalnego builda *Create: Applied Kinetics* 1.21.1)
-- Potwierdzić, że FTB Quests `2101.x` (`version: 13`) bez błędów wczytuje `icon: { id: "..." }`, `type: "custom"` oraz `type: "toast"`.
+- ✅ `create_mechanical_extruder:mechanical_extruder` (`stage_0_start.snbt`, `C000000000000202`)
+- ✅ `sliceanddice:slicer` (`stage_1_trade.snbt`, `C100000000000201`)
+- ✅ `lightmanscurrency:shelf_oak` oraz `lightmanscurrency:wallet_copper` (`stage_1_trade.snbt`, `C100000000000401`..`402`)
+- ✅ `create_confectionery:bar_of_black_chocolate` (`stage_2_nether.snbt`, `C200000000000502`)
+- ✅ `create_hypertube:hypertube_entrance` (`stage_2_nether.snbt`, `C200000000000603` — poprawiono namespace z `hypertubes:` na `create_hypertube:`!)
+- ✅ `trading_floor:trading_depot` (`stage_3_industry.snbt`, `C300000000000401`)
+- ✅ `create_enchantment_industry:blaze_enchanter` (`stage_3_industry.snbt`, `C300000000000402`)
+- ✅ `create_sa:brass_jetpack_chestplate` (`stage_3_industry.snbt`, `C300000000000501`)
+- ✅ `createappliedkinetics:me_proxy` (`stage_4_hightech_end.snbt`, `C400000000000303` — poprawiono z nieistniejącego `stress_generator` na prawdziwy blok `me_proxy`!)
+- `[VERIFY ON 1.21.1 BOOT]` Potwierdzić, że FTB Quests `2101.x` (`version: 13`) bez błędów wczytuje `icon: { id: "..." }`, `type: "custom"` oraz `type: "toast"`.
