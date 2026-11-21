@@ -1,0 +1,11 @@
+# HalucynacjeGTP2 — FTB Chunks (ustawienia wspólne / ochrona Mac M2 & Exaroton)
+# [VERIFY ON 1.21.1 BOOT]: Sprawdzić dokładne nazwy kluczy w FTB Chunks 2101.x (NeoForge 1.21.1).
+
+{
+	# Brak ładowania chunków w trybie offline (spójne z force_load_mode: "default")
+	chunk_load_offline: false
+	# Wyłączamy dublowaną minimapę FTB Chunks — paczka używa Xaero's Minimap & World Map.
+	# Oszczędza VRAM i narzut renderingu na Apple Silicon Mac M2 (OpenGL 4.1).
+	# Ekran claimowania chunków nadal pozostaje w pełni dostępny!
+	minimap_enabled: false
+}

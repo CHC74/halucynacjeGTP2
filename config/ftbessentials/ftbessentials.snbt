@@ -1,0 +1,105 @@
+# HalucynacjeGTP2 — FTB Essentials (komendy QoL dla co-op Skyblock Tycoon)
+# [VERIFY ON 1.21.1 BOOT]: W NeoForge 1.21.1 sprawdzić czy FTB Essentials czyta
+# `config/ftbessentials.snbt` lub `world/serverconfig/ftbessentials.snbt`.
+
+{
+	# Komendy ułatwiające poruszanie się między wyspami bez psucia balansu logistyki towarów
+	teleportation: {
+		back: {
+			cooldown: 10
+			enabled: true
+			max: 5
+			warmup: 0
+		}
+		home: {
+			cooldown: 5
+			enabled: true
+			max: 5
+			warmup: 0
+		}
+		# /jump wyłączone (utrzymuje wartość jetpacków Create: SA i Hypertubes)
+		jump: {
+			enabled: false
+		}
+		# /rtp WYŁĄCZONE — na Overworldzie typu Void Skyblock losowy teleport nie ma sensu
+		rtp: {
+			cooldown: 600
+			enabled: false
+			max_distance: 1000
+			min_distance: 250
+			warmup: 0
+		}
+		spawn: {
+			cooldown: 5
+			enabled: true
+			warmup: 0
+		}
+		tpa: {
+			cooldown: 5
+			enabled: true
+			warmup: 0
+		}
+		warp: {
+			cooldown: 5
+			enabled: true
+			warmup: 0
+		}
+	}
+
+	# Drobne komendy kosmetyczne i informacyjne
+	misc: {
+		hat: {
+			enabled: true
+		}
+		kickme: {
+			enabled: false
+		}
+		leaderboard: {
+			enabled: true
+		}
+		near: {
+			enabled: false
+		}
+		nick: {
+			enabled: true
+		}
+		rec: {
+			enabled: true
+		}
+		# /trashcan wyłączone — zachowujemy fizyczną logistykę utylizacji (lawa / zsyp)
+		trashcan: {
+			enabled: false
+		}
+	}
+
+	# Komendy cheatujące / psujące balans ekonomii i narzędzi — WYŁĄCZONE
+	cheat: {
+		anvil: {
+			enabled: false
+		}
+		crafting: {
+			enabled: false
+		}
+		enderchest: {
+			enabled: false
+		}
+		feed: {
+			enabled: false
+		}
+		fly: {
+			enabled: false
+		}
+		god: {
+			enabled: false
+		}
+		heal: {
+			enabled: false
+		}
+		smithing: {
+			enabled: false
+		}
+		stonecutter: {
+			enabled: false
+		}
+	}
+}
