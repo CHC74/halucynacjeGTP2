@@ -1,0 +1,50 @@
+// ============================================================================
+// HalucynacjeGTP2 — Skyblock Builder: Ekwipunek startowy gracza
+// Platforma: Minecraft 1.21.1 | NeoForge | Skyblock Builder
+//
+// Zasady projektu (Guardrails):
+// - Zero sit / narzędzi z Ex Deorum / Ex Nihilo.
+// - Zero przedmiotów magicznych i zero przesadzonego (OP) sprzętu na starcie.
+// - Przyjazne dla `keepInventory = true` (gracz nie traci księgi questów ani
+//   podstawowego jedzenia po przypadkowym upadku w pustkę w Stage 0).
+//
+// UWAGA DO WERYFIKACJI NA PIERWSZYM URUCHOMIENIU NEOFORGE 1.21.1:
+// - Potwierdzić dokładny format tablicy `items` w Skyblock Builder 1.21.1
+//   (w MC 1.21.1 część struktur ItemStack używa pola `"id"` + `"count"` zamiast
+//   starszego `"item"` + `"Count"`).
+// - Zweryfikować identyfikator księgi FTB Quests (`ftbquests:book`).
+// ============================================================================
+{
+  // Czy wyczyścić ekwipunek przed przyznaniem przedmiotów startowych (tylko raz na wyspę).
+  clear: false,
+
+  // Przedmioty startowe przekazywane każdemu graczowi przy pierwszym wejściu na wyspę.
+  // [VERIFY ON 1.21.1 BOOT]: Sprawdzić schemat kluczy (`Slot` + `Item: { id, count }`).
+  items: [
+    {
+      Slot: "mainhand",
+      Item: {
+        id: "ftbquests:book",
+        count: 1
+      }
+    },
+    {
+      Item: {
+        id: "minecraft:bread",
+        count: 6
+      }
+    },
+    {
+      Item: {
+        id: "minecraft:torch",
+        count: 8
+      }
+    },
+    {
+      Item: {
+        id: "minecraft:oak_sapling",
+        count: 2
+      }
+    }
+  ]
+}

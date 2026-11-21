@@ -1,0 +1,46 @@
+// ============================================================================
+// HalucynacjeGTP2 — Skyblock Builder: Konfiguracja spawnu i bezpieczeństwa
+// Platforma: Minecraft 1.21.1 | NeoForge | Skyblock Builder
+//
+// Projektowane z myślą o kooperacji znajomych z permanentnym `keepInventory = true`
+// oraz obsługą komend FTB Essentials (`/spawn`, `/home`, `/tpa`).
+//
+// UWAGA DO WERYFIKACJI NA PIERWSZYM URUCHOMIENIU NEOFORGE 1.21.1:
+// - Zweryfikować dokładne nazwy pól (`dimension`, `height`, `radius`, `skipSelectionGui`)
+//   z domyślnym `spawn.json5` wygenerowanym przez Skyblock Builder 1.21.1.
+// ============================================================================
+{
+  // Wymiar spawnu początkowego (zawsze Overworld).
+  dimension: "minecraft:overworld",
+
+  // Docelowa wysokość spawnu zsynchronizowana z płytą Wyspy Startowej (Y = 64).
+  height: {
+    heightCalculationType: "set",
+    range: {
+      bottom: 64,
+      top: 64
+    }
+  },
+
+  // Promień szukania bezpiecznego bloku w razie zabudowania dokładnego punktu spawnu.
+  radius: 5,
+
+  // Ponieważ mamy jeden dopracowany układ 3 wysp, pomijamy zbędne GUI wyboru szablonu
+  // przy pierwszym dołączeniu (można zmienić na false, jeśli dodamy alternatywne wyspy).
+  // [VERIFY ON 1.21.1 BOOT]: Potwierdzić klucz `skipSelectionGui` / `autoCreate`.
+  skipSelectionGui: true,
+
+  // W kooperacji na małym serwerze Exaroton wszyscy gracze mogą dołączyć do jednej
+  // wspólnej wyspy drużynowej (przez `/skyblock join` lub FTB Teams).
+  createOwnTeamOnJoin: false,
+
+  // Bezpieczny respawn na wyspie drużyny (współgra z `keepInventory = true`).
+  forceRespawnOnIsland: true,
+
+  // Brak kary za spamowanie teleportu przy budowaniu mostów nad pustką.
+  spawnProtectionEvents: {
+    // Wyłączamy ochronę bloków na spawnie, aby gracze mogli swobodnie budować fabryki
+    // na całej Wyspie Startowej.
+    protectSpawn: false
+  }
+}
