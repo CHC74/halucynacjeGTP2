@@ -1,64 +1,48 @@
 // ============================================================================
-// HalucynacjeGTP2 — Skyblock Builder: Konfiguracja świata i wymiarów
-// Platforma: Minecraft 1.21.1 | NeoForge | Skyblock Builder
+// HalucynacjeGTP2 — Skyblock Builder: Konfiguracja świata (WorldConfig)
+// Platforma: Minecraft 1.21.1 | NeoForge | SkyblockBuilder 21.1.37
+// Schemat zweryfikowany ze źródłem: MelanX/SkyblockBuilder (1.21.x) WorldConfig.java
 //
-// KRYTYCZNY GUARDRAIL PROJEKTU:
-// - Overworld (`minecraft:overworld`): PUSTKA (Void) z układem 3 wysp.
-// - Nether (`minecraft:the_nether`): NORMALNA generacja waniliowa (Stage 2).
-// - End (`minecraft:the_end`): NORMALNA generacja waniliowa (Stage 4).
-//
-// UWAGA DO WERYFIKACJI NA PIERWSZYM URUCHOMIENIU NEOFORGE 1.21.1:
-// - Sprawdzić dokładne nazwy kluczy `surface` / `dimensions` / `biomes`
-//   wygenerowane przez konkretną wersję Skyblock Builder dla MC 1.21.1
-//   (w niektórych wersjach ustawienia wymiarów mieszkają w `world.json5`
-//   pod blokiem `dimensions`, a `surface` kontroluje generację terenu).
+// UWAGA: Włączanie/wyłączanie pustki (Void) per wymiar konfiguruje się w
+// `config/skyblockbuilder/dimensions.json5` (Overworld=custom, Nether/End=normalne).
 // ============================================================================
 {
-  // Odległość między wyspami kolejnych drużyn (w blokach).
-  // Wartość 8192 gwarantuje, że wyspy satelickie (offset ~152) nigdy nie najdą
-  // na strefę sąsiedniej drużyny.
-  islandDistance: 8192,
-
-  // Bazowa wysokość Y generowania wysp (zgodna z docs/ISLAND_DESIGN.md: Y = 64).
-  offset: 0,
-  seaHeight: 64,
-
-  // Zapobiega przedwczesnemu rozlewaniu się wody/lawy zanim gracz odwiedzi wyspę.
-  preventScheduledTicks: true,
-
-  // Konfiguracja wymiarów — KRYTYCZNE: pustka TYLKO w Overworldzie!
-  // [VERIFY ON 1.21.1 BOOT]: Potwierdzić schemat sekcji `surface` / `dimensions`
-  // w Skyblock Builder 1.21.1 (czy Nether i End wymagają `default: true`).
-  surface: {
-    // Wyłączamy waniliową generację terenu w Overworldzie (zostaje Void + wyspy).
-    generateSurface: false,
-    // Specyfikacja per-wymiar: Nether i End pozostają normalne!
-    dimensions: {
-      "minecraft:overworld": {
-        isDefault: false
-      },
-      "minecraft:the_nether": {
-        isDefault: true
-      },
-      "minecraft:the_end": {
-        isDefault: true
-      }
+  // Biomy w wymiarach custom (ResourceList LibX: allow_list + elements).
+  // Dla Overworldu wykluczamy oceany (brak spawnu zwierząt), a właściwy biom wysp
+  // (`minecraft:plains` w promieniu 256) ustawiony jest w `dimensions.json5`.
+  biomes: {
+    "minecraft:overworld": {
+      allow_list: false,
+      elements: [
+        "minecraft:*ocean*"
+      ]
+    },
+    "minecraft:the_nether": {
+      allow_list: false,
+      elements: []
     }
   },
 
-  // Biomy wysp Overworlda — neutralny, przyjazny biom `plains` bez śniegu/zamarzania
-  // wody w generatorze bruku i z normalnymi opadami.
-  // [VERIFY ON 1.21.1 BOOT]: Sprawdzić klucz `biomes` / `singleBiome`.
-  biomes: {
-    "minecraft:overworld": {
-      isDefault: false,
-      biome: "minecraft:plains"
-    },
-    "minecraft:the_nether": {
-      isDefault: true
-    },
-    "minecraft:the_end": {
-      isDefault: true
-    }
+  // Wyłączamy płaską powierzchnię terenu (zostaje czysty Void Skyblock).
+  surface: false,
+
+  // Poziom morza (domyślny waniliowy 63; płyty wysp leżą na Y = 64).
+  seaHeight: 63,
+
+  // Odległość między wyspami kolejnych drużyn (w blokach).
+  // 8192 gwarantuje zero kolizji między układami 3 wysp (promień ~170 bloków).
+  islandDistance: 8192,
+
+  // Zapobiega przedwczesnemu rozlewaniu się cieczy w trakcie generowania struktur.
+  preventScheduledTicks: true,
+
+  // Gracz opuszczający drużynę wraca na wyspę spawnu Skyblocka.
+  leaveToOverworld: false,
+
+  // Wspólny Overworld Skyblocka (bez eksperymentalnego Infiniverse).
+  DimensionPerTeam: {
+    enabled: false,
+    overworld: true,
+    nether: true
   }
 }

@@ -1,0 +1,38 @@
+// ============================================================================
+// HalucynacjeGTP2 — Skyblock Builder: Konfiguracja wymiarów (DimensionsConfig)
+// Platforma: Minecraft 1.21.1 | NeoForge | SkyblockBuilder 21.1.37
+// Schemat zweryfikowany ze źródłem: MelanX/SkyblockBuilder (1.21.x) DimensionsConfig.java
+//
+// KRYTYCZNY GUARDRAIL PROJEKTU:
+// - Overworld (`isCustom: true`): PUSTKA (Void) z układem 3 wysp + biom plains.
+// - Nether    (`isCustom: false`): NORMALNA generacja waniliowa (Stage 2).
+// - End       (`isCustom: false`): NORMALNA generacja waniliowa (Stage 4).
+// ============================================================================
+{
+  Overworld: {
+    // Overworld korzysta z generatora Skyblock (pustka + wyspy z templates.json5).
+    isCustom: true,
+
+    // Promień 256 bloków wokół środka wyspy (0, 0) w przyjaznym biomie `minecraft:plains`
+    // obejmuje Wyspę Startową (0, 0), Wyspę-Rynek (+152E) i Hutę Południową (+152S).
+    // Zapobiega zamarzaniu wody w generatorze bruku i zapewnia normalne opady.
+    centeredBiomes: [
+      {
+        id: "minecraft:plains",
+        radius: 256
+      }
+    ]
+  },
+
+  Nether: {
+    // Wyłączenie niestandardowego generatora = w 100% NORMALNY, pełny Nether!
+    isCustom: false,
+    centeredBiomes: []
+  },
+
+  End: {
+    // Wyłączenie niestandardowego generatora = w 100% NORMALNY End ze smokiem i wyspami!
+    isCustom: false,
+    keepMainIsland: true
+  }
+}

@@ -32,7 +32,13 @@ const REQUIRED_ENTRIES = [
   'overrides/kubejs/assets/kubejs/textures/item/stage_5_token.png',
   'overrides/config/carryon-common.toml',
   'overrides/config/ftbquests/quests/data.snbt',
-  'overrides/config/halucynacje_economy/prices.json'
+  'overrides/config/halucynacje_economy/prices.json',
+  'overrides/config/skyblockbuilder/dimensions.json5',
+  'overrides/config/skyblockbuilder/templates.json5',
+  'overrides/config/skyblockbuilder/starter_inventory.json5',
+  'overrides/config/skyblockbuilder/templates/islands/starter_island.nbt',
+  'overrides/config/skyblockbuilder/templates/spreads/market_island.nbt',
+  'overrides/config/skyblockbuilder/templates/spreads/industrial_island.nbt'
 ];
 
 if (!fs.existsSync(mrpackPath)) {

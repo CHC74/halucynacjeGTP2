@@ -1,61 +1,72 @@
 // ============================================================================
-// HalucynacjeGTP2 — Skyblock Builder: Szablony wysp i wyspy satelickie (spreads)
-// Platforma: Minecraft 1.21.1 | NeoForge | Skyblock Builder
+// HalucynacjeGTP2 — Skyblock Builder: Konfiguracja szablonów i wysp (TemplatesConfig)
+// Platforma: Minecraft 1.21.1 | NeoForge | SkyblockBuilder 21.1.37
+// Schemat zweryfikowany ze źródłem: MelanX/SkyblockBuilder (1.21.x)
+//   - TemplatesConfig.java, TemplateInfoMapper.java, TemplateSpawns.java,
+//     TemplateSpreads.java, SingleSpreadEntry.java, SkyPaths.java
 //
-// Układ 3 wysp zgodny z docs/ISLAND_DESIGN.md:
-// 1. Wyspa Startowa (`starter_island.nbt`)         -> origin (0, 64, 0)
-// 2. Wyspa-Rynek (`spreads/market_island.nbt`)     -> offset [152, 0, 0] (~150 bloków na Wschód)
-// 3. Wyspa Przemysłowa (`spreads/industrial_island.nbt`) -> offset [0, 0, 152] (~150 bloków na Południe)
+// Ścieżki plików `.nbt` (zgodne ze SkyPaths.java):
+//   - Wyspa główna (ISLANDS_DIR): config/skyblockbuilder/templates/islands/starter_island.nbt
+//   - Wyspy towarzyszące (SPREADS_DIR):
+//       * config/skyblockbuilder/templates/spreads/market_island.nbt
+//       * config/skyblockbuilder/templates/spreads/industrial_island.nbt
 //
-// UWAGA DO WERYFIKACJI NA PIERWSZYM URUCHOMIENIU NEOFORGE 1.21.1:
-// - Binarne pliki `.nbt` muszą zostać wyeksportowane w grze (patrz schematics/README.md)
-//   i umieszczone w `config/skyblockbuilder/templates/`.
-// - Potwierdzić dokładną składnię obiektów `spawns`, `spreads` i `templates`
-//   w docelowej wersji Skyblock Builder na MC 1.21.1 (m.in. `minOffset`/`maxOffset`
-//   vs pojedynczy `offset` oraz relatywne koordynaty spawnu względem narożnika NBT).
+// Wyrównanie współrzędnych (Height.range.bottom = 64):
+//   - starter_island.nbt (15x13x15, offset [-7, -6, -7]):
+//       narożnik (-7, 58, -7) -> środek powierzchni (7, 6, 7) = świat (0, 64, 0)
+//       punkt spawnu (7, 7, 7) = świat (0, 65, 0), patrzenie: EAST (+X na Rynek!)
+//   - market_island.nbt (29x9x25, offset [152, 0, 0], origin "center"):
+//       środek powierzchni (14, 4, 12) = świat (152, 64, 0) — idealny poziom Y=64!
+//   - industrial_island.nbt (21x7x21, offset [0, 0, 152], origin "center"):
+//       środek powierzchni (10, 3, 10) = świat (0, 64, 152) — idealny poziom Y=64!
 // ============================================================================
 {
-  // Definicja punktów spawnu dla szablonów (relatywnie do origin struktury NBT).
-  // [VERIFY ON 1.21.1 BOOT]: Po eksporcie `starter_island.nbt` dopasować dokładny
-  // wektor [x, y, z] środka wyspy (powierzchnia Y=64 -> spawn gracza na Y=65).
-  spawns: {
-    starter_center: [
-      [7, 7, 7]
-    ]
+  // Dodatkowe globalne przesunięcie wysp (0 = pierwsza drużyna na osi 0, 0).
+  defaultOffset: 0,
+
+  // Referencje punktów spawnu dla szablonów (klucze kierunków: south, west, north, east).
+  spawnPointReferences: {
+    starter_center: {
+      south: [],
+      west: [],
+      north: [],
+      // Gracz spawnuje się dokładnie na (7, 7, 7) [świat: (0, 65, 0)] na bloku trawy (7, 6, 7)
+      // i od pierwszej sekundy patrzy na Wschód (wprost na Pirs i Wyspę-Rynek +152E!).
+      east: [
+        [7, 7, 7]
+      ]
+    }
   },
 
-  // Definicja wysp towarzyszących (spreads) generowanych obok każdej wyspy głównej.
-  // Stałe przesunięcia (minOffset == maxOffset) zapewniają idealne wyrównanie osi
-  // torowisk na Z=0 (Rynek) oraz X=0 (Huta Południowa) przy wspólnym poziomie Y=64.
-  spreads: {
+  // Referencje wysp towarzyszących (spreads) wczytywanych z `templates/spreads/`.
+  spreadReferences: {
     tycoon_triad: [
       {
         file: "market_island.nbt",
-        minOffset: [152, 0, 0],
-        maxOffset: [152, 0, 0],
+        offset: [152, 0, 0],
         origin: "center"
       },
       {
         file: "industrial_island.nbt",
-        minOffset: [0, 0, 152],
-        maxOffset: [0, 0, 152],
+        offset: [0, 0, 152],
         origin: "center"
       }
     ]
   },
 
-  // Lista szablonów dostępnych do wyboru przy tworzeniu drużyny/wyspy.
-  templates: [
+  // Lista dostępnych szablonów wysp (pierwszy wpis jest domyślny dla świata).
+  templateList: [
     {
       name: "Halucynacje Tycoon (3 Wyspy)",
       desc: "Wyspa Startowa (0,64,0) + Wyspa-Rynek (+152E) + Huta Południowa (+152S). Pure-Create Skyblock.",
       file: "starter_island.nbt",
       spawns: "starter_center",
+      offset: [-7, -6, -7],
       spreads: "tycoon_triad",
-      // Kierunek patrzenia gracza przy pierwszym spawnie: Wschód (wprost na Wyspę-Rynek!).
-      direction: "east",
-      // Czy zezwalać na wyspę dla wszystkich graczy domyślnie.
       allowPaletteSelection: false
     }
-  ]
+  ],
+
+  // Brak sztucznych wysp wokół portalu w Netherze — Nether generuje się w 100% normalnie.
+  netherSpreads: []
 }

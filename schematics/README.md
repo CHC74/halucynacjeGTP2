@@ -2,24 +2,29 @@
 
 Ten katalog służy do przechowywania i dokumentowania **szablonów struktur `.nbt`** wysp używanych przez mod **Skyblock Builder** (NeoForge `1.21.1`).
 
-> **Status (Faza 3 — przed pierwszym uruchomieniem klienta):**
-> Binarne pliki `.nbt` (`starter_island.nbt`, `market_island.nbt`, `industrial_island.nbt`) zostaną wyeksportowane w grze podczas pierwszego uruchomienia klienta NeoForge `1.21.1` po ukończeniu pipeline'u `packwiz` (Issue #6). W repozytorium znajdują się już gotowe pliki konfiguracyjne `config/skyblockbuilder/*.json5` oraz kompletny blueprint koordynatów w [docs/ISLAND_DESIGN.md](../docs/ISLAND_DESIGN.md).
+> **Status (Faza 3 — UKOŃCZONA ✅):**
+> Wszystkie 3 binarne pliki `.nbt` (Minecraft `1.21.1`, `DataVersion 3955`, czyste bloki waniliowe) zostały wygenerowane deterministycznie przez [scripts/generate_island_nbt.py](../scripts/generate_island_nbt.py), zweryfikowane round-trip parserem NBT oraz zakomitowane w dokładnych katalogach wymaganych przez `MelanX/SkyblockBuilder` 1.21.x (`SkyPaths.java`). Kompletny blueprint znajduje się w [docs/ISLAND_DESIGN.md](../docs/ISLAND_DESIGN.md).
 
 ---
 
-## Docelowe pliki szablonów
-
-Po eksporcie w grze pliki `.nbt` należy skopiować do katalogu używanego przez `Skyblock Builder`:
+## Docelowe pliki szablonów (zweryfikowane z `SkyPaths.java`)
 
 ```text
 config/skyblockbuilder/templates/
-├── starter_island.nbt          # Wyspa Startowa (15x15, origin (0, 64, 0), Pirs Wschodni)
+├── islands/
+│   └── starter_island.nbt      # Wyspa Startowa (15x13x15, spawn [7,7,7] -> (0,65,0) EAST, skrzynia anty-softlock + Pirs Wschodni)
 └── spreads/
-    ├── market_island.nbt       # Wyspa-Rynek (33x27, offset [152, 0, 0], 8 stoisk + 3 ATM)
-    └── industrial_island.nbt   # Wyspa Przemysłowa / Huta Południowa (21x21, offset [0, 0, 152])
+    ├── market_island.nbt       # Wyspa-Rynek (29x9x25, offset [152,0,0], 100% płaski plac Y=64, 8 stoisk + tylne aleje Create + 3 ATM)
+    └── industrial_island.nbt   # Wyspa Przemysłowa / Huta Południowa (21x7x21, offset [0,0,152], płyta Y=64 + Dok Północny)
 ```
 
-*(Opcjonalnie kopie robocze lub schematy Create `Create Schematicannon` mogą trafiać również tutaj do `schematics/` jako referencja archiwalna.)*
+Aby ponownie wygenerować lub zweryfikować pliki `.nbt` lokalnie:
+```bash
+python3 scripts/generate_island_nbt.py          # regeneracja + pełna weryfikacja
+python3 scripts/generate_island_nbt.py --verify # sama weryfikacja binarna
+```
+
+*(Jeśli kiedyś zechcesz nadpisać wyspy własną wersją z trybu Creative, poniższa instrukcja eksportu przez `Structure Block` nadal obowiązuje — pamiętaj tylko, by `starter_island.nbt` trafiał do `templates/islands/`!)*
 
 ---
 
