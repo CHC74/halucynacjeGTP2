@@ -560,12 +560,32 @@ function safeTellPlayer(player, component) {
  * Otwiera natywne graficzne GUI Trading Terminala Lightman's Currency (1.21-2.3.0.6)
  * z sieciowymi sklepami z `config/lightmanscurrency/PersistentTraders.json`.
  *
- * Zweryfikowane w bajtkodzie `CommandTerminal`, `TerminalMenuProvider` i `MinecraftServerKJS`:
- *   1) Bezpośrednio: `TerminalMenuProvider.OpenMenu(player, SimpleValidator.NULL)`
- *   2) Fallback przez natywny dispatcher Brigadiera `/lcterminal` (zwracający prawdziwy `int`,
- *      ponieważ `server.runCommandSilent(...)` w KubeJS 7.2 zwraca `void`!).
+ * Zweryfikowane na żywym serwerze (`v1.0.4-playtest`) oraz w bajtkodzie `EntityKJS`:
+ *   1) Bezpośrednio: `player.runCommandSilent('lcterminal')` — wywołuje natywną komendę
+ *      `/lcterminal` jako ten sam gracz (`player.createCommandSourceStack().withSuppressedOutput()`),
+ *      identycznie jak wpisanie `/lcterminal` na czacie!
+ *   2) Fallback serwerowy: `server.runCommandSilent('execute as <gracz> run lcterminal')`.
+ *   3) Fallback Java API: `TerminalMenuProvider.OpenMenu(player, SimpleValidator.NULL)`.
  */
 function openTradingTerminalGui(player, server, source) {
+  try {
+    if (player && typeof player.runCommandSilent === 'function') {
+      player.runCommandSilent('lcterminal');
+      return true;
+    }
+  } catch (err0) {
+    console.warn(`[HalucynacjeGTP2] player.runCommandSilent('lcterminal') nie powiodło się: ${err0}`);
+  }
+
+  try {
+    if (server && typeof server.runCommandSilent === 'function' && player && player.username) {
+      server.runCommandSilent(`execute as ${player.username} run lcterminal`);
+      return true;
+    }
+  } catch (err1) {
+    console.warn(`[HalucynacjeGTP2] server.runCommandSilent('execute as ... run lcterminal') nie powiodło się: ${err1}`);
+  }
+
   try {
     const classes = getTerminalGuiClasses();
     if (
@@ -578,36 +598,8 @@ function openTradingTerminalGui(player, server, source) {
       classes.TerminalMenuProvider.OpenMenu(player, classes.SimpleValidator.NULL);
       return true;
     }
-  } catch (err) {
-    console.warn(`[HalucynacjeGTP2] TerminalMenuProvider.OpenMenu nie powiodło się: ${err}`);
-  }
-
-  try {
-    const dispatcher =
-      server && server.commands && typeof server.commands.getDispatcher === 'function'
-        ? server.commands.getDispatcher()
-        : server && server.commands && server.commands.dispatcher
-          ? server.commands.dispatcher
-          : null;
-    if (dispatcher && typeof dispatcher.execute === 'function') {
-      let cmdSource = null;
-      if (source && typeof source.withPermission === 'function') {
-        cmdSource = source.withPermission(2);
-      } else if (player && typeof player.createCommandSourceStack === 'function') {
-        cmdSource = player.createCommandSourceStack().withPermission(2);
-      }
-      if (cmdSource && typeof cmdSource.withSuppressedOutput === 'function') {
-        cmdSource = cmdSource.withSuppressedOutput();
-      }
-      if (cmdSource) {
-        const res = Number(dispatcher.execute('lcterminal', cmdSource) || 0);
-        if (res > 0) {
-          return true;
-        }
-      }
-    }
   } catch (err2) {
-    console.warn(`[HalucynacjeGTP2] Fallback Brigadier /lcterminal nie powiódł się: ${err2}`);
+    console.warn(`[HalucynacjeGTP2] TerminalMenuProvider.OpenMenu nie powiodło się: ${err2}`);
   }
 
   return false;
