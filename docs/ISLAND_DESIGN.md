@@ -14,12 +14,12 @@ Wszystkie 3 wyspy generują się na wspólnym poziomie bazowym **`y = 64`** (z j
 
 ```mermaid
 flowchart LR
-    S["Wyspa Startowa (0, 64, 0)<br/>15x15 | Baza, Farma, Fabryka<br/>Pirs Wschodni: (+8, 65, 0)"]
-    M["Wyspa-Rynek (152, 64, 0)<br/>33x27 | 8 Stoisk, 3 ATM, Terminal<br/>Stacja Zachodnia: (136, 65, 0)"]
-    I["Wyspa Przemyslowa / Huta Poludniowa (0, 64, 152)<br/>21x21 | Ekspansja: Huta / AE2 / Mekanism<br/>Dok Polnocny: (0, 65, 141)"]
+    S["Wyspa Startowa (0, 64, 0)<br/>15x13x15 | Baza, Farma, Fabryka<br/>Pirs Wschodni: (+7, 65, 0)"]
+    M["Wielka Wyspa-Rynek (152, 64, 0)<br/>45x25x35 | Dworzec, Rotunda z Terminalem, 8 Butikow, 3 ATM<br/>Stacja Zachodnia: (130, 65, 0)"]
+    I["Huta Poludniowa (0, 64, 152)<br/>33x21x33 | 4 Hale 11x11, Suwnica, Komin, Dyspozytornia<br/>Dok Polnocny: (0, 65, 136)"]
 
-    S -->|"~128 blokow (Wschod, Z=0, Y=65)<br/>Pociagi Create / Chain Conveyors (Y=72) / Hypertube"| M
-    S -->|"~133 bloki (Poludnie, X=0, Y=65)<br/>Linia przemyslowa (surowce & polprodukty)"| I
+    S -->|"~122 bloki (Wschod, Z=0, Y=65)<br/>Pociagi Create / Chain Conveyors / Hypertube"| M
+    S -->|"~128 blokow (Poludnie, X=0, Y=65)<br/>Linia przemyslowa (surowce & polprodukty)"| I
     I -.->|"~215 blokow (Luk poludniowo-wschodni, Y=65)<br/>Opcjonalna petla 3-stacyjna (eksport Tier 3-5)"| M
 ```
 
@@ -29,27 +29,28 @@ flowchart LR
 
 ## 2. Tabela koordynatów bazowych i punktów orientacyjnych
 
-Koordynaty podane są względem punktu początkowego wyspy drużyny (`origin = (0, 64, 0)`). W `Skyblock Builder` wyspy satelickie definiowane są jako `spreads` z relatywnym przesunięciem (`offset`), więc przy wielu drużynach zachowują identyczny układ względny.
+Koordynaty podane są względem punktu początkowego wyspy drużyny (`origin = (0, 64, 0)`). W `Skyblock Builder` wyspy satelickie definiowane są jako `spreads` z relatywnym przesunięciem (`offset`) i wyrównaniem `origin: "center"` (`originOffset = size // 2`), więc przy wielu drużynach zachowują identyczny układ względny oraz wspólny poziom nawierzchni **`Y = 64`**.
 
 | Lokacja / Element | Koordynaty `(X, Y, Z)` | Wymiary / Przesunięcie | Przeznaczenie |
 | :--- | :--- | :--- | :--- |
-| **Wyspa Startowa — środek / spawn** | `(0, 64, 0)` | `15 × 15` (`X: -7..+7`, `Z: -7..+7`) | Punkt odrodzenia drużyny i startowa platforma Stage 0 |
+| **Wyspa Startowa — środek / spawn** | `(0, 64, 0)` | `15 × 13 × 15` (`offset [-7, -6, -7]`) | Punkt odrodzenia drużyny i startowa platforma Stage 0 |
 | Drzewo startowe (Dąb) | `(-4, 65, -4)` | 1 drzewo na bloku ziemi | Pierwsze drewno, sadzonki, jabłka |
-| Wnęka Cobble-Gen (Lód/Woda + Lawa) | `(-5, 64, +4)` | `4 × 3` (zagłębiona na `Y=63`) | Bezpieczny generator bruku (2× lód/woda + 1× lawa) |
-| Skrzynia Startowa (opcjonalna zapasowa) | `(-2, 65, +2)` | `1 × 1` | Zapasowa sadzonka, kości/mączka, pochodnie |
-| **Pirs Logistyczny Wschodni (Startowa)** | `(+8, 64, 0)` do `(+10, 64, 0)` | Tor `Y=65`, Maszt `Y=72` | Wyrównany wylot na wschód: tory, Chain Conveyor, Hypertube |
-| **Wyspa-Rynek — centrum placu** | `(152, 64, 0)` | `33 × 27` (`X: 136..168`, `Z: -13..+13`), offset `[152, 0, 0]` | Główny hub handlowy: `Shoppers` NPC + `Lightman's Currency` |
-| **Stacja Kolejowa Zachodnia (Rynek)** | `(136, 65, 0)` | Peron `5 × 9` (`X: 136..140`, `Z: -4..+4`) | Przyjazd pociągów ze Startowej (prosta oś `Z=0`, `Y=65`) |
-| Terminal Hypertube (Rynek) | `(139, 65, -3)` | `2 × 2` | Szybki transport graczy na/z Wyspy Startowej |
-| Pad pod Waystone (Rynek) | `(139, 65, +3)` | `2 × 2` | Odkrywany punkt teleportacji `Waystones` |
-| Pawilon Centralny (`Trading Terminal`) | `(152, 64, 0)` | `5 × 5` (otwarta altana) | Hurtowy skup (`Creative Network Traders`) + katalog Żetonów Etapów |
-| **Bankomat ATM #1 (Północny Zachód)** | `(146, 64, -8)` | Odstęp `12` bloków od ATM #2 | Obsługa wypłat gotówki NPC `Shoppers` bez kolejek |
-| **Bankomat ATM #2 (Północny Wschód)** | `(158, 64, -8)` | Odstęp `12` bloków od ATM #1 | Obsługa wypłat gotówki NPC `Shoppers` bez kolejek |
-| **Bankomat ATM #3 (Południe)** | `(152, 64, +10)` | Odstęp `>18` bloków od ATM #1/#2 | Trzeci punkt ATM dla równomiernego ruchu NPC |
-| Stoiska Handlowe Północne (#1–#4) | `X: 143, 149, 155, 161`, `Z: -5` | 4 moduły `4 × 3` + korytarz tylny `Z: -9..-10` | Fizyczne sklepy `Lightman's Currency` zasilane od tyłu |
-| Stoiska Handlowe Południowe (#5–#8) | `X: 143, 149, 155, 161`, `Z: +5` | 4 moduły `4 × 3` + korytarz tylny `Z: +9..+10` | Fizyczne sklepy `Lightman's Currency` zasilane od tyłu |
-| **Wyspa Przemysłowa / Huta Południowa** | `(0, 64, 152)` | `21 × 21` (`X: -10..+10`, `Z: 142..162`), offset `[0, 0, 152]` | Opcjonalna płyta pod ciężką hutę, AE2 i Mekanism |
-| **Dok Kolejowy Północny (Przemysłowa)** | `(0, 65, 141)` | Peron `9 × 4` (`X: -4..+4`, `Z: 141..144`) | Wyrównany w osi `X=0, Y=65` ze skrajem Wyspy Startowej |
+| Wnęka Cobble-Gen (Lód/Woda + Lawa) | `(-4, 64, +3)` | Niecka z `stone_bricks` + blok lodu | Bezpieczny generator bruku |
+| Skrzynia Startowa (anty-softlock) | `(-1, 65, -2)` | 11 pozycji startowych + stół rzemieślniczy | Lawa, 2× lód, sadzonki, trzcina, kaktus, wodorosty, nasiona |
+| **Pirs Logistyczny Wschodni (Startowa)** | `(+4..+7, 64, 0)` | Tor `Y=65`, latarnie kierunkowe | Wyrównany wylot na wschód ku Stacji Rynku |
+| **Wielka Wyspa-Rynek — centrum Rotundy** | `(152, 64, 0)` | `45 × 25 × 35` (`X: 130..174`, `Z: -17..+17`), `offset [152, 4, 0]` | Wiktoriańsko-steampunkowy hub handlowy: `Shoppers` NPC + `Lightman's Currency` |
+| **Wielka Hala Dworca Zachodniego (Rynek)** | `(130..138, 65, 0)` | Prześwit wjazdu `9 × 6` ze szklanym sklepieniem | Przyjazd pociągów ze Startowej (prosta oś `Z=0`, `Y=65`) |
+| Stacja Hypertubes (Rynek, Północ) | `(136, 65, -9)` | Pad z `create:copper_casing` + szyld | Szybki transport graczy na/z Wyspy Startowej |
+| Sanktuarium Waystone (Rynek, Południe) | `(136, 65, +9)` | Pad z wapienia i tufu + szyld | Odkrywany punkt teleportacji `Waystones` |
+| **Centralna Rotunda z Kopułą (`lightmanscurrency:terminal`)** | `(152, 65, 0)` | `7 × 7` (wys. do `Y=80` z iglicą!) | Gotowy, wbudowany **`lightmanscurrency:terminal`** (Giełda Centralna) |
+| **Bankomat ATM #1 (NW Bulwar)** | `(141, 65, -6)` | Prawdziwy działający `lightmanscurrency:atm` w kiosku | Obsługa wypłat NPC `Shoppers` (odstęp `23` bloki od ATM #2) |
+| **Bankomat ATM #2 (NE Bulwar)** | `(164, 65, -6)` | Prawdziwy działający `lightmanscurrency:atm` w kiosku | Obsługa wypłat NPC `Shoppers` (odstęp `12` bloków od ATM #3) |
+| **Bankomat ATM #3 (SE Bulwar)** | `(164, 65, +6)` | Prawdziwy działający `lightmanscurrency:atm` w kiosku | Trzeci działający punkt ATM (odstęp `25.9` bloków od ATM #1) |
+| 8 Dwupiętrowych Butików Handlowych (`S1–S8`) | `X: 140..166`, `Z: -9` i `+9` | 8 modułów `6 × 4 × 9` z markizami, szyldami i estakadą `brass_catwalk` w tylnej alei `3` bloki | Fizyczne sklepy `Lightman's Currency` (Piekarnia, Bistro, Cukiernia, Mechanika, Kolej, AE2, Mekanism, Bazar VIP) |
+| Wschodni Taras Ogrodowy i Fontanna | `(168..174, 64, 0)` | Fontanna, 2 klomby azalii, balkon widokowy | Estetyczna strefa rekreacyjna bez przeszkód w pathfindingu |
+| **Huta Południowa / Terminal Towarowy** | `(0, 64, 152)` | `33 × 21 × 33` (`X: -16..+16`, `Z: 136..168`), `offset [0, 4, 152]` | 4 otwarte hale `11 × 11` pod ciężki przemysł Create, AE2 i Mekanism |
+| **Dok Kolejowy Północny & Suwnica Bramowa** | `(0, 65, 136)` | Podkłady `X=0, Y=64`, suwnica z `metal_girder` + `industrial_iron_catwalk` | Wyrównany w osi `X=0, Y=65` z Wyspą Startową |
+| Komin Przemysłowy i Dyspozytornia | `(+8..+14, 65, 139..145)` | Komin z dymem (`campfire`) + przeszklona kabina z `lightmanscurrency:terminal` | Klimatyczny punkt orientacyjny i lokalny terminal handlowy |
 
 ---
 

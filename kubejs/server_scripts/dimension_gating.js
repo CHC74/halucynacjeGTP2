@@ -11,16 +11,10 @@
 // 3. Soft gating wymiarów (dwuwarstwowy):
 //    - Warstwa główna: `EntityTravelToDimensionEvent` (blokada przed przejściem
 //      przez portal bez ładowania docelowego wymiaru).
-//    - Warstwa zapasowa (fallback): `PlayerEvents.changedDimension` (natychmiastowy
-//      powrót na Wyspę Startową `(0, 65, 0)` w Overworldzie).
+//    - Warstwa zapasowa (fallback): `NativeEvents.onEvent('...PlayerEvent$PlayerChangedDimensionEvent')`
+//      (natychmiastowy powrót na Wyspę Startową `(0, 65, 0)` w Overworldzie; `PlayerEvents.changedDimension`
+//      nie istnieje w KubeJS 7.2 dla MC 1.21.1).
 //    - Wymagania: `minecraft:the_nether` -> `stage_2` (50k), `minecraft:the_end` -> `stage_4` (250k).
-//
-// UWAGA DO WERYFIKACJI NA PIERWSZYM URUCHOMIENIU SERWERA 1.21.1 (Issue #4):
-// - [VERIFY ON 1.21.1 BOOT] Potwierdzić w logach serwera, że `NativeEvents.onEvent`
-//   poprawnie rejestruje `net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent`
-//   i czy `event.setCanceled(true)` zatrzymuje przejście przez portal Netheru/Endu.
-// - [TODO — kolejna iteracja] Podłączyć integrację per-team `FTB Teams` oraz
-//   automatyczne zaliczanie zadań `FTB Quests` po zdefiniowaniu ID questów.
 // ============================================================================
 
 const GLOBAL_STAGES_KEY = 'halucynacje_global_stages';
@@ -368,40 +362,61 @@ if (typeof NativeEvents !== 'undefined') {
     console.info('[HalucynacjeGTP2] Zarejestrowano główny gating wymiarów (EntityTravelToDimensionEvent).');
   } catch (err) {
     console.warn(
-      `[HalucynacjeGTP2] Nie udało się zarejestrować EntityTravelToDimensionEvent (${err}); aktywny pozostaje fallback PlayerEvents.changedDimension.`
+      `[HalucynacjeGTP2] Nie udało się zarejestrować EntityTravelToDimensionEvent (${err}); aktywny pozostaje fallback PlayerEvent$PlayerChangedDimensionEvent.`
     );
   }
 }
 
 // ----------------------------------------------------------------------------
-// 3b. Soft gating wymiarów — WARSTWA ZAPASOWA (PlayerEvents.changedDimension)
+// 3b. Soft gating wymiarów — WARSTWA ZAPASOWA (PlayerEvent$PlayerChangedDimensionEvent)
+//     W KubeJS 7.2 (NeoForge 1.21.1) event `PlayerEvents.changedDimension` nie istnieje,
+//     dlatego używamy natywnego eventu NeoForge (zweryfikowanego w kubejs-neoforge-2101.7.2).
 //     Działa niezależnie od metody teleportu (portale, komendy, Waystones).
 // ----------------------------------------------------------------------------
-PlayerEvents.changedDimension((event) => {
-  const { player, server } = event;
-  if (!player || !server) {
-    return;
+if (typeof NativeEvents !== 'undefined') {
+  try {
+    NativeEvents.onEvent(
+      'net.neoforged.neoforge.event.entity.player.PlayerEvent$PlayerChangedDimensionEvent',
+      (event) => {
+        const player = typeof event.getEntity === 'function' ? event.getEntity() : event.entity;
+        if (!player) {
+          return;
+        }
+        const server = player.server || (player.level && player.level.server);
+        if (!server) {
+          return;
+        }
+
+        const rawTarget =
+          (typeof event.getTo === 'function' ? event.getTo() : event.to) ||
+          getDimensionId(player.level);
+        const targetDim = normalizeDimensionId(rawTarget);
+        const requirement = DIMENSION_REQUIREMENTS[targetDim];
+        if (!requirement) {
+          return;
+        }
+
+        if (hasUnlockedStage(player, server, requirement.stageId)) {
+          return;
+        }
+
+        notifyDimensionLocked(player, targetDim, requirement);
+
+        // Bezpieczny powrót na płytę Wyspy Startowej Overworlda (zgodnie z docs/ISLAND_DESIGN.md: 0, 65, 0)
+        server.runCommandSilent(
+          `execute in minecraft:overworld run tp ${player.username} 0 65 0`
+        );
+      }
+    );
+    console.info(
+      '[HalucynacjeGTP2] Zarejestrowano zapasowy gating wymiarów (PlayerEvent$PlayerChangedDimensionEvent).'
+    );
+  } catch (err) {
+    console.warn(
+      `[HalucynacjeGTP2] Nie udało się zarejestrować PlayerEvent$PlayerChangedDimensionEvent (${err}).`
+    );
   }
-
-  const targetDim = getDimensionId(player.level);
-  const requirement = DIMENSION_REQUIREMENTS[targetDim];
-  if (!requirement) {
-    return;
-  }
-
-  if (hasUnlockedStage(player, server, requirement.stageId)) {
-    return;
-  }
-
-  notifyDimensionLocked(player, targetDim, requirement);
-
-  // Bezpieczny powrót na płytę Wyspy Startowej Overworlda (zgodnie z docs/ISLAND_DESIGN.md: 0, 65, 0)
-  // TODO (Issue #4 — kolejna iteracja): Zastąpić fallback `(0, 65, 0)` dynamicznym spawnem
-  // wyspy drużyny z Skyblock Builder / FTB Essentials (`/spawn`), jeśli zagra wiele drużyn.
-  server.runCommandSilent(
-    `execute in minecraft:overworld run tp ${player.username} 0 65 0`
-  );
-});
+}
 
 // ----------------------------------------------------------------------------
 // 4. Komenda OP `/halucynacje_sync_stages` — ręczna resynchronizacja etapów co-op

@@ -82,21 +82,29 @@ function test(name, fn) {
 console.log('🧪 Uruchamiam testy jednostkowe KubeJS...');
 
 // 1. dimension_gating.js
-test('dimension_gating.js: normalizacja ID wymiarów + FTB Quests stage_1..stage_5', () => {
+test('dimension_gating.js: KubeJS 7.2 NativeEvents gating + normalizacja ID + FTB Quests stage_1..stage_5', () => {
   const cmds = [];
+  const nativeHandlers = {};
   const sandbox = {
     console: { info: () => {}, warn: () => {}, error: () => {} },
     Text: makeTextProxy(),
     ServerEvents: { loaded: () => {}, commandRegistry: () => {} },
-    PlayerEvents: { loggedIn: () => {}, changedDimension: () => {} },
+    // KubeJS 7.2 (MC 1.21.1) NIE ma `PlayerEvents.changedDimension`!
+    PlayerEvents: { loggedIn: () => {} },
     ItemEvents: { rightClicked: () => {} },
-    NativeEvents: { onEvent: () => {} },
+    NativeEvents: {
+      onEvent: (cls, cb) => {
+        nativeHandlers[cls] = cb;
+      }
+    },
     assert,
     __cmds: cmds,
     __makeCompound: makeCompound
   };
+  const rawSrc = fs.readFileSync('kubejs/server_scripts/dimension_gating.js', 'utf8');
+  assert(!/PlayerEvents\.changedDimension\s*\(/.test(rawSrc), 'PlayerEvents.changedDimension nie istnieje w KubeJS 7.2!');
   const src =
-    fs.readFileSync('kubejs/server_scripts/dimension_gating.js', 'utf8') +
+    rawSrc +
     `
     ;(() => {
       assert(normalizeDimensionId('minecraft:the_nether') === 'minecraft:the_nether', 'plain string');
@@ -113,6 +121,41 @@ test('dimension_gating.js: normalizacja ID wymiarów + FTB Quests stage_1..stage
     })();
     `;
   vm.runInNewContext(src, sandbox);
+
+  const travelCb = nativeHandlers['net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent'];
+  const changedCb = nativeHandlers['net.neoforged.neoforge.event.entity.player.PlayerEvent$PlayerChangedDimensionEvent'];
+  assert(typeof travelCb === 'function', 'EntityTravelToDimensionEvent zarejestrowany');
+  assert(typeof changedCb === 'function', 'PlayerEvent$PlayerChangedDimensionEvent zarejestrowany');
+
+  let canceled = false;
+  const lockedServer = { persistentData: makeCompound(), runCommandSilent: (c) => cmds.push(c) };
+  const lockedPlayer = {
+    username: 'Alex',
+    isPlayer: () => true,
+    persistentData: makeCompound(),
+    tell: () => {},
+    displayClientMessage: () => {},
+    level: { isClientSide: () => false, dimensionKey: 'minecraft:the_end', server: lockedServer },
+    server: lockedServer
+  };
+  travelCb({
+    entity: lockedPlayer,
+    getDimension: () => 'ResourceKey[minecraft:dimension / minecraft:the_end]',
+    setCanceled: (v) => {
+      canceled = Boolean(v);
+    }
+  });
+  assert(canceled === true, 'EntityTravelToDimensionEvent musi zablokować End bez stage_4');
+
+  cmds.length = 0;
+  changedCb({
+    getEntity: () => lockedPlayer,
+    getTo: () => 'ResourceKey[minecraft:dimension / minecraft:the_end]'
+  });
+  assert(
+    cmds.some((c) => c.includes('execute in minecraft:overworld run tp Alex 0 65 0')),
+    'PlayerChangedDimensionEvent musi cofnąć gracza do Overworlda bez stage_4'
+  );
 });
 
 // 2. skyblock_create_recipes.js
