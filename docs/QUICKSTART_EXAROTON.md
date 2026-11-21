@@ -3,27 +3,36 @@
 Ten poradnik pozwala postawić gotowy serwer **HalucynacjeGTP2** (NeoForge `1.21.1` / `21.1.267`, Create `6.0.10`) na **Exaroton** i dołączyć z **Windows / Linux / Apple Silicon Mac M2** w kilka minut — bez ręcznego szukania modów i bez ręcznego eksportu wysp!
 
 > **Skąd pobrać gotowe paczki?**
-> Przejdź do zakładki **[Releases](https://github.com/CHC74/halucynacjeGTP2/releases)** w repozytorium `CHC74/halucynacjeGTP2` i pobierz dwa pliki z najnowszego wydania (np. `v1.0.0-playtest`):
-> - **`halucynacjeGTP2.mrpack`** — gotowy pakiet dla graczy (**65 modów** + `config/` + 3 wyspy `.nbt` + `kubejs/`).
+> Przejdź do zakładki **[Releases](https://github.com/CHC74/halucynacjeGTP2/releases)** w repozytorium `CHC74/halucynacjeGTP2` i pobierz pliki z najnowszego wydania (np. `v1.0.1-playtest`):
+> - **`halucynacjeGTP2-curseforge.zip`** ⭐ *(Główna paczka dla graczy — **CurseForge App**)* — natywny pakiet CurseForge (**65/65 modów**: 15 pobieranych natywnie z CurseForge + 50 zweryfikowanych JAR-ów Modrinth w `overrides/mods/` + `config/` + 3 wyspy `.nbt` + `kubejs/`).
 > - **`halucynacjeGTP2-server-exaroton.zip`** — gotowy pakiet serwerowy pod Exaroton (**55/55 modów `.jar`** ze zweryfikowanymi sumami kontrolnymi, odfiltrowane 10 modów klienckich + `config/` + 3 wyspy `.nbt` + `kubejs/` + `server.properties`).
+> - **`halucynacjeGTP2.mrpack`** *(Opcja B — Prism Launcher / Modrinth App)* — ten sam zestaw 65 modów + `overrides/` w formacie Modrinth.
 
 ---
 
 ## Krok 1 — Klient gry (PC Windows/Linux oraz Apple Silicon Mac M2)
 
-> **Rekomendacja:** Użyj **[Prism Launcher](https://prismlauncher.org/)** (darmowy, open-source, natywny dla macOS `arm64` i Windows). **Prism Launcher jest NAJLEPSZYM wyborem**, ponieważ w **1 kliknięciu** bezproblemowo instaluje zarówno 50 modów z Modrinth, jak i 15 modów FTB/JEI z CurseForge zawartych w `halucynacjeGTP2.mrpack`!
+### Opcja A (Główna): CurseForge App (`halucynacjeGTP2-curseforge.zip`)
 
-1. Pobierz plik **`halucynacjeGTP2.mrpack`** z GitHub Releases.
-2. Otwórz **Prism Launcher** → kliknij **Add Instance** → zakładka **Import** → wskaż pobrany plik `halucynacjeGTP2.mrpack` (albo po prostu przeciągnij plik w okno launchera).
-3. Kliknij prawym na utworzoną instancję → **Edit** → **Settings**:
-   - **Java:** wybierz **Java 21** (na **Mac M2** koniecznie natywna wersja **`arm64`**, np. Azul Zulu 21 ARM64 lub Eclipse Temurin 21 ARM64 — Prism może pobrać ją automatycznie przyciskiem *Download Java*).
-   - **Memory (RAM):** ustaw Minimum `4096 MiB`, Maximum `6144 MiB` (**6 GB RAM**).
+1. Pobierz plik **`halucynacjeGTP2-curseforge.zip`** z GitHub Releases *(nie rozpakowuj go ręcznie!)*.
+2. Otwórz **CurseForge App** → zakładka **Minecraft** → kliknij **Create Custom Profile** → link **Import** (u góry okna tworzenia profilu) → wskaż pobrany plik `halucynacjeGTP2-curseforge.zip`.
+   - CurseForge App automatycznie zainstaluje NeoForge `21.1.267` (MC `1.21.1`), pobierze 15 natywnych modów CurseForge z `manifest.json` oraz skopiuje pozostałe 50 zweryfikowanych JAR-ów z `overrides/mods/` wraz z `config/` i `kubejs/`.
+3. Po imporcie kliknij ikonę trzech kropek (`⋮`) przy profilu **HalucynacjeGTP2** → **Profile Options**:
+   - Odznacz *Use System Memory Settings* i ustaw suwak RAM na **6144 MB (6 GB RAM)**.
+   - *(Tylko **Apple Silicon Mac M2**)*: w ustawieniach Minecraft w CurseForge App (`Settings → Game Specific → Minecraft → Java Version`) upewnij się, że używana jest **natywna Java 21 ARM64 (`arm64` / Apple Silicon)**, a nie x86_64 przez Rosettę!
 4. *(Tylko Apple Silicon Mac M2 — OpenGL 4.1)*: jeśli po wejściu do gry zauważysz artefakty na kołach zębatych Create, wpisz w grze:
    ```mcfunction
    /flywheel backend instancing
    ```
    *(lub `/flywheel backend off` jako tryb awaryjny — szczegóły w [EXAROTON_AND_MAC_M2.md](EXAROTON_AND_MAC_M2.md)).*
-5. Kliknij **Launch** — gotowe!
+5. Kliknij **Play** — gotowe!
+
+### Opcja B (Alternatywna): Prism Launcher / Modrinth App (`halucynacjeGTP2.mrpack`)
+
+1. Pobierz plik **`halucynacjeGTP2.mrpack`** z GitHub Releases.
+2. Otwórz **[Prism Launcher](https://prismlauncher.org/)** (lub Modrinth App) → **Add Instance** → **Import** → wskaż pobrany plik `halucynacjeGTP2.mrpack` (albo przeciągnij go w okno launchera).
+3. W **Edit → Settings** ustaw **Java 21** (na Mac M2 natywna wersja `arm64`) oraz **Memory (RAM)**: Minimum `4096 MiB`, Maximum `6144 MiB` (**6 GB RAM**).
+4. Kliknij **Launch** — gotowe!
 
 ---
 
