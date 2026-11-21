@@ -106,7 +106,7 @@ function makeTrade(tradeType, itemId, count, copperPrice, displayName = null) {
   return trade;
 }
 
-function makeTrader(id, name, iconItemId, trades) {
+function makeTrader(id, name, ownerName, iconItemId, trades) {
   if (trades.length === 0) {
     throw new Error(`Trader "${id}" nie ma żadnych ofert!`);
   }
@@ -119,7 +119,7 @@ function makeTrader(id, name, iconItemId, trades) {
     Type: 'lightmanscurrency:item_trader',
     ID: id,
     Name: name,
-    OwnerName: OWNER_NAME,
+    OwnerName: ownerName || OWNER_NAME,
     CustomIcon: makeItemIcon(iconItemId),
     Trades: trades
   };
@@ -129,12 +129,14 @@ function generatePersistentTraders(prices) {
   const blockedIds = new Set((prices.tier_0_blocked || []).map((x) => x.id));
   const traders = [];
 
-  // 1. Żetony Etapów (Stage 1..5) + Prestiżowy Creative Motor (2M)
+  // 1. [KUP] 1. Żetony Etapów (Stage 1..5 + Prestiżowy Creative Motor 2M)
   const stageAndPrestigeTrades = [];
   for (const tok of prices.stage_tokens || []) {
     stageAndPrestigeTrades.push(makeTrade('SALE', tok.id, 1, tok.buy_price, tok.name));
   }
-  const prestigeItems = (prices.buy_catalog || []).filter((item) => item.stage >= 5);
+  const prestigeItems = (prices.buy_catalog || []).filter(
+    (item) => item.category === 'prestige' || (!item.category && item.stage >= 5)
+  );
   for (const item of prestigeItems) {
     const label =
       item.id === 'create:creative_motor'
@@ -144,62 +146,102 @@ function generatePersistentTraders(prices) {
   }
   traders.push(
     makeTrader(
-      'halucynacje_stage_tokens',
-      'Żetony Etapów & Prestiż',
+      'halucynacje_kup_01_etapy',
+      '[KUP] 1. Żetony Etapów',
+      'Stage 1-5 i Creative Motor',
       'lightmanscurrency:coin_diamond',
       stageAndPrestigeTrades
     )
   );
 
-  // 2. Startery Skyblocka — Rośliny, Farmy i Hodowla (Etapy 0–1)
-  const earlyStarters = (prices.buy_catalog || []).filter((item) => item.stage <= 1);
-  traders.push(
-    makeTrader(
-      'halucynacje_starters_early',
-      'Startery Skyblocka — Rośliny i Hodowla (S0–S1)',
-      'minecraft:oak_sapling',
-      earlyStarters.map((item) => makeTrade('SALE', item.id, 1, item.buy_price))
-    )
-  );
+  // 2..5. Cztery tematyczne sklepy zakupowe [KUP] z prices.json
+  const buyCategories = [
+    {
+      key: 'plants',
+      id: 'halucynacje_kup_02_rosliny',
+      name: '[KUP] 2. Rośliny i Sadzonki',
+      subtitle: 'Drzewa, nasiona i uprawy FD',
+      icon: 'minecraft:oak_sapling'
+    },
+    {
+      key: 'livestock',
+      id: 'halucynacje_kup_03_hodowla',
+      name: '[KUP] 3. Zwierzęta i Hodowla',
+      subtitle: 'Jajka mobów, pszczoły i ule',
+      icon: 'minecraft:bee_nest'
+    },
+    {
+      key: 'skyblock',
+      id: 'halucynacje_kup_04_skyblock',
+      name: '[KUP] 4. Skyblock i Bloki',
+      subtitle: 'Lawa, lód, mech i startery',
+      icon: 'minecraft:lava_bucket'
+    },
+    {
+      key: 'tech',
+      id: 'halucynacje_kup_05_tech',
+      name: '[KUP] 5. Maszyny i High-Tech',
+      subtitle: 'Create, Waystone, AE2, Mekanism',
+      icon: 'ae2:flawless_budding_quartz'
+    }
+  ];
 
-  // 3. Startery Logistyki i High-Tech (Etapy 2–4: Terminal, Waystone, AE2, Mekanism)
-  const techStarters = (prices.buy_catalog || []).filter(
-    (item) => item.stage >= 2 && item.stage < 5
-  );
-  traders.push(
-    makeTrader(
-      'halucynacje_starters_tech',
-      'Startery Logistyki i High-Tech (S2–S3)',
-      'ae2:flawless_budding_quartz',
-      techStarters.map((item) => makeTrade('SALE', item.id, 1, item.buy_price))
-    )
-  );
+  const assignedBuyIds = new Set(prestigeItems.map((x) => x.id));
+  for (const cat of buyCategories) {
+    const catItems = (prices.buy_catalog || []).filter((item) => item.category === cat.key);
+    for (const item of catItems) {
+      assignedBuyIds.add(item.id);
+    }
+    traders.push(
+      makeTrader(
+        cat.id,
+        cat.name,
+        cat.subtitle,
+        cat.icon,
+        catItems.map((item) => makeTrade('SALE', item.id, 1, item.buy_price))
+      )
+    );
+  }
 
-  // 4..8. Skup Hurtowy Tier 1–5 (TradeType = PURCHASE, cena bazowa 100% z prices.json)
+  // Straż: żaden przedmiot z buy_catalog nie może wypaść poza kategorie!
+  for (const item of prices.buy_catalog || []) {
+    if (!assignedBuyIds.has(item.id)) {
+      throw new Error(
+        `Pozycja buy_catalog "${item.id}" ma nieznaną lub brakującą kategorię "${item.category}"!`
+      );
+    }
+  }
+
+  // 6..10. [SKUP] 1..5 — Skup Hurtowy Tier 1–5 (TradeType = PURCHASE, cena bazowa 100% z prices.json)
   const tierMeta = {
     tier_1_start: {
-      id: 'halucynacje_skup_tier_1',
-      name: 'Skup Hurtowy — Tier 1: Wypieki i Start',
+      id: 'halucynacje_skup_01_start',
+      name: '[SKUP] 1. Wypieki i Start',
+      subtitle: 'Tier 1 | 4-22c -> Stage 1 (10k)',
       icon: 'minecraft:bread'
     },
     tier_2_kitchen: {
-      id: 'halucynacje_skup_tier_2',
-      name: 'Skup Hurtowy — Tier 2: Kuchnia FD & Create:Food',
+      id: 'halucynacje_skup_02_kuchnia',
+      name: '[SKUP] 2. Kuchnia i Obiady',
+      subtitle: 'Tier 2 | 36-100c -> Stage 2 (50k)',
       icon: 'farmersdelight:hamburger'
     },
     tier_3_luxury_bakery: {
-      id: 'halucynacje_skup_tier_3',
-      name: 'Skup Hurtowy — Tier 3: Cukiernia i Słodycze',
+      id: 'halucynacje_skup_03_cukiernia',
+      name: '[SKUP] 3. Cukiernia i Słodycze',
+      subtitle: 'Tier 3 | 125-285c -> Stage 3 (100k)',
       icon: 'create:sweet_roll'
     },
     tier_4_create_industry: {
-      id: 'halucynacje_skup_tier_4',
-      name: 'Skup Hurtowy — Tier 4: Przemysł Create 6',
+      id: 'halucynacje_skup_04_przemysl',
+      name: '[SKUP] 4. Przemysł Create 6',
+      subtitle: 'Tier 4 | 340-1050c -> Stage 4 (250k)',
       icon: 'create:precision_mechanism'
     },
     tier_5_hightech_export: {
-      id: 'halucynacje_skup_tier_5',
-      name: 'Skup Hurtowy — Tier 5: Eksport AE2 & Mekanism',
+      id: 'halucynacje_skup_05_hightech',
+      name: '[SKUP] 5. Eksport High-Tech',
+      subtitle: 'Tier 5 | 2.4k-13.5k -> Stage 5 (1M)',
       icon: 'ae2:engineering_processor'
     }
   };
@@ -207,7 +249,8 @@ function generatePersistentTraders(prices) {
   for (const [tierKey, tierObj] of Object.entries(prices.sell_tiers || {})) {
     const meta = tierMeta[tierKey] || {
       id: `halucynacje_skup_${tierKey}`,
-      name: `Skup Hurtowy — ${tierKey}`,
+      name: `[SKUP] ${tierKey}`,
+      subtitle: OWNER_NAME,
       icon: 'lightmanscurrency:coin_gold'
     };
 
@@ -222,7 +265,7 @@ function generatePersistentTraders(prices) {
       purchaseTrades.push(makeTrade('PURCHASE', item.id, packSize, item.wholesale_gui));
     }
 
-    traders.push(makeTrader(meta.id, meta.name, meta.icon, purchaseTrades));
+    traders.push(makeTrader(meta.id, meta.name, meta.subtitle, meta.icon, purchaseTrades));
   }
 
   return {

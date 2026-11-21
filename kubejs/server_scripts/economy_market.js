@@ -181,6 +181,7 @@ function getMarketCatalog(forceReload) {
         entry = {
           id: String(tok.id),
           alias: String(tok.alias || `stage_${tok.stage}`),
+          category: 'etapy',
           stage: Number(tok.required_stage != null ? tok.required_stage : Math.max(0, Number(tok.stage) - 1)),
           unlocksStage: Number(tok.stage || i + 1),
           buyPrice: Number(tok.buy_price || 0),
@@ -201,6 +202,7 @@ function getMarketCatalog(forceReload) {
         entry = {
           id: String(b.id),
           alias: String(b.alias || String(b.id).split(':')[1] || b.id),
+          category: String(b.category || 'inne'),
           stage: Number(b.stage || 0),
           buyPrice: Number(b.buy_price || 0),
           teamLimit: Number(b.team_limit || 0),
@@ -637,6 +639,15 @@ function handleOpenShopGui(player, server, source) {
   }
 }
 
+function getBuyCategoryLabel(category) {
+  if (category === 'etapy' || category === 'prestige') return 'Etapy';
+  if (category === 'plants') return 'Rośliny';
+  if (category === 'livestock') return 'Hodowla';
+  if (category === 'skyblock') return 'Skyblock';
+  if (category === 'tech') return 'Tech';
+  return 'Inne';
+}
+
 function handleShowShop(player, server, requestedStage) {
   var catalog = null;
   var currentStage = 0;
@@ -644,6 +655,7 @@ function handleShowShop(player, server, requestedStage) {
   var shown = 0;
   var i = 0;
   var entry = null;
+  var catLabel = '';
   var prefix = '';
   var lockTag = null;
   var limitNote = '';
@@ -670,7 +682,11 @@ function handleShowShop(player, server, requestedStage) {
         continue;
       }
 
-      prefix = entry.stage > currentStage ? `[Wymaga Stage ${entry.stage}] ` : `[S${entry.stage}] `;
+      catLabel = getBuyCategoryLabel(entry.category);
+      prefix =
+        entry.stage > currentStage
+          ? `[Wymaga S${entry.stage} • ${catLabel}] `
+          : `[S${entry.stage} • ${catLabel}] `;
       lockTag = entry.stage > currentStage ? Text.red(prefix) : Text.green(prefix);
       limitNote = entry.teamLimit > 0 ? ` (limit ${entry.teamLimit})` : '';
       aliasStr = String(entry.alias || entry.id || '?');
