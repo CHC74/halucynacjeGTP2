@@ -5,14 +5,20 @@
 //
 // Cel skryptu:
 // Uzupełnienie naturalnych luk surowcowych Skyblocka w 100% przez maszyny Create
-// (Mixing, Compacting, Crushing, Splashing, Haunting) — bez sit i bez magii.
+// (Mechanical Extruder, Mixing, Compacting, Milling, Splashing) — bez sit i bez magii.
 //
-// UWAGA DO WERYFIKACJI I BALANSU (Issue #4 — z agentem partnerskim):
-// - Sprawdzić dokładny schemat JSON receptur Create 6.0.x na Minecraft 1.21.1
-//   (w MC 1.21.1 NeoForge część wyników używa klucza `"id"` zamiast `"item"` oraz
-//   płynów jako `{ "type": "fluid_stack", "fluid": "...", "amount": ... }` w Create 6).
-// - Dostroić szanse (`chance`) i ilości po pierwszych playtestach na Exaroton,
-//   aby żadna maszyna nie była zbyt tania ani zbyt wolna.
+// Poprawki z review Issue #4 (`agent:partner`):
+// - Domknięto generację `minecraft:tuff` (Create: Mechanical Extruder + Create Compacting),
+//   dzięki czemu receptura płukania Tuff nie jest martwa w JEI.
+// - Dodano wczesne ścieżki `minecraft:red_sand` (Millstone z terakoty oraz Mixing z piasku
+//   i czerwonego barwnika), aby `crimsite` i `netherrack` były osiągalne w Stage 1
+//   jeszcze przed zbudowaniem Crushing Wheels.
+//
+// UWAGA DO WERYFIKACJI I BALANSU NA ŻYWYM SERWERZE 1.21.1 (Issue #4):
+// - [VERIFY ON 1.21.1 BOOT] Sprawdzić dokładny schemat JSON receptur Create 6.0.x
+//   oraz `create_mechanical_extruder:extruding` pod NeoForge 1.21.1
+//   (`"id"` vs `"item"` w wynikach, `{ "type": "fluid_stack", ... }` w Create 6).
+// - Dostroić szanse (`chance`) i ilości po pierwszych playtestach na Exaroton.
 // ============================================================================
 
 ServerEvents.recipes((event) => {
@@ -33,9 +39,33 @@ ServerEvents.recipes((event) => {
     .id('halucynacje:create/mixing/skyblock_andesite');
 
   // --------------------------------------------------------------------------
+  // 1b. Wczesny Czerwony Piasek (Stage 0-1 — przed Crushing Wheels!)
+  //     Odblokowuje płynną ścieżkę do `crimsite` oraz wczesnego `netherrack`
+  //     w Stage 1 bez konieczności budowy Mechanical Crafterów.
+  // --------------------------------------------------------------------------
+  event
+    .custom({
+      type: 'create:milling',
+      processing_time: 200,
+      ingredients: [{ item: 'minecraft:terracotta' }],
+      results: [{ id: 'minecraft:red_sand', count: 1 }]
+    })
+    .id('halucynacje:create/milling/skyblock_terracotta_to_red_sand');
+
+  event
+    .custom({
+      type: 'create:mixing',
+      ingredients: [
+        { item: 'minecraft:sand' },
+        { item: 'minecraft:red_dye' }
+      ],
+      results: [{ id: 'minecraft:red_sand', count: 1 }]
+    })
+    .id('halucynacje:create/mixing/skyblock_red_sand_dye');
+
+  // --------------------------------------------------------------------------
   // 2. Veridium -> ścieżka Miedzi (Stage 0-1)
-  //    Mielenie Veridium w Create daje Crushed Raw Copper.
-  //    TODO (balans): Dostroić koszt w glinie/piasku po testach linii miedzianej.
+  //    Mielenie Veridium w Create daje Crushed Raw Copper (lub Copper Nuggets w Millstone).
   // --------------------------------------------------------------------------
   event
     .custom({
@@ -53,8 +83,6 @@ ServerEvents.recipes((event) => {
   // --------------------------------------------------------------------------
   // 3. Asurine -> ścieżka Cynku (Stage 1, pod Brass Age)
   //    Mielenie Asurine w Crushing Wheels daje Crushed Raw Zinc + Zinc Nuggets.
-  //    TODO (balans): Sprawdzić, czy wymagać podgrzewania `heated` czy zostawić
-  //    bez grzania dla płynnego wejścia w Stage 1.
   // --------------------------------------------------------------------------
   event
     .custom({
@@ -106,7 +134,7 @@ ServerEvents.recipes((event) => {
   // --------------------------------------------------------------------------
   // 6. Netherrack przed odblokowaniem Netheru (Stage 1 — pod Cinder Flour i Empty Blaze Burner)
   //    Celowo wymaga małej ilości lawy, aby po odblokowaniu Netheru (Stage 2)
-  //    ekspedycje nadal były dużo bardziej opłacalne.
+  //    ekspedycje i pociągi-cysterny nadal były dużo bardziej opłacalne.
   // --------------------------------------------------------------------------
   event
     .custom({
@@ -121,11 +149,39 @@ ServerEvents.recipes((event) => {
     .id('halucynacje:create/mixing/skyblock_netherrack');
 
   // --------------------------------------------------------------------------
-  // 7. Wczesne źródło Cynku i Miedzi przez płukanie (Bulk Washing — Stage 0-1)
-  //    Uzupełnia sytuację przed zbudowaniem pierwszych Crushing Wheels.
-  //    TODO (balans): Uzgodnić z partnerem czy zostawić płukanie Tuff/Deepslate
-  //    czy oprzeć cynk w 100% na Asurine + Millstone.
+  // 7. Generacja i płukanie Tuff (Stage 0-1 — domknięcie ścieżki z review Issue #4)
+  //    7a. Create: Mechanical Extruder (woda + lawa na katalizatorze z Andezytu)
+  //    7b. Alternatywna receptura Create: Compacting (gwarancja pełnej automatyzacji
+  //        w czystym Create bez ryzyka martwej receptury w JEI)
+  //    7c. Bulk Washing Tuff -> wczesne samorodki Cynku i Miedzi
   // --------------------------------------------------------------------------
+  // [VERIFY ON 1.21.1 BOOT]: Potwierdzić dokładny schemat JSON `create_mechanical_extruder:extruding`
+  // dla `Create: Mechanical Extruder 2.2.2-6.0.10` na NeoForge 1.21.1.
+  event
+    .custom({
+      type: 'create_mechanical_extruder:extruding',
+      ingredients: [
+        { type: 'fluid_stack', fluid: 'minecraft:water', amount: 1000 },
+        { type: 'fluid_stack', fluid: 'minecraft:lava', amount: 1000 }
+      ],
+      catalyst: { item: 'minecraft:andesite' },
+      result: { id: 'minecraft:tuff', count: 1 }
+    })
+    .id('halucynacje:mechanical_extruder/skyblock_tuff');
+
+  event
+    .custom({
+      type: 'create:compacting',
+      ingredients: [
+        { item: 'minecraft:cobblestone' },
+        { item: 'minecraft:cobblestone' },
+        { item: 'minecraft:andesite' },
+        { type: 'fluid_stack', fluid: 'minecraft:water', amount: 100 }
+      ],
+      results: [{ id: 'minecraft:tuff', count: 2 }]
+    })
+    .id('halucynacje:create/compacting/skyblock_tuff');
+
   event
     .custom({
       type: 'create:splashing',
