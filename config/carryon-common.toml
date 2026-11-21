@@ -29,7 +29,7 @@
 		# --- Create 6 + Addony (kotły, zbiorniki, skarbce, pociągi, Packagery, Frogporty) ---
 		"create:*",
 		"railways:*",
-		"hypertubes:*",
+		"create_hypertube:*",
 		"createaddition:*",
 		"create_enchantment_industry:*",
 		"trading_floor:*",
