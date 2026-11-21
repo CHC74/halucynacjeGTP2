@@ -11,14 +11,14 @@
 //       * config/skyblockbuilder/templates/spreads/market_island.nbt
 //       * config/skyblockbuilder/templates/spreads/industrial_island.nbt
 //
-// Wyrównanie współrzędnych (Height.range.bottom = 64):
+// Wyrównanie współrzędnych (Height.range.bottom = 64, SpreadInfo$Origin.CENTER = size // 2):
 //   - starter_island.nbt (15x13x15, offset [-7, -6, -7]):
 //       narożnik (-7, 58, -7) -> środek powierzchni (7, 6, 7) = świat (0, 64, 0)
 //       punkt spawnu (7, 7, 7) = świat (0, 65, 0), patrzenie: EAST (+X na Rynek!)
-//   - market_island.nbt (29x9x25, offset [152, 0, 0], origin "center"):
-//       środek powierzchni (14, 4, 12) = świat (152, 64, 0) — idealny poziom Y=64!
-//   - industrial_island.nbt (21x7x21, offset [0, 0, 152], origin "center"):
-//       środek powierzchni (10, 3, 10) = świat (0, 64, 152) — idealny poziom Y=64!
+//   - market_island.nbt (45x25x35, floor_y=8, size//2=(22,12,17), offset [152, 4, 0], origin "center"):
+//       środek powierzchni (22, 8, 17) -> 64 + 4 - 12 + 8 = świat (152, 64, 0) — idealny poziom Y=64!
+//   - industrial_island.nbt (33x21x33, floor_y=6, size//2=(16,10,16), offset [0, 4, 152], origin "center"):
+//       środek powierzchni (16, 6, 16) -> 64 + 4 - 10 + 6 = świat (0, 64, 152) — idealny poziom Y=64!
 // ============================================================================
 {
   // Dodatkowe globalne przesunięcie wysp (0 = pierwsza drużyna na osi 0, 0).
@@ -43,12 +43,12 @@
     tycoon_triad: [
       {
         file: "market_island.nbt",
-        offset: [152, 0, 0],
+        offset: [152, 4, 0],
         origin: "center"
       },
       {
         file: "industrial_island.nbt",
-        offset: [0, 0, 152],
+        offset: [0, 4, 152],
         origin: "center"
       }
     ]
