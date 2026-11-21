@@ -1,0 +1,279 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "stage_3_industry"
+	group: "1000000000000001"
+	icon: {
+		id: "kubejs:stage_3_token"
+	}
+	id: "A300000000000000"
+	order_index: 3
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: [
+				"B200000000000005"
+				"B200000000000006"
+			]
+			description: [
+				"Kup &6Żeton Etapu 3: Przemysł Ciężki&r (&e100 000 monet&r) i kliknij &aPPM&r!"
+				""
+				"&eOdblokowania Etapu 3:&r"
+				"• Kategoria sklepu: &bZaawansowana Inżynieria&r (rzadkie minerały startowe pod AE2: Certus Quartz / Sky Stone, elementy bazowe pod Mekanism)."
+				"• Narzędzia przemysłowe (*Create: Trading Floor*, *Create: Stuff 'N Additions*, wyższe tiery *Building Gadgets 2*)."
+			]
+			icon: {
+				id: "kubejs:stage_3_token"
+			}
+			id: "B300000000000001"
+			rewards: [
+				{
+					id: "D300000000000101"
+					type: "xp_levels"
+					xp_levels: 10
+				}
+				{
+					description: "Odblokowano Etap 3: Przemysł Ciężki!"
+					icon: {
+						id: "kubejs:stage_3_token"
+					}
+					id: "D300000000000102"
+					title: "Awans Tycoona — Etap 3"
+					type: "toast"
+				}
+			]
+			shape: "hexagon"
+			size: 1.5d
+			subtitle: "Koszt: 100 000 monet | Przemysł ciężki i starter AE2"
+			tasks: [
+				{
+					consume_items: false
+					id: "C300000000000101"
+					item: {
+						count: 1
+						id: "kubejs:stage_3_token"
+					}
+					type: "item"
+				}
+				{
+					icon: {
+						id: "kubejs:stage_3_token"
+					}
+					id: "C300000000000102"
+					title: "Aktywuj Etap 3 (PPM — stage_3)"
+					type: "custom"
+				}
+			]
+			title: "Żeton Etapu 3: Przemysł Ciężki"
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B300000000000001"]
+			description: [
+				"Zbuduj wieloetapową linię montażową (&fSequenced Assembly&r z &bDeployerami&r) dla &bPrecision Mechanisms&r oraz produkcję &bSturdy Sheets&r i torów kolejowych!"
+				""
+				"To flagowe towary &eTier 4&r (&e350 – 1 080 monet&r), które pozwolą Ci płynnie zgromadzić 250 000 monet na Etap 4 i odblokowanie Endu."
+			]
+			id: "B300000000000002"
+			rewards: [
+				{
+					id: "D300000000000201"
+					type: "xp"
+					xp: 450
+				}
+			]
+			subtitle: "Flagowa produkcja eksportowa Tier 4"
+			tasks: [
+				{
+					count: 16L
+					id: "C300000000000201"
+					item: {
+						count: 1
+						id: "create:precision_mechanism"
+					}
+					type: "item"
+				}
+				{
+					count: 32L
+					id: "C300000000000202"
+					item: {
+						count: 1
+						id: "create:sturdy_sheet"
+					}
+					type: "item"
+				}
+				{
+					count: 3L
+					id: "C300000000000203"
+					item: {
+						count: 1
+						id: "create:deployer"
+					}
+					type: "item"
+				}
+			]
+			title: "Linia Precision Mechanisms i Sturdy Sheets"
+			x: 2.5d
+			y: -1.5d
+		}
+		{
+			dependencies: ["B300000000000001"]
+			description: [
+				"150 bloków na południe od Wyspy Startowej czeka &bWyspa Przemysłowa / Huta Południowa (0, 64, 152)&r z gotowym Dokiem Północnym &b(0, 65, 141)&r!"
+				""
+				"• Przenieś tu najcięższe linie: kotły z &bSteam Engine&r i baterie &bCrushing Wheels&r mielące &fCrimsite / Ochrum / Asurine / Veridium&r."
+				"• &aBonus FPS na Mac M2:&r oddalenie gęstych wirujących mechanizmów od głównej bazy wyraźnie odciąża renderowanie OpenGL 4.1!"
+			]
+			id: "B300000000000003"
+			rewards: [
+				{
+					id: "D300000000000301"
+					type: "xp"
+					xp: 450
+				}
+			]
+			subtitle: "Kocioł parowy i ciężka huta na (0, 64, 152)"
+			tasks: [
+				{
+					count: 4L
+					id: "C300000000000301"
+					item: {
+						count: 1
+						id: "create:steam_engine"
+					}
+					type: "item"
+				}
+				{
+					count: 2L
+					id: "C300000000000302"
+					item: {
+						count: 1
+						id: "create:crushing_wheel"
+					}
+					type: "item"
+				}
+			]
+			title: "Wyspa Przemysłowa i Kotły Parowe"
+			x: 2.5d
+			y: 1.5d
+		}
+		{
+			dependencies: ["B300000000000002"]
+			description: [
+				"Zautomatyzuj specjalistyczne usługi na skalę przemysłową — w 100% mechanicznie, zero magii:"
+				""
+				"• &bCreate: Trading Floor&r (&fTrading Depot&r) automatyzuje handel z wieśniakami bezpośrednio z taśmociągów."
+				"• &bCreate: Enchantment Industry&r pozwala zbierać płynne doświadczenie z farm oraz mechanicznie ulepszać i powielać zaklęcia narzędzi!"
+			]
+			id: "B300000000000004"
+			rewards: [
+				{
+					id: "D300000000000401"
+					type: "xp"
+					xp: 450
+				}
+			]
+			subtitle: "Trading Floor oraz przemysłowe zaklinanie XP"
+			tasks: [
+				{
+					id: "C300000000000401"
+					item: {
+						count: 1
+						id: "trading_floor:trading_depot"
+					}
+					type: "item"
+				}
+				{
+					id: "C300000000000402"
+					item: {
+						count: 1
+						id: "create_enchantment_industry:blaze_enchanter"
+					}
+					type: "item"
+				}
+			]
+			title: "Trading Floor i Enchantment Industry"
+			x: 5.0d
+			y: -1.5d
+		}
+		{
+			dependencies: ["B300000000000003"]
+			description: [
+				"Budowa wielopoziomowych hal fabrycznych i 3-stacyjnej pętli kolejowej nad pustką staje się czystą przyjemnością z parowym jetpackiem z &bCreate: Stuff 'N Additions&r!"
+			]
+			id: "B300000000000005"
+			rewards: [
+				{
+					id: "D300000000000501"
+					type: "xp"
+					xp: 400
+				}
+			]
+			subtitle: "Plecak odrzutowy Create: Stuff 'N Additions"
+			tasks: [
+				{
+					id: "C300000000000501"
+					item: {
+						count: 1
+						id: "create_sa:brass_jetpack_chestplate"
+					}
+					type: "item"
+				}
+			]
+			title: "Mobilność Inżyniera nad Pustką"
+			x: 5.0d
+			y: 1.5d
+		}
+		{
+			dependencies: [
+				"B300000000000002"
+				"B300000000000003"
+			]
+			description: [
+				"Sklep Etapu 3 udostępnia startowe zasoby pod &bApplied Energistics 2&r (Certus Quartz, Sky Stone)."
+				""
+				"Uruchom pierwszą prasę &bInscriber&r, &bME Drive&r i &bCrafting Terminal&r — połącz je z zasilaniem FE z &fAlternatora&r C&A. To Twój fundament przed pełnym autokraftingiem i integracją Create w Etapie 4!"
+			]
+			id: "B300000000000006"
+			rewards: [
+				{
+					id: "D300000000000601"
+					type: "xp"
+					xp: 500
+				}
+			]
+			subtitle: "Pierwszy cyfrowy magazyn ME przed Etapem 4"
+			tasks: [
+				{
+					id: "C300000000000601"
+					item: {
+						count: 1
+						id: "ae2:inscriber"
+					}
+					type: "item"
+				}
+				{
+					id: "C300000000000602"
+					item: {
+						count: 1
+						id: "ae2:drive"
+					}
+					type: "item"
+				}
+				{
+					id: "C300000000000603"
+					item: {
+						count: 1
+						id: "ae2:crafting_terminal"
+					}
+					type: "item"
+				}
+			]
+			title: "Start Sieci Cyfrowej AE2"
+			x: 7.5d
+			y: 0.0d
+		}
+	]
+	title: "Etap 3: Przemysł Ciężki (100k)"
+}

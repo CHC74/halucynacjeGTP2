@@ -1,0 +1,355 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "stage_0_start"
+	group: "1000000000000001"
+	icon: {
+		id: "create:water_wheel"
+	}
+	id: "A000000000000000"
+	order_index: 0
+	quest_links: [ ]
+	quests: [
+		{
+			description: [
+				"Witaj na serwerze &6HalucynacjeGTP2 — Create Skyblock Tycoon&r!"
+				""
+				"&eNajważniejsze zasady tego świata:&r"
+				"• &aPure-Create Skyblock:&r zero sit Ex Deorum / Ex Nihilo i zero magii — wszystkie surowce produkujemy maszynami Create."
+				"• &aPermanentne keepInventory = true:&r nie tracisz ekwipunku przy upadku w pustkę."
+				"• &aTrójkąt 3 Wysp:&r Startowa &b(0, 64, 0)&r, Wyspa-Rynek &b(152, 64, 0)&r na wschodzie oraz Wyspa Przemysłowa &b(0, 64, 152)&r na południu."
+				"• &aOchrona Ekonomii:&r surowe bloki kopane w świecie płacą &c0 monet&r — bogacisz się wyłącznie na przetworzonych dobrach fabrycznych!"
+			]
+			icon: {
+				id: "create:cogwheel"
+			}
+			id: "B000000000000001"
+			rewards: [
+				{
+					id: "D000000000000101"
+					type: "xp"
+					xp: 50
+				}
+				{
+					count: 8
+					id: "D000000000000102"
+					item: {
+						count: 1
+						id: "minecraft:torch"
+					}
+					type: "item"
+				}
+			]
+			shape: "hexagon"
+			size: 1.5d
+			subtitle: "Zasady Pure-Create Skyblock, keepInventory i mapa wysp"
+			tasks: [
+				{
+					id: "C000000000000101"
+					title: "Zapoznałem(-am) się z zasadami Tycoona"
+					type: "checkmark"
+				}
+			]
+			title: "Witaj w HalucynacjeGTP2!"
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B000000000000001"]
+			description: [
+				"Na Wyspie Startowej znajdziesz przygotowaną wnękę generatora bruku na &b(-5, 64, +4)&r z wodą/lodem i lawą."
+				""
+				"Jak najszybciej przejdź z ręcznego kopania na &bCreate: Mechanical Extruder&r — pojedynczy blok napędzany obrotami zastępuje lagujące farmy tłokowe i chroni TPS naszego serwera Exaroton!"
+				""
+				"&7Wskazówka:&r podłożenie bloku katalizatora pod Ekstruder (np. &fAndesite&r) pozwala automatycznie generować także &fTuff&r (receptura KubeJS) oraz inne kamienie."
+			]
+			id: "B000000000000002"
+			rewards: [
+				{
+					id: "D000000000000201"
+					type: "xp"
+					xp: 100
+				}
+			]
+			subtitle: "Wydajna produkcja bruku i kamieni bez lagów"
+			tasks: [
+				{
+					count: 16L
+					id: "C000000000000201"
+					item: {
+						count: 1
+						id: "minecraft:cobblestone"
+					}
+					type: "item"
+				}
+				{
+					id: "C000000000000202"
+					item: {
+						count: 1
+						id: "create_mechanical_extruder:mechanical_extruder"
+					}
+					type: "item"
+				}
+			]
+			title: "Generator Bruku i Mechanical Extruder"
+			x: 2.5d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B000000000000002"]
+			description: [
+				"Czas uruchomić pierwszą energię kinetyczną (&eSU — Stress Units&r)!"
+				""
+				"Zbuduj pierwsze &bWater Wheels&r i podepnij je do &bMillstone&r:"
+				"• &fCobblestone&r -> &fGravel&r"
+				"• &fGravel&r -> &fSand&r (+ szansa na &fFlint&r)"
+				""
+				"Pamiętaj: trzymając kursor na dowolnej maszynie Create w JEI lub ekwipunku i przytrzymując &eW (Ponder)&r, obejrzysz interaktywną animację jej działania."
+			]
+			id: "B000000000000003"
+			rewards: [
+				{
+					id: "D000000000000301"
+					type: "xp"
+					xp: 100
+				}
+				{
+					id: "D000000000000302"
+					item: {
+						count: 1
+						id: "create:wrench"
+					}
+					type: "item"
+				}
+			]
+			subtitle: "Koła wodne i pierwsze mielenie kamienia"
+			tasks: [
+				{
+					count: 2L
+					id: "C000000000000301"
+					item: {
+						count: 1
+						id: "create:water_wheel"
+					}
+					type: "item"
+				}
+				{
+					id: "C000000000000302"
+					item: {
+						count: 1
+						id: "create:millstone"
+					}
+					type: "item"
+				}
+			]
+			title: "Pierwsza Energia Kinetyczna (SU)"
+			x: 5.0d
+			y: -1.0d
+		}
+		{
+			dependencies: ["B000000000000003"]
+			description: [
+				"Zamiast ręcznego przesiewania używamy &bBulk Washing&r — dmuchania przez wodę za pomocą &bEncased Fan&r!"
+				""
+				"&eKluczowe ścieżki płukania w Etapie 0:&r"
+				"• &fGravel&r -> &fIron Nuggets&r + &fFlint&r"
+				"• &fSand&r -> &fClay Balls&r"
+				"• &fTuff&r (z Extrudera lub Compacting) -> &fZinc Nuggets&r + &fCopper Nuggets&r (receptura KubeJS)"
+				""
+				"W nagrodę otrzymasz &bEngineer's Goggles&r, które pokazują obciążenie SU i stan maszyn."
+			]
+			id: "B000000000000004"
+			rewards: [
+				{
+					id: "D000000000000401"
+					type: "xp"
+					xp: 150
+				}
+				{
+					id: "D000000000000402"
+					item: {
+						count: 1
+						id: "create:goggles"
+					}
+					type: "item"
+				}
+			]
+			subtitle: "Bulk Washing zastępuje kopalnię i sita"
+			tasks: [
+				{
+					id: "C000000000000401"
+					item: {
+						count: 1
+						id: "create:encased_fan"
+					}
+					type: "item"
+				}
+				{
+					count: 16L
+					id: "C000000000000402"
+					item: {
+						count: 1
+						id: "minecraft:iron_nugget"
+					}
+					type: "item"
+				}
+				{
+					count: 16L
+					id: "C000000000000403"
+					item: {
+						count: 1
+						id: "minecraft:clay_ball"
+					}
+					type: "item"
+				}
+			]
+			title: "Płukanie Żwiru i Tuffu (Pure-Create Rudy)"
+			x: 7.5d
+			y: -1.0d
+		}
+		{
+			dependencies: ["B000000000000004"]
+			description: [
+				"&bAndesite Alloy&r to kręgosłup całej wczesnej fabryki. Możesz produkować &fAndesite&r z Mechanical Extrudera albo przez naszą recepturę KubeJS w Mikserze (&fGravel + Flint + Water&r)."
+				""
+				"Zbuduj &bMechanical Press&r i &bMechanical Mixer&r z miską (&fBasin&r) — odblokujesz dzięki nim kompaktowanie &fVeridium&r (miedź) i &fAsurine&r (cynk), które można wstępnie mielić już w &fMillstone&r!"
+			]
+			id: "B000000000000005"
+			rewards: [
+				{
+					id: "D000000000000501"
+					type: "xp"
+					xp: 200
+				}
+			]
+			subtitle: "Prasa, Mikser i wczesne kamienie rudonośne Create"
+			tasks: [
+				{
+					count: 16L
+					id: "C000000000000501"
+					item: {
+						count: 1
+						id: "create:andesite_alloy"
+					}
+					type: "item"
+				}
+				{
+					id: "C000000000000502"
+					item: {
+						count: 1
+						id: "create:mechanical_press"
+					}
+					type: "item"
+				}
+				{
+					id: "C000000000000503"
+					item: {
+						count: 1
+						id: "create:mechanical_mixer"
+					}
+					type: "item"
+				}
+			]
+			title: "Stop Andezytowy i Pierwsze Maszyny"
+			x: 10.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B000000000000002"]
+			description: [
+				"Pierwsze pieniądze na &6Żeton Etapu 1 (10 000 monet)&r najwygodniej zarobić na wypiekach i prostych przetworach &bFarmer's Delight&r (Tier 1)."
+				""
+				"• Postaw &bCooking Pot&r i &bCutting Board&r."
+				"• Automatyczne mielenie pszenicy -> mąka -> płukanie -> &fDough&r -> wypiekanie &fBread&r daje stały, bezobsługowy dochód!"
+				"• Startowe nasiona, sadzonki i kelp dokupisz w Pawilonie Centralnym na Wyspie-Rynku &b(152, 64, 0)&r."
+			]
+			id: "B000000000000006"
+			rewards: [
+				{
+					id: "D000000000000601"
+					type: "xp"
+					xp: 120
+				}
+				{
+					count: 4
+					id: "D000000000000602"
+					item: {
+						count: 1
+						id: "farmersdelight:apple_pie_slice"
+					}
+					type: "item"
+				}
+			]
+			subtitle: "Pierwsza piekarnia i kuchnia pod rynek (Tier 1)"
+			tasks: [
+				{
+					id: "C000000000000601"
+					item: {
+						count: 1
+						id: "farmersdelight:cooking_pot"
+					}
+					type: "item"
+				}
+				{
+					id: "C000000000000602"
+					item: {
+						count: 1
+						id: "farmersdelight:cutting_board"
+					}
+					type: "item"
+				}
+				{
+					count: 16L
+					id: "C000000000000603"
+					item: {
+						count: 1
+						id: "minecraft:bread"
+					}
+					type: "item"
+				}
+			]
+			title: "Pierwsza Kuchnia i Wypieki Tier 1"
+			x: 5.0d
+			y: 1.5d
+		}
+		{
+			dependencies: [
+				"B000000000000005"
+				"B000000000000006"
+			]
+			description: [
+				"Twoja baza ma już stabilne żelazo, andezyt i pierwszą kuchnię. Czas spojrzeć na wschód — w stronę &bWyspy-Rynku (152, 64, 0)&r!"
+				""
+				"&eZasada premii rynkowej:&r"
+				"• Szybki skup hurtowy w terminalu GUI płaci stawkę bazową (&f100%&r)."
+				"• Sprzedaż w Twoich fizycznych stoiskach &bLightman's Currency&r klientom NPC &bShoppers&r na Wyspie-Rynku daje premię &a+20%&r!"
+				""
+				"Uzbieraj &610 000 monet&r, kup &bŻeton Etapu 1&r i otwórz kolejny rozdział księgi."
+			]
+			icon: {
+				id: "kubejs:stage_1_token"
+			}
+			id: "B000000000000007"
+			rewards: [
+				{
+					id: "D000000000000701"
+					type: "xp"
+					xp: 150
+				}
+			]
+			shape: "diamond"
+			subtitle: "Brama do Etapu 1: Rzemiosło i Handel (10 000 monet)"
+			tasks: [
+				{
+					id: "C000000000000701"
+					title: "Rozumiem premię +20% w sklepach NPC na Wyspie-Rynku"
+					type: "checkmark"
+				}
+			]
+			title: "Cel: Pierwsze 10 000 Monet"
+			x: 10.0d
+			y: 1.5d
+		}
+	]
+	title: "Etap 0: Start na Wyspie Fabrycznej"
+}
