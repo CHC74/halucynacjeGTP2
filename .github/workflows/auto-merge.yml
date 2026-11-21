@@ -1,0 +1,78 @@
+name: Auto-Approve & Auto-Merge Trusted PRs
+
+on:
+  workflow_run:
+    workflows:
+      - "CI — HalucynacjeGTP2 Validation & Packwiz Export"
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-approve-and-merge:
+    name: Auto-Approve i Auto-Merge po zielonym CI
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Wykryj PR, zweryfikuj zaufanego autora i zmerguj
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          PR_NUMBER_FROM_EVENT: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          set -euo pipefail
+
+          PR_NUM="${PR_NUMBER_FROM_EVENT:-}"
+          if [ -z "$PR_NUM" ]; then
+            PR_NUM=$(gh pr list -R "$REPO" --state open --head "$HEAD_BRANCH" --json number --jq '.[0].number // empty')
+          fi
+
+          if [ -z "$PR_NUM" ]; then
+            echo "Brak otwartego PR dla gałęzi ${HEAD_BRANCH} — pomijam."
+            exit 0
+          fi
+
+          PR_JSON=$(gh pr view "$PR_NUM" -R "$REPO" --json state,isDraft,author,headRepositoryOwner,labels)
+          STATE=$(echo "$PR_JSON" | jq -r '.state')
+          IS_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
+          AUTHOR=$(echo "$PR_JSON" | jq -r '.author.login')
+          HEAD_OWNER=$(echo "$PR_JSON" | jq -r '.headRepositoryOwner.login')
+          HAS_BLOCK_LABEL=$(echo "$PR_JSON" | jq -r '[.labels[].name] | index("do-not-merge") != null')
+
+          echo "PR #${PR_NUM}: state=${STATE}, draft=${IS_DRAFT}, author=${AUTHOR}, headOwner=${HEAD_OWNER}, do-not-merge=${HAS_BLOCK_LABEL}"
+
+          if [ "$STATE" != "OPEN" ] || [ "$IS_DRAFT" = "true" ]; then
+            echo "PR #${PR_NUM} nie jest otwartym, gotowym PR — pomijam."
+            exit 0
+          fi
+
+          if [ "$HAS_BLOCK_LABEL" = "true" ]; then
+            echo "PR #${PR_NUM} ma etykietę do-not-merge — pomijam."
+            exit 0
+          fi
+
+          # Ochrona przed obcymi forkami i nieautoryzowanymi kontami
+          if [ "$HEAD_OWNER" != "CHC74" ]; then
+            echo "PR #${PR_NUM} pochodzi spoza repozytorium CHC74 (${HEAD_OWNER}) — pomijam."
+            exit 0
+          fi
+
+          case "$AUTHOR" in
+            CHC74|TATRAzCHARaKTEReM)
+              echo "Zaufany autor (${AUTHOR}) + zielone CI — zatwierdzam i merguję PR #${PR_NUM}."
+              ;;
+            *)
+              echo "Autor ${AUTHOR} spoza listy zaufanych — pomijam."
+              exit 0
+              ;;
+          esac
+
+          gh pr review "$PR_NUM" -R "$REPO" --approve --body "🤖 Auto-approved po przejściu zielonego CI (\`CI — HalucynacjeGTP2 Validation & Packwiz Export\`)."
+          gh pr merge "$PR_NUM" -R "$REPO" --squash --delete-branch || gh pr merge "$PR_NUM" -R "$REPO" --auto --squash --delete-branch
