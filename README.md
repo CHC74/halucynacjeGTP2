@@ -18,7 +18,8 @@ Modpack kooperacyjny typu **Create Skyblock Tycoon** budowany na **Minecraft 1.2
 - [docs/MODLIST.md](docs/MODLIST.md) — kuratorowana lista modów (**65 modów** z bibliotekami, limit Exaroton `<= 115`) oraz lista wykluczeń
 - [docs/PROGRESSION_AND_ECONOMY.md](docs/PROGRESSION_AND_ECONOMY.md) — 6-poziomowa progresja (Stage 0–5), cennik towarów fabrycznych i ścieżki surowcowe pure-Create
 - [docs/ECONOMY_GUIDE.md](docs/ECONOMY_GUIDE.md) — przewodnik po komendach rynku, hurtowym skupie i sklepach NPC *Shoppers*
-- [docs/ISLAND_DESIGN.md](docs/ISLAND_DESIGN.md) — projekt 3 wysp *Skyblock Builder* (Wyspa Startowa, Wyspa-Rynek ~150 bloków, Wyspa Przemysłowa)
+- [docs/ISLAND_DESIGN.md](docs/ISLAND_DESIGN.md) — projekt 3 wysp *Skyblock Builder* (Wyspa Startowa, Wielka Wyspa-Rynek ~150 bloków, Huta Południowa)
+- [docs/ISLAND_PREVIEWS.md](docs/ISLAND_PREVIEWS.md) — **rendery 3D wszystkich 3 wysp `.nbt` + interaktywny podgląd 3D HTML** (zatwierdzanie bez restartu serwera!)
 - [docs/QOL_AND_SERVER_CONFIGS.md](docs/QOL_AND_SERVER_CONFIGS.md) — konfiguracje QoL, limity *FTB Chunks*/*Essentials*, blacklista *Carry On* i limity *Sophisticated Storage*
 - [docs/EXAROTON_AND_MAC_M2.md](docs/EXAROTON_AND_MAC_M2.md) — konfiguracja serwera Exaroton i checklista wydajnościowa pod Apple Silicon Mac M2
 - [docs/PLAYTEST_CHECKLIST.md](docs/PLAYTEST_CHECKLIST.md) — checklista pierwszego uruchomienia, playtestu na Exaroton + Mac M2 oraz zbiorcza tabela `[VERIFY ON 1.21.1 BOOT]`

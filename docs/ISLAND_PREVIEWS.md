@@ -1,0 +1,55 @@
+# Podgląd 3D Wysp — Galeria Zatwierdzania (`HalucynacjeGTP2`)
+
+Ten dokument zawiera **automatycznie wyrenderowane obrazy 3D** wygenerowane bezpośrednio z rzeczywistych binarnych plików `.nbt` (`config/skyblockbuilder/templates/`), dzięki czemu można wizualnie ocenić i zatwierdzić architekturę wszystkich 3 wysp **bez wgrywania plików i bez restartowania serwera Exaroton**!
+
+> **Interaktywny podgląd 3D z obrotem 360° i suwakiem warstw Y:**
+> Pobierz i otwórz lokalnie w przeglądarce plik **[docs/renders/island_viewer_3d.html](renders/island_viewer_3d.html)** (100% offline, zero zewnętrznych bibliotek).
+>
+> **Regeneracja po zmianie wysp:**
+> ```bash
+> python3 scripts/generate_island_nbt.py
+> python3 scripts/render_islands_3d.py
+> ```
+
+---
+
+## 1. Wielka Wyspa-Rynek (`market_island.nbt` — `45 × 25 × 35`, `9 412` bloków)
+
+- **Pozycja w świecie:** środek `(152, 64, 0)`, `offset: [152, 4, 0]` (plac 100% płaski na `Y = 64` pod pathfinding AI *Shoppers*).
+- **Kluczowe elementy widoczne na renderach:**
+  - **Zachodnia Hala Dworca Kolejowego** ze szklanym sklepieniem kolebkowym, miedzianymi okapami, 9-blokowym wjazdem na `Y = 65` oraz przyległymi padami pod **Hypertubes** (N) i **Waystone** (S).
+  - **Centralna 2-poziomowa Rotunda Giełdowa** z wielowarstwową miedzianą kopułą, iglicą do `Y = 80` i wbudowanym, działającym **`lightmanscurrency:terminal`** (świecący błękitny blok w centrum).
+  - **8 dwupiętrowych tematycznych butików** (Piekarnia, Bistro, Cukiernia, Mechanika, Kolej & Paliwa, Elektronika AE2, Przemysł Mekanism, Bazar VIP Kontrakty `+35%`) z pasiastymi markizami, polskimi szyldami i 3-blokową tylną aleją automatyzacji ze stalowo-mosiężną estakadą (`createdeco:brass_catwalk`).
+  - **3 działające bankomaty `lightmanscurrency:atm`** w kioskach (turkusowe bloki wzdłuż bulwaru, odstęp `>= 12` bloków) oraz **wschodni taras ogrodowy** z fontanną i klombami kwitnącej azalii.
+
+![Wielka Wyspa-Rynek 3D](renders/market_island_3d.png)
+
+---
+
+## 2. Huta Południowa & Terminal Towarowy (`industrial_island.nbt` — `33 × 21 × 33`, `4 847` bloków)
+
+- **Pozycja w świecie:** środek `(0, 64, 152)`, `offset: [0, 4, 152]` (płyta robocza na `Y = 64`).
+- **Kluczowe elementy widoczne na renderach:**
+  - **4 wielkie otwarte zatoki budowlane `11 × 11`** na ciężki przemysł Create, AE2 i Mekanism, oddzielone arteriami z pasami ostrzegawczymi i siatką wpuszczonych lamp `sea_lantern`.
+  - **Północny Dok Kolejowy z Suwnicą Bramową** (`create:metal_girder` + `createdeco:industrial_iron_catwalk`, mosiężny hak ładunkowy wysoko nad torem, wjazd idealnie w osi `X = 0` ze Startowej).
+  - **Ceglano-żelazny komin przemysłowy z dymem** (`campfire` `signal_fire=true`) oraz **przeszklona Dyspozytornia** z wbudowanym działającym **`lightmanscurrency:terminal`**.
+
+![Huta Południowa 3D](renders/industrial_island_3d.png)
+
+---
+
+## 3. Wyspa Startowa (`starter_island.nbt` — `15 × 13 × 15`, `389` bloków)
+
+- **Pozycja w świecie:** środek `(0, 64, 0)`, spawn `(0, 65, 0)` patrząc prosto na Wschód (wzdłuż Pirsu Wschodniego ku Wielkiej Wyspie-Rynkowi).
+- **Kluczowe elementy widoczne na renderach:**
+  - Naturalna latająca bryła skalna z dębem startowym, bezpieczną wnęką cobble-gen (blok lodu + kamienna niecka), skrzynią anty-softlock (11 pozycji) i stołem rzemieślniczym.
+  - **Pirs Wschodni** z latarniami wskazujący oś toru na Rynek oraz **znacznik łupkowy na Południu** wskazujący kierunek na Hutę Południową.
+
+![Wyspa Startowa 3D](renders/starter_island_3d.png)
+
+---
+
+## Checklista zatwierdzenia wizualnego
+- [ ] Wielka Wyspa-Rynek (`market_island.nbt`) — zatwierdzona do gry / uwagi w Issue
+- [ ] Huta Południowa (`industrial_island.nbt`) — zatwierdzona do gry / uwagi w Issue
+- [ ] Wyspa Startowa (`starter_island.nbt`) — zatwierdzona do gry / uwagi w Issue
