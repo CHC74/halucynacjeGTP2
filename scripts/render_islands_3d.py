@@ -89,6 +89,22 @@ BLOCK_COLORS: dict[str, tuple[int, int, int, int, float]] = {
     "minecraft:chest": (166, 114, 52, 255, 0.0),
     "minecraft:barrel": (136, 98, 62, 255, 0.0),
     "minecraft:crafting_table": (146, 102, 64, 255, 0.0),
+    "minecraft:smithing_table": (62, 64, 78, 255, 0.0),
+    "minecraft:anvil": (76, 78, 84, 255, 0.0),
+    "minecraft:smoker": (144, 112, 74, 255, 0.25),
+    "minecraft:blast_furnace": (108, 110, 116, 255, 0.3),
+    "minecraft:honeycomb_block": (244, 184, 48, 255, 0.1),
+    "minecraft:coal_block": (34, 36, 42, 255, 0.0),
+    "minecraft:emerald_block": (54, 214, 104, 255, 0.2),
+    "minecraft:potted_poppy": (214, 58, 52, 255, 0.1),
+    "minecraft:potted_dandelion": (248, 222, 64, 255, 0.1),
+    "minecraft:potted_blue_orchid": (62, 186, 232, 255, 0.1),
+    "minecraft:potted_orange_tulip": (242, 134, 44, 255, 0.1),
+    "minecraft:potted_pink_tulip": (242, 148, 184, 255, 0.1),
+    "minecraft:potted_fern": (76, 152, 62, 255, 0.0),
+    "minecraft:potted_azalea_bush": (146, 114, 144, 255, 0.05),
+    "minecraft:potted_oak_sapling": (92, 148, 56, 255, 0.0),
+    "minecraft:potted_cactus": (68, 134, 52, 255, 0.0),
     "minecraft:oak_wall_sign": (186, 148, 92, 255, 0.1),
     "minecraft:gold_block": (246, 206, 62, 255, 0.15),
     "minecraft:torch": (255, 214, 96, 255, 0.6),
@@ -690,27 +706,124 @@ selectIsland('market');
     print(f"🌐 Wygenerowano interaktywny podgląd 3D: {out_html.relative_to(REPO_ROOT)} ({out_html.stat().st_size // 1024} KB)")
 
 
+def _crop_blocks(
+    blocks: dict[tuple[int, int, int], tuple[str, Any]],
+    x0: int,
+    x1: int,
+    y0: int,
+    y1: int,
+    z0: int,
+    z1: int,
+) -> tuple[dict[tuple[int, int, int], tuple[str, Any]], tuple[int, int, int]]:
+    """Wycina fragment bryły (zbliżenie lub przekrój wnętrza) i przesuwa do (0,0,0)."""
+    out: dict[tuple[int, int, int], tuple[str, Any]] = {}
+    for (x, y, z), val in blocks.items():
+        if x0 <= x <= x1 and y0 <= y <= y1 and z0 <= z <= z1:
+            out[(x - x0, y - y0, z - z0)] = val
+    return out, (x1 - x0 + 1, y1 - y0 + 1, z1 - z0 + 1)
+
+
+def render_closeup_sheet(
+    out_png: Path,
+    title: str,
+    subtitle: str,
+    panels: list[Image.Image],
+) -> None:
+    """Składa 4 panele zbliżeń/przekrojów w jeden arkusz 2x2 (1796x1270)."""
+    pw, ph = 880, 580
+    header_h = 74
+    gap = 12
+    sheet_w = pw * 2 + gap * 3
+    sheet_h = ph * 2 + gap * 3 + header_h
+
+    sheet = Image.new("RGBA", (sheet_w, sheet_h), (14, 20, 32, 255))
+    sdraw = ImageDraw.Draw(sheet)
+    sdraw.rectangle([0, 0, sheet_w, header_h], fill=(18, 26, 42, 255))
+    sdraw.line([(0, header_h - 1), (sheet_w, header_h - 1)], fill=(214, 172, 74, 255), width=2)
+    sdraw.text((22, 12), title, fill=(250, 224, 134, 255), font=_get_font(22))
+    sdraw.text((22, 44), subtitle, fill=(196, 212, 234, 255), font=_get_font_regular(14))
+
+    positions = [
+        (gap, header_h + gap),
+        (gap * 2 + pw, header_h + gap),
+        (gap, header_h + gap * 2 + ph),
+        (gap * 2 + pw, header_h + gap * 2 + ph),
+    ]
+    for img, pos in zip(panels, positions):
+        sheet.paste(img, pos)
+
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    sheet.convert("RGB").save(out_png, format="PNG", optimize=True)
+    print(f"🔍 Wyrenderowano zbliżenia/wnętrza {out_png.relative_to(REPO_ROOT)} ({sheet_w}×{sheet_h}, {out_png.stat().st_size // 1024} KB)")
+
+
 def main() -> int:
     renders_dir = REPO_ROOT / "docs/renders"
     payload = {}
 
+    starter_path = REPO_ROOT / "config/skyblockbuilder/templates/islands/starter_island.nbt"
+    market_path = REPO_ROOT / "config/skyblockbuilder/templates/spreads/market_island.nbt"
+    industrial_path = REPO_ROOT / "config/skyblockbuilder/templates/spreads/industrial_island.nbt"
+
     payload["starter"] = render_island_sheet(
-        REPO_ROOT / "config/skyblockbuilder/templates/islands/starter_island.nbt",
+        starter_path,
         renders_dir / "starter_island_3d.png",
         "Wyspa Startowa (starter_island.nbt)",
         "Spawn (0, 65, 0) patrząc na Wschód • Pirs Wschodni • Skrzynia anty-softlock • Cobble-Gen",
     )
     payload["market"] = render_island_sheet(
-        REPO_ROOT / "config/skyblockbuilder/templates/spreads/market_island.nbt",
+        market_path,
         renders_dir / "market_island_3d.png",
         "Wielka Wyspa-Rynek (market_island.nbt)",
         "Środek (152, 64, 0) • Hala Dworca • Rotunda z Terminalem LC • 8 Butików • 3 ATM • Ogród",
     )
     payload["industrial"] = render_island_sheet(
-        REPO_ROOT / "config/skyblockbuilder/templates/spreads/industrial_island.nbt",
+        industrial_path,
         renders_dir / "industrial_island_3d.png",
         "Huta Południowa (industrial_island.nbt)",
         "Środek (0, 64, 152) • 4 Hale 11×11 • Suwnica Bramowa • Komin • Dyspozytornia z Terminalem",
+    )
+
+    # Arkusze zbliżeń i przekrojów wnętrz (Issue #35 — feedback użytkownika)
+    m_size, _, m_blocks = _index_blocks(decode_nbt_gzip(market_path.read_bytes()), vanilla_only=False)
+    i_size, _, i_blocks = _index_blocks(decode_nbt_gzip(industrial_path.read_bytes()), vanilla_only=False)
+
+    pw, ph = 880, 580
+
+    # 1. Zbliżenia i wnętrza Wielkiej Wyspy-Rynku
+    m_station_b, m_station_s = _crop_blocks(m_blocks, 0, 14, 6, 22, 6, 28)
+    m_rotunda_b, m_rotunda_s = _crop_blocks(m_blocks, 10, 35, 8, 13, 10, 24)
+    m_boutiques_n_b, m_boutiques_n_s = _crop_blocks(m_blocks, 8, 37, 8, 11, 1, 12)
+    m_garden_s_b, m_garden_s_s = _crop_blocks(m_blocks, 22, 44, 7, 17, 13, 34)
+
+    render_closeup_sheet(
+        renders_dir / "market_island_closeups_3d.png",
+        "Wielka Wyspa-Rynek — Zbliżenia i Przekroje Wnętrz (market_island.nbt)",
+        "Dworzec Kolejowy • Przekrój Rotundy (Terminal LC + 3 ATM) • Wnętrza Butików #1–#4 + Estakada • Ogród i Butiki #5–#8",
+        [
+            render_isometric_panel(m_station_b, m_station_s, 2, pw, ph, "1. Zbliżenie: Hala Dworca Zachodniego + Hypertube & Waystone", "Wjazd kolejowy (oś Z=0)"),
+            render_isometric_panel(m_rotunda_b, m_rotunda_s, 0, pw, ph, "2. Przekrój wnętrza: Centralna Rotunda (Terminal LC) & Kioski ATM", "Dach zdjęty (y <= 13)"),
+            render_isometric_panel(m_boutiques_n_b, m_boutiques_n_s, 0, pw, ph, "3. Przekrój wnętrz: Butiki #1–#4 (Piekarnia–Mechanika) + Aleja Create", "Parter bez piętra (y <= 11)"),
+            render_isometric_panel(m_garden_s_b, m_garden_s_s, 1, pw, ph, "4. Zbliżenie: Fontanna, Ogród Azalii & Południowe Butiki #5–#8", "Widok SE z tarasem"),
+        ],
+    )
+
+    # 2. Zbliżenia i wnętrza Huty Południowej + Plan parteru Rynku
+    i_dock_b, i_dock_s = _crop_blocks(i_blocks, 6, 23, 5, 19, 0, 12)
+    i_cabin_b, i_cabin_s = _crop_blocks(i_blocks, 22, 31, 6, 9, 1, 11)
+    i_ne_b, i_ne_s = _crop_blocks(i_blocks, 11, 32, 5, 20, 0, 15)
+    m_floor_b, m_floor_s = _crop_blocks(m_blocks, 0, m_size[0] - 1, 8, 10, 0, m_size[2] - 1)
+
+    render_closeup_sheet(
+        renders_dir / "industrial_island_closeups_3d.png",
+        "Huta Południowa — Zbliżenia i Wnętrza + Plan Parteru Rynku",
+        "Suwnica i Plac Kontenerów • Przekrój Dyspozytorni (Terminal LC + Zbiornik) • Komin z Dymem • Plan Wnętrz Parteru Rynku",
+        [
+            render_isometric_panel(i_dock_b, i_dock_s, 2, pw, ph, "1. Zbliżenie: Północny Dok Kolejowy, Suwnica & Kontenery", "Wjazd kolejowy (oś X=0)"),
+            render_isometric_panel(i_cabin_b, i_cabin_s, 0, pw, ph, "2. Przekrój wnętrza: Dyspozytornia (Terminal LC) + Zbiornik + Komin", "Dach zdjęty (y <= 9)"),
+            render_isometric_panel(i_ne_b, i_ne_s, 1, pw, ph, "3. Zbliżenie: Pełna sylwetka Komina, Zbiornika i Suwnicy Bramowej", "Widok przemysłowy NE"),
+            render_topdown_panel(m_floor_b, m_floor_s, pw, ph, "4. Rzut wnętrz parteru Wielkiej Wyspy-Rynku (przekrój Y = 64..66)"),
+        ],
     )
 
     write_interactive_html(payload, renders_dir / "island_viewer_3d.html")
