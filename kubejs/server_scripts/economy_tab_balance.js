@@ -120,23 +120,31 @@ function extractMainChainCopper(moneyView) {
     return 0;
   }
 
-  let total = 0;
+  var total = 0;
+  var values = null;
+  var len = 0;
+  var i = 0;
+  var mv = null;
+  var isMainCoinChain = false;
+  var uniq = '';
+  var coreVal = 0;
+
   try {
-    const values = moneyView.allValues();
+    values = moneyView.allValues();
     if (!values) return 0;
 
-    const len = typeof values.size === 'function' ? values.size() : values.length || 0;
-    for (let i = 0; i < len; i++) {
-      const mv = typeof values.get === 'function' ? values.get(i) : values[i];
+    len = typeof values.size === 'function' ? values.size() : values.length || 0;
+    for (i = 0; i < len; i++) {
+      mv = typeof values.get === 'function' ? values.get(i) : values[i];
       if (!mv) continue;
       if (typeof mv.isEmpty === 'function' && mv.isEmpty()) continue;
       if (typeof mv.isFree === 'function' && mv.isFree()) continue;
 
-      let isMainCoinChain = false;
+      isMainCoinChain = false;
       if (typeof mv.getChain === 'function') {
         isMainCoinChain = String(mv.getChain()) === 'main';
       } else if (typeof mv.getUniqueName === 'function') {
-        const uniq = String(mv.getUniqueName());
+        uniq = String(mv.getUniqueName());
         isMainCoinChain =
           uniq === 'lightmanscurrency:coins;main' ||
           uniq === 'lightmanscurrency:coins_main' ||
@@ -144,7 +152,7 @@ function extractMainChainCopper(moneyView) {
       }
 
       if (isMainCoinChain && typeof mv.getCoreValue === 'function') {
-        const coreVal = Number(mv.getCoreValue());
+        coreVal = Number(mv.getCoreValue());
         if (Number.isFinite(coreVal) && coreVal > 0) {
           total += coreVal;
         }
@@ -181,12 +189,15 @@ function getInventoryCoinsCopper(player) {
  * 2. Monety w wyposażonym portfelu LC (`MoneyAPI -> CoinPlayerMoneyHandler -> WalletHandler`).
  */
 function getEquippedWalletCopper(player) {
+  var api = null;
+  var moneyApi = null;
+  var handler = null;
   try {
-    const api = getLightmansApiClasses();
+    api = getLightmansApiClasses();
     if (!api || !api.MoneyAPI || typeof api.MoneyAPI.getApi !== 'function') return 0;
-    const moneyApi = api.MoneyAPI.getApi();
+    moneyApi = api.MoneyAPI.getApi();
     if (!moneyApi || typeof moneyApi.GetPlayersMoneyHandler !== 'function') return 0;
-    const handler = moneyApi.GetPlayersMoneyHandler(player);
+    handler = moneyApi.GetPlayersMoneyHandler(player);
     if (!handler || typeof handler.getStoredMoney !== 'function') return 0;
     return extractMainChainCopper(handler.getStoredMoney());
   } catch (err) {
@@ -198,16 +209,20 @@ function getEquippedWalletCopper(player) {
  * 3. Osobiste konto bankowe gracza (`PlayerBankReference.of(player).get()`).
  */
 function getPersonalBankCopper(player) {
+  var api = null;
+  var ref = null;
+  var account = null;
+  var storage = null;
   try {
-    const api = getLightmansApiClasses();
+    api = getLightmansApiClasses();
     if (!api || !api.PlayerBankReference || typeof api.PlayerBankReference.of !== 'function') {
       return 0;
     }
-    const ref = api.PlayerBankReference.of(player);
+    ref = api.PlayerBankReference.of(player);
     if (!ref || typeof ref.get !== 'function') return 0;
-    const account = ref.get();
+    account = ref.get();
     if (!account || typeof account.getMoneyStorage !== 'function') return 0;
-    const storage = account.getMoneyStorage();
+    storage = account.getMoneyStorage();
     if (!storage || typeof storage.getStoredMoney !== 'function') return 0;
     return extractMainChainCopper(storage.getStoredMoney());
   } catch (err) {
@@ -219,23 +234,33 @@ function getPersonalBankCopper(player) {
  * 4. Konta bankowe drużyn LC dostępnych dla gracza (deduplikowane po `team.getID()`).
  */
 function getTeamBanksCopper(player) {
+  var api = null;
+  var teamApi = null;
+  var teams = null;
+  var seenTeamIds = {};
+  var total = 0;
+  var len = 0;
+  var i = 0;
+  var team = null;
+  var teamId = '';
+  var account = null;
+  var storage = null;
+
   try {
-    const api = getLightmansApiClasses();
+    api = getLightmansApiClasses();
     if (!api || !api.TeamAPI || typeof api.TeamAPI.getApi !== 'function') return 0;
-    const teamApi = api.TeamAPI.getApi();
+    teamApi = api.TeamAPI.getApi();
     if (!teamApi || typeof teamApi.GetAllTeamsForPlayer !== 'function') return 0;
-    const teams = teamApi.GetAllTeamsForPlayer(player);
+    teams = teamApi.GetAllTeamsForPlayer(player);
     if (!teams) return 0;
 
-    const seenTeamIds = {};
-    let total = 0;
-    const len = typeof teams.size === 'function' ? teams.size() : teams.length || 0;
+    len = typeof teams.size === 'function' ? teams.size() : teams.length || 0;
 
-    for (let i = 0; i < len; i++) {
-      const team = typeof teams.get === 'function' ? teams.get(i) : teams[i];
+    for (i = 0; i < len; i++) {
+      team = typeof teams.get === 'function' ? teams.get(i) : teams[i];
       if (!team) continue;
 
-      const teamId = typeof team.getID === 'function' ? String(team.getID()) : String(i);
+      teamId = typeof team.getID === 'function' ? String(team.getID()) : String(i);
       if (seenTeamIds[teamId]) continue;
       seenTeamIds[teamId] = true;
 
@@ -244,9 +269,9 @@ function getTeamBanksCopper(player) {
         continue;
       }
 
-      const account = typeof team.getBankAccount === 'function' ? team.getBankAccount() : null;
+      account = typeof team.getBankAccount === 'function' ? team.getBankAccount() : null;
       if (!account || typeof account.getMoneyStorage !== 'function') continue;
-      const storage = account.getMoneyStorage();
+      storage = account.getMoneyStorage();
       if (!storage || typeof storage.getStoredMoney !== 'function') continue;
       total += extractMainChainCopper(storage.getStoredMoney());
     }
