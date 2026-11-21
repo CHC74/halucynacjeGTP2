@@ -1,0 +1,206 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "stage_5_tycoon"
+	group: "1000000000000001"
+	icon: {
+		id: "kubejs:stage_5_token"
+	}
+	id: "A500000000000000"
+	order_index: 5
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["B400000000000005"]
+			description: [
+				"Ostateczny kamień milowy kampanii! Kup &6Żeton Etapu 5: Imperium Tycoona&r (&e1 000 000 monet&r) i kliknij &aPPM&r, aby oficjalnie zdobyć &6Certyfikat Imperium Tycoona&r dla całej drużyny!"
+				""
+				"Odblokowujesz kategorię endgame w Trading Terminalu, w tym opcjonalny cel prestiżowy: zakup &bCreative Motor&r za dodatkowe &e2 000 000 monet&r."
+			]
+			icon: {
+				id: "kubejs:stage_5_token"
+			}
+			id: "B500000000000001"
+			rewards: [
+				{
+					id: "D500000000000101"
+					type: "xp_levels"
+					xp_levels: 30
+				}
+				{
+					description: "Gratulacje! Zdobyliście Certyfikat Imperium Tycoona!"
+					icon: {
+						id: "kubejs:stage_5_token"
+					}
+					id: "D500000000000102"
+					title: "IMPERIUM TYCOONA — ETAP 5!"
+					type: "toast"
+				}
+			]
+			shape: "hexagon"
+			size: 2.0d
+			subtitle: "Koszt: 1 000 000 monet | Certyfikat Imperium Tycoona"
+			tasks: [
+				{
+					consume_items: false
+					id: "C500000000000101"
+					item: {
+						count: 1
+						id: "kubejs:stage_5_token"
+					}
+					type: "item"
+				}
+				{
+					icon: {
+						id: "kubejs:stage_5_token"
+					}
+					id: "C500000000000102"
+					title: "Aktywuj Etap 5 — Certyfikat Imperium Tycoona (PPM — stage_5)"
+					type: "custom"
+				}
+			]
+			title: "Żeton Etapu 5: Imperium Tycoona"
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B500000000000001"]
+			description: [
+				"Zwieńczenie logistyki Skyblocka: zamknij pełną &b3-stacyjną pętlę kolejową&r łączącą:"
+				"• &fWyspę Startową (0, 64, 0)&r"
+				"• &fWyspę Przemysłową (0, 64, 152)&r"
+				"• &fWyspę-Rynek (152, 64, 0)&r"
+				""
+				"Pociągi, Frogporty, Packagery i Hypertubes pracujące razem jak szwajcarski zegarek to esencja HalucynacjeGTP2!"
+			]
+			icon: {
+				id: "create:track"
+			}
+			id: "B500000000000002"
+			rewards: [
+				{
+					id: "D500000000000201"
+					type: "xp_levels"
+					xp_levels: 10
+				}
+			]
+			subtitle: "Pełna automatyzacja trójkąta 3 wysp"
+			tasks: [
+				{
+					id: "C500000000000201"
+					title: "Połączyłem(-am) wszystkie 3 wyspy automatyczną siecią Create 6"
+					type: "checkmark"
+				}
+			]
+			title: "Wielka Pętla Logistyczna 3 Wysp"
+			x: 3.0d
+			y: -1.5d
+		}
+		{
+			dependencies: ["B500000000000001"]
+			description: [
+				"Udowodnij, że Twoje Imperium Tycoona opanowało wszystkie główne gałęzie gospodarki naraz — od kuchni przemysłowej po elektronikę Mekanism!"
+			]
+			icon: {
+				id: "create:precision_mechanism"
+			}
+			id: "B500000000000003"
+			rewards: [
+				{
+					id: "D500000000000301"
+					type: "xp_levels"
+					xp_levels: 15
+				}
+			]
+			subtitle: "Jednoczesna produkcja wszystkich filarów eksportu"
+			tasks: [
+				{
+					count: 64L
+					id: "C500000000000301"
+					item: {
+						count: 1
+						id: "farmersdelight:hamburger"
+					}
+					type: "item"
+				}
+				{
+					count: 64L
+					id: "C500000000000302"
+					item: {
+						count: 1
+						id: "create:sweet_roll"
+					}
+					type: "item"
+				}
+				{
+					count: 32L
+					id: "C500000000000303"
+					item: {
+						count: 1
+						id: "create:precision_mechanism"
+					}
+					type: "item"
+				}
+				{
+					count: 32L
+					id: "C500000000000304"
+					item: {
+						count: 1
+						id: "mekanism:ultimate_control_circuit"
+					}
+					type: "item"
+				}
+			]
+			title: "Mistrzostwo Wszystkich Gałęzi Eksportu"
+			x: 3.0d
+			y: 1.5d
+		}
+		{
+			dependencies: ["B500000000000001"]
+			description: [
+				"&6Opcjonalny cel prestiżowy (Endgame Flex):&r"
+				""
+				"Masz już 1 000 000 monet i Certyfikat Imperium Tycoona, ale chcesz zbudować ostateczną, wieczną fabrykę-pomnik? Zbierz kolejne &e2 000 000 monet&r i wykup &bCreate: Creative Motor&r w katalogu endgame na Wyspie-Rynku!"
+			]
+			icon: {
+				id: "create:creative_motor"
+			}
+			id: "B500000000000004"
+			optional: true
+			rewards: [
+				{
+					id: "D500000000000401"
+					type: "xp_levels"
+					xp_levels: 50
+				}
+				{
+					description: "Osiągnęliście absolutny szczyt inżynierii — Creative Motor!"
+					icon: {
+						id: "create:creative_motor"
+					}
+					id: "D500000000000402"
+					title: "ENDGAME FLEX: CREATIVE MOTOR!"
+					type: "toast"
+				}
+			]
+			shape: "gear"
+			size: 1.75d
+			subtitle: "Opcjonalny cel prestiżowy: zakup za 2 000 000 monet"
+			tasks: [
+				{
+					consume_items: false
+					id: "C500000000000401"
+					item: {
+						count: 1
+						id: "create:creative_motor"
+					}
+					type: "item"
+				}
+			]
+			title: "Endgame Flex: Creative Motor"
+			x: 6.0d
+			y: 0.0d
+		}
+	]
+	title: "Etap 5: Imperium Tycoona (1M)"
+}

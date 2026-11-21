@@ -1,0 +1,295 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "stage_2_nether"
+	group: "1000000000000001"
+	icon: {
+		id: "kubejs:stage_2_token"
+	}
+	id: "A200000000000000"
+	order_index: 2
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["B100000000000005"]
+			description: [
+				"Kup &6Żeton Etapu 2: Ekspansja i Nether&r (&e50 000 monet&r) i kliknij &aPPM&r, aby zdjąć blokadę portalu Netheru dla całej drużyny!"
+				""
+				"&eOdblokowania Etapu 2:&r"
+				"• &cNormalny Nether&r (pełna generacja waniliowa — fortece, morza lawy, kwarc)."
+				"• Kategoria sklepu: &bPrzemysł & Kolej&r (*Steam 'n' Rails*, *Hypertubes*, *Create: Confectionery*, *Enchantment Industry*, silniki elektryczne C&A)."
+				""
+				"&cPrzypomnienie anty-exploit:&r surowe bloki z Netheru (netherrack, kwarc, złoto) sprzedają się za &c0 monet&r — używaj ich jako taniego surowca dla swoich fabryk!"
+			]
+			icon: {
+				id: "kubejs:stage_2_token"
+			}
+			id: "B200000000000001"
+			rewards: [
+				{
+					id: "D200000000000101"
+					type: "xp_levels"
+					xp_levels: 8
+				}
+				{
+					description: "Nether został odblokowany dla całej drużyny!"
+					icon: {
+						id: "kubejs:stage_2_token"
+					}
+					id: "D200000000000102"
+					title: "Awans Tycoona — Etap 2"
+					type: "toast"
+				}
+			]
+			shape: "hexagon"
+			size: 1.5d
+			subtitle: "Koszt: 50 000 monet | Odblokowanie normalnego Netheru"
+			tasks: [
+				{
+					consume_items: false
+					id: "C200000000000101"
+					item: {
+						count: 1
+						id: "kubejs:stage_2_token"
+					}
+					type: "item"
+				}
+				{
+					icon: {
+						id: "kubejs:stage_2_token"
+					}
+					id: "C200000000000102"
+					title: "Aktywuj Etap 2 i odblokuj Nether (PPM — stage_2)"
+					type: "custom"
+				}
+			]
+			title: "Żeton Etapu 2: Ekspansja i Nether"
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B200000000000001"]
+			description: [
+				"Zbuduj portal i wkrocz do normalnego Netheru! Złap pierwsze &bBlaze'y&r w &fEmpty Blaze Burnery&r — od teraz Twoje piece, kotły parowe i miksery mosiądzu mogą działać na pełną skalę."
+			]
+			id: "B200000000000002"
+			rewards: [
+				{
+					id: "D200000000000201"
+					type: "xp"
+					xp: 350
+				}
+			]
+			subtitle: "Pierwsza wyprawa do Netheru i łapanie Blaze'ów"
+			tasks: [
+				{
+					dimension: "minecraft:the_nether"
+					id: "C200000000000201"
+					title: "Odwiedź Nether (minecraft:the_nether)"
+					type: "dimension"
+				}
+				{
+					count: 4L
+					id: "C200000000000202"
+					item: {
+						count: 1
+						id: "create:blaze_burner"
+					}
+					type: "item"
+				}
+			]
+			title: "Ekspedycja do Netheru i Blaze Burnery"
+			x: 2.5d
+			y: -1.5d
+		}
+		{
+			dependencies: ["B200000000000002"]
+			description: [
+				"Jedna z najlepszych pętli inżynierskich w Create: &bPociąg-Cysterna z Nieskończoną Lawą&r!"
+				""
+				"• Opuść &bHose Pulley&r na dno jeziora lawy w Netherze (>= 10 000 bloków źródłowych = nieskończone źródło)."
+				"• Przepompowuj lawę przez &bPortable Fluid Interface&r do zbiorników na pociągu i wysyłaj go przez portal prosto do elektrowni na Wyspie Startowej lub Przemysłowej!"
+			]
+			id: "B200000000000003"
+			rewards: [
+				{
+					id: "D200000000000301"
+					type: "xp"
+					xp: 400
+				}
+			]
+			subtitle: "Nieskończone paliwo dla kotłów parowych i Blaze'ów"
+			tasks: [
+				{
+					id: "C200000000000301"
+					item: {
+						count: 1
+						id: "create:hose_pulley"
+					}
+					type: "item"
+				}
+				{
+					count: 4L
+					id: "C200000000000302"
+					item: {
+						count: 1
+						id: "create:fluid_tank"
+					}
+					type: "item"
+				}
+				{
+					count: 2L
+					id: "C200000000000303"
+					item: {
+						count: 1
+						id: "create:portable_fluid_interface"
+					}
+					type: "item"
+				}
+			]
+			title: "Pociąg-Cysterna z Lawą z Netheru"
+			x: 5.0d
+			y: -1.5d
+		}
+		{
+			dependencies: ["B200000000000001"]
+			description: [
+				"Czas zamienić pierwsze linki na prawdziwą &bKolej Tycoona&r!"
+				""
+				"• Poprowadź prosty wiadukt kolejowy w osi &bZ = 0, Y = 65&r z Pirsu Wschodniego &b(+8, 65, 0)&r prosto na Stację Zachodnią Wyspy-Rynku &b(136, 65, 0)&r (~128 bloków przęsła)."
+				"• Zamontuj &bTrain Station&r, stwórz automatyczny rozkład jazdy i dostarczaj pełne wagony towarów na rynek!"
+			]
+			id: "B200000000000004"
+			rewards: [
+				{
+					id: "D200000000000401"
+					type: "xp"
+					xp: 350
+				}
+			]
+			subtitle: "Wiadukt kolejowy z (+8, 65, 0) na Stację Rynku (136, 65, 0)"
+			tasks: [
+				{
+					count: 64L
+					id: "C200000000000401"
+					item: {
+						count: 1
+						id: "create:track"
+					}
+					type: "item"
+				}
+				{
+					id: "C200000000000402"
+					item: {
+						count: 1
+						id: "create:controls"
+					}
+					type: "item"
+				}
+				{
+					count: 2L
+					id: "C200000000000403"
+					item: {
+						count: 1
+						id: "create:track_station"
+					}
+					type: "item"
+				}
+			]
+			title: "Most Kolejowy: Wyspa Startowa ↔ Rynek"
+			x: 2.5d
+			y: 1.5d
+		}
+		{
+			dependencies: ["B200000000000004"]
+			description: [
+				"Zbuduj linię luksusowych słodyczy &bCreate&r i &bCreate: Confectionery&r (Tier 3)!"
+				""
+				"Tabliczki czekolady, &fSweet Rolls&r i wypieki premium osiągają ceny &e120–310 monet&r za sztukę na Wyspie-Rynku i są idealne do automatycznego pakowania w pudła (&fPackagers&r)."
+			]
+			id: "B200000000000005"
+			rewards: [
+				{
+					id: "D200000000000501"
+					type: "xp"
+					xp: 350
+				}
+			]
+			subtitle: "Słodycze i czekolada premium (Tier 3)"
+			tasks: [
+				{
+					count: 16L
+					id: "C200000000000501"
+					item: {
+						count: 1
+						id: "create:sweet_roll"
+					}
+					type: "item"
+				}
+				{
+					count: 16L
+					id: "C200000000000502"
+					item: {
+						count: 1
+						id: "create_confectionery:bar_of_black_chocolate"
+					}
+					type: "item"
+				}
+			]
+			title: "Cukiernia Premium (Create: Confectionery)"
+			x: 5.0d
+			y: 1.5d
+		}
+		{
+			dependencies: [
+				"B200000000000003"
+				"B200000000000004"
+			]
+			description: [
+				"Dwa filary nowoczesnej infrastruktury Etapu 2:"
+				""
+				"1. &bCreate: Hypertubes&r — zbuduj rurę szybkiego transportu graczy prosto na Terminal Hypertube Wyspy-Rynku &b(139, 65, -3)&r."
+				"2. &bCreate: Crafts & Additions&r — zamieniaj obroty &fSU&r na prąd &fFE&r (&fAlternator&r) i odwrotnie (&fElectric Motor&r), przygotowując sieć energetyczną pod przyszłe AE2 i Mekanism."
+			]
+			id: "B200000000000006"
+			rewards: [
+				{
+					id: "D200000000000601"
+					type: "xp"
+					xp: 400
+				}
+			]
+			subtitle: "Szybki transport graczy oraz konwersja SU ↔ FE"
+			tasks: [
+				{
+					id: "C200000000000601"
+					item: {
+						count: 1
+						id: "createaddition:alternator"
+					}
+					type: "item"
+				}
+				{
+					id: "C200000000000602"
+					item: {
+						count: 1
+						id: "createaddition:electric_motor"
+					}
+					type: "item"
+				}
+				{
+					id: "C200000000000603"
+					item: {
+						count: 1
+						id: "hypertubes:hypertube_entrance"
+					}
+					type: "item"
+				}
+			]
+			title: "Hypertubes i Elektryczność (C&A)"
+			x: 7.5d
+			y: 0.0d
+		}
+	]
+	title: "Etap 2: Ekspansja i Nether (50k)"
+}

@@ -1,0 +1,247 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "stage_4_hightech_end"
+	group: "1000000000000001"
+	icon: {
+		id: "kubejs:stage_4_token"
+	}
+	id: "A400000000000000"
+	order_index: 4
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["B300000000000006"]
+			description: [
+				"Kup &6Żeton Etapu 4: High-Tech i End&r (&e250 000 monet&r) i kliknij &aPPM&r, aby otworzyć ostatni wymiar i pełną erę High-Tech!"
+				""
+				"&eOdblokowania Etapu 4:&r"
+				"• &5Normalny End&r (Smok Endu, Elytry, Shulkery, pełna generacja waniliowa)."
+				"• Pełne skalowanie &bApplied Energistics 2&r + &bCreate: Applied Kinetics&r."
+				"• Pełne wejście w &bMekanism&r i &bMekanism Generators&r."
+			]
+			icon: {
+				id: "kubejs:stage_4_token"
+			}
+			id: "B400000000000001"
+			rewards: [
+				{
+					id: "D400000000000101"
+					type: "xp_levels"
+					xp_levels: 15
+				}
+				{
+					description: "End oraz era High-Tech zostały odblokowane!"
+					icon: {
+						id: "kubejs:stage_4_token"
+					}
+					id: "D400000000000102"
+					title: "Awans Tycoona — Etap 4"
+					type: "toast"
+				}
+			]
+			shape: "hexagon"
+			size: 1.5d
+			subtitle: "Koszt: 250 000 monet | Odblokowanie Endu, AE2 i Mekanism"
+			tasks: [
+				{
+					consume_items: false
+					id: "C400000000000101"
+					item: {
+						count: 1
+						id: "kubejs:stage_4_token"
+					}
+					type: "item"
+				}
+				{
+					icon: {
+						id: "kubejs:stage_4_token"
+					}
+					id: "C400000000000102"
+					title: "Aktywuj Etap 4 i odblokuj End (PPM — stage_4)"
+					type: "custom"
+				}
+			]
+			title: "Żeton Etapu 4: High-Tech i End"
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B400000000000001"]
+			description: [
+				"Zbierz drużynę i wyrusz do normalnego Endu pokonać &5Smoka Endu&r!"
+				""
+				"Z &fkeepInventory = true&r walka jest czystą frajdą — zdobądź Elytry, Shulker Boxy i oddech smoka do późniejszych linii produkcyjnych. Pamiętaj: surowe &fEnd Stone&r i &fChorus Fruit&r mają cenę skupu &c0 monet&r."
+			]
+			id: "B400000000000002"
+			rewards: [
+				{
+					id: "D400000000000201"
+					type: "xp_levels"
+					xp_levels: 10
+				}
+			]
+			subtitle: "Wspólna walka ze Smokiem Endu i eksploracja"
+			tasks: [
+				{
+					dimension: "minecraft:the_end"
+					id: "C400000000000201"
+					title: "Odwiedź End (minecraft:the_end)"
+					type: "dimension"
+				}
+				{
+					entity: "minecraft:ender_dragon"
+					id: "C400000000000202"
+					title: "Pokonaj Smoka Endu"
+					type: "kill"
+					value: 1L
+				}
+			]
+			title: "Wyprawa do Endu i Smok Endu"
+			x: 2.5d
+			y: -1.5d
+		}
+		{
+			dependencies: ["B400000000000001"]
+			description: [
+				"Połącz swoją fabrykę mechaniczną z mózgiem cyfrowym! Postaw &bME Controller&r, &bPattern Providery&r oraz most &bCreate: Applied Kinetics&r."
+				""
+				"Dzięki temu Twoja sieć AE2 może zamawiać produkty bezpośrednio z linii Create 6 (Packagers, Stock Networks) i automatycznie produkować procesory eksportowe!"
+			]
+			id: "B400000000000003"
+			rewards: [
+				{
+					id: "D400000000000301"
+					type: "xp"
+					xp: 600
+				}
+			]
+			subtitle: "Cyfrowy autokrafting spięty z Create 6"
+			tasks: [
+				{
+					id: "C400000000000301"
+					item: {
+						count: 1
+						id: "ae2:controller"
+					}
+					type: "item"
+				}
+				{
+					id: "C400000000000302"
+					item: {
+						count: 1
+						id: "ae2:pattern_provider"
+					}
+					type: "item"
+				}
+				{
+					id: "C400000000000303"
+					item: {
+						count: 1
+						id: "createappliedkinetics:stress_generator"
+					}
+					type: "item"
+				}
+			]
+			title: "AE2 + Create: Applied Kinetics"
+			x: 2.5d
+			y: 1.5d
+		}
+		{
+			dependencies: ["B400000000000003"]
+			description: [
+				"Uruchom metalurgię i energetykę &bMekanism&r oraz &bMekanism Generators&r — przetwarzanie rud 3x–5x, produkcja stopów, obwodów sterujących oraz wydajne generatory (Ethylene / Turbiny / Reaktory)."
+				""
+				"&eHigiena TPS na Exaroton:&r unikaj zbędnych pętli rur Mekanism i stawiaj ciężkie kompleksy chemiczne na Wyspie Przemysłowej &b(0, 64, 152)&r w ramach limitu chunk-loadingu (20 chunków na drużynę)."
+			]
+			id: "B400000000000004"
+			rewards: [
+				{
+					id: "D400000000000401"
+					type: "xp"
+					xp: 700
+				}
+			]
+			subtitle: "Metalurgia, chemia i energetyka High-Tech"
+			tasks: [
+				{
+					id: "C400000000000401"
+					item: {
+						count: 1
+						id: "mekanism:metallurgic_infuser"
+					}
+					type: "item"
+				}
+				{
+					id: "C400000000000402"
+					item: {
+						count: 1
+						id: "mekanism:enrichment_chamber"
+					}
+					type: "item"
+				}
+				{
+					id: "C400000000000403"
+					item: {
+						count: 1
+						id: "mekanismgenerators:gas_burning_generator"
+					}
+					type: "item"
+				}
+			]
+			title: "Wejście w Mekanism i Generatory"
+			x: 5.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B400000000000004"]
+			description: [
+				"Zautomatyzuj eksport elektroniki &bAE2&r i obwodów &bMekanism&r (&eTier 5&r: &e2 500 – 14 500 monet&r za sztukę)!"
+				""
+				"Dostarczaj je na stoiska #6 i #7 Wyspy-Rynku lub do hurtowego Trading Terminalu — to najkrótsza i najprzyjemniejsza droga do &61 000 000 monet&r i finałowego Etapu 5."
+			]
+			id: "B400000000000005"
+			rewards: [
+				{
+					id: "D400000000000501"
+					type: "xp_levels"
+					xp_levels: 12
+				}
+			]
+			subtitle: "Najbardziej dochodowy eksport na drodze do 1M monet"
+			tasks: [
+				{
+					count: 32L
+					id: "C400000000000501"
+					item: {
+						count: 1
+						id: "ae2:engineering_processor"
+					}
+					type: "item"
+				}
+				{
+					count: 32L
+					id: "C400000000000502"
+					item: {
+						count: 1
+						id: "ae2:calculation_processor"
+					}
+					type: "item"
+				}
+				{
+					count: 16L
+					id: "C400000000000503"
+					item: {
+						count: 1
+						id: "mekanism:ultimate_control_circuit"
+					}
+					type: "item"
+				}
+			]
+			title: "Eksport High-Tech Tier 5"
+			x: 7.5d
+			y: 0.0d
+		}
+	]
+	title: "Etap 4: High-Tech i End (250k)"
+}

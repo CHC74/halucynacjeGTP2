@@ -1,0 +1,302 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "stage_1_trade"
+	group: "1000000000000001"
+	icon: {
+		id: "kubejs:stage_1_token"
+	}
+	id: "A100000000000000"
+	order_index: 1
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["B000000000000007"]
+			description: [
+				"Kup &6Żeton Etapu 1: Rzemiosło i Handel&r (&e10 000 monet&r) w Pawilonie Centralnym na Wyspie-Rynku &b(152, 64, 0)&r i kliknij nim &aPPM&r, aby odblokować Etap 1 dla całej drużyny co-op!"
+				""
+				"&eOdblokowania Etapu 1:&r"
+				"• Kategoria sklepu: &bGastronomia & Rolnictwo&r (egzotyczne sadzonki, kakaowiec, kelp, startowe Blaze Burnery)."
+				"• Wyższe tiery skrzyń &bSophisticated Storage&r oraz pierwsze materiały kolejowe."
+				""
+				"&7Zadanie aktywacji zalicza się automatycznie w chwili użycia żetonu (KubeJS).&r"
+			]
+			icon: {
+				id: "kubejs:stage_1_token"
+			}
+			id: "B100000000000001"
+			rewards: [
+				{
+					id: "D100000000000101"
+					type: "xp_levels"
+					xp_levels: 5
+				}
+				{
+					description: "Odblokowano Etap 1: Rzemiosło i Handel!"
+					icon: {
+						id: "kubejs:stage_1_token"
+					}
+					id: "D100000000000102"
+					title: "Awans Tycoona — Etap 1"
+					type: "toast"
+				}
+			]
+			shape: "hexagon"
+			size: 1.5d
+			subtitle: "Koszt: 10 000 monet | Odblokowanie gastronomii i handlu"
+			tasks: [
+				{
+					consume_items: false
+					id: "C100000000000101"
+					item: {
+						count: 1
+						id: "kubejs:stage_1_token"
+					}
+					type: "item"
+				}
+				{
+					icon: {
+						id: "kubejs:stage_1_token"
+					}
+					id: "C100000000000102"
+					title: "Aktywuj Etap 1 (PPM na Żeton — stage_1)"
+					type: "custom"
+				}
+			]
+			title: "Żeton Etapu 1: Rzemiosło i Handel"
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B100000000000001"]
+			description: [
+				"Złożone posiłki &bFarmer's Delight&r i &bCreate: Food&r (Tier 2) to Twój główny motor finansowy na drodze do 50 000 monet!"
+				""
+				"Połącz &bCreate: Slice & Dice&r (&fSlicer&r do automatycznego krojenia składników) z &bCreate: Central Kitchen&r i &fStove&r, aby zautomatyzować produkcję hamburgerów, makaronów i dań obiadowych bez ręcznego klikania."
+			]
+			id: "B100000000000002"
+			rewards: [
+				{
+					id: "D100000000000201"
+					type: "xp"
+					xp: 200
+				}
+			]
+			subtitle: "Automatyzacja dań Tier 2 (Slice & Dice + Central Kitchen)"
+			tasks: [
+				{
+					id: "C100000000000201"
+					item: {
+						count: 1
+						id: "sliceanddice:slicer"
+					}
+					type: "item"
+				}
+				{
+					id: "C100000000000202"
+					item: {
+						count: 1
+						id: "farmersdelight:stove"
+					}
+					type: "item"
+				}
+				{
+					count: 16L
+					id: "C100000000000203"
+					item: {
+						count: 1
+						id: "farmersdelight:hamburger"
+					}
+					type: "item"
+				}
+			]
+			title: "Kuchnia Przemysłowa Tier 2"
+			x: 2.5d
+			y: -1.5d
+		}
+		{
+			dependencies: ["B100000000000001"]
+			description: [
+				"Create 6 wprowadza rewolucyjną logistykę paczek! Zamiast biegać pieszo z jedzeniem na Wyspę-Rynek, rozepnij napowietrzną linię &bChain Conveyors&r."
+				""
+				"• Na Pirsie Wschodnim Wyspy Startowej &b(+8, 72, 0)&r masz gotowy maszt startowy."
+				"• Pakuj gotowe posiłki przez &bPackager&r, nadaj im adres stoiska i wysyłaj &bPackage Frogportami&r prosto do korytarza serwisowego Wyspy-Rynku &b(152, 64, 0)&r!"
+			]
+			id: "B100000000000003"
+			rewards: [
+				{
+					id: "D100000000000301"
+					type: "xp"
+					xp: 250
+				}
+			]
+			subtitle: "Napowietrzna linia paczek z (+8, 72, 0) na Wyspę-Rynek"
+			tasks: [
+				{
+					count: 2L
+					id: "C100000000000301"
+					item: {
+						count: 1
+						id: "create:packager"
+					}
+					type: "item"
+				}
+				{
+					count: 4L
+					id: "C100000000000302"
+					item: {
+						count: 1
+						id: "create:chain_conveyor"
+					}
+					type: "item"
+				}
+				{
+					count: 2L
+					id: "C100000000000303"
+					item: {
+						count: 1
+						id: "create:package_frogport"
+					}
+					type: "item"
+				}
+			]
+			title: "Logistyka Create 6: Packagery i Frogporty"
+			x: 2.5d
+			y: 1.5d
+		}
+		{
+			dependencies: [
+				"B100000000000002"
+				"B100000000000003"
+			]
+			description: [
+				"Zajmij jedno z 8 modularnych stoisk (&fS1–S8&r) na Wyspie-Rynku &b(152, 64, 0)&r i postaw tam swój fizyczny sklep &bLightman's Currency&r."
+				""
+				"• Front stoiska kieruj do głównej alei placu — tam spacerują NPC &bShoppers&r."
+				"• Zasilaj stoisko od tyłu przez zamknięty korytarz serwisowy (&bZ = -9..-10&r lub &bZ = +9..+10&r), nie blokując ścieżek NPC."
+				"• Zawsze miej przy sobie portfel (&fWallet&r), aby wygodnie zbierać utarg!"
+			]
+			id: "B100000000000004"
+			rewards: [
+				{
+					id: "D100000000000401"
+					type: "xp"
+					xp: 250
+				}
+			]
+			subtitle: "Fizyczny sklep zasilany taśmociągiem (+20% marży)"
+			tasks: [
+				{
+					id: "C100000000000401"
+					item: {
+						count: 1
+						id: "lightmanscurrency:shelf_oak"
+					}
+					type: "item"
+				}
+				{
+					id: "C100000000000402"
+					item: {
+						count: 1
+						id: "lightmanscurrency:wallet_copper"
+					}
+					type: "item"
+				}
+			]
+			title: "Pierwsze Stoisko na Wyspie-Rynku"
+			x: 5.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["B100000000000004"]
+			description: [
+				"Jeszcze przed odblokowaniem Netheru (Etap 2) możesz wejść w &eBrass Age&r dzięki naszym recepturom Skyblock w KubeJS:"
+				""
+				"• &fTerracotta&r -> &fMillstone&r -> &fRed Sand&r (lub &fSand + Red Dye&r w Mikserze)."
+				"• &fCobblestone + Red Sand + Lava&r -> &fNetherrack&r (pod &fEmpty Blaze Burner&r i &fCinder Flour&r)."
+				"• &fSand&r -> &fBulk Haunting&r -> &fSoul Sand&r -> &fBulk Washing&r -> &fNether Quartz&r."
+				"• Pierwsze napełnione Blaze Burnery możesz kupić w sklepie Etapu 1, a po odblokowaniu Netheru złapiesz ich dowolną liczbę!"
+			]
+			id: "B100000000000005"
+			rewards: [
+				{
+					id: "D100000000000501"
+					type: "xp"
+					xp: 300
+				}
+			]
+			subtitle: "Wejście w Brass Age na Skyblocku przed Netherem"
+			tasks: [
+				{
+					count: 16L
+					id: "C100000000000501"
+					item: {
+						count: 1
+						id: "minecraft:red_sand"
+					}
+					type: "item"
+				}
+				{
+					count: 8L
+					id: "C100000000000502"
+					item: {
+						count: 1
+						id: "create:brass_ingot"
+					}
+					type: "item"
+				}
+				{
+					id: "C100000000000503"
+					item: {
+						count: 1
+						id: "create:empty_blaze_burner"
+					}
+					type: "item"
+				}
+			]
+			title: "Wczesny Czerwony Piasek, Kwarc i Mosiądz"
+			x: 7.5d
+			y: -1.0d
+		}
+		{
+			dependencies: ["B100000000000004"]
+			description: [
+				"Przy rozbudowie wyspy dbaj o wydajność serwera Exaroton i FPS na Macu M2:"
+				""
+				"• Zastępuj dziesiątki zwykłych skrzyń pojemnymi skrzyniami i beczkami &bSophisticated Storage&r."
+				"• Wykorzystaj &bBuilding Gadgets 2&r do szybkiego i bezpiecznego budowania hal fabrycznych oraz przęseł mostowych nad pustką."
+			]
+			id: "B100000000000006"
+			rewards: [
+				{
+					id: "D100000000000601"
+					type: "xp"
+					xp: 200
+				}
+			]
+			subtitle: "Czysta baza i szybka rozbudowa nad pustką"
+			tasks: [
+				{
+					id: "C100000000000601"
+					item: {
+						count: 1
+						id: "sophisticatedstorage:iron_chest"
+					}
+					type: "item"
+				}
+				{
+					id: "C100000000000602"
+					item: {
+						count: 1
+						id: "buildinggadgets2:gadget_building"
+					}
+					type: "item"
+				}
+			]
+			title: "Kompaktowe Magazyny i Budowanie"
+			x: 7.5d
+			y: 1.5d
+		}
+	]
+	title: "Etap 1: Rzemiosło i Handel (10k)"
+}
