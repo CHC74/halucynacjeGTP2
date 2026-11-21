@@ -515,91 +515,169 @@ function handleBuy(player, server, rawKey, rawQty) {
   return qty;
 }
 
+let CACHED_TERMINAL_CLASSES = null;
+let CACHED_TERMINAL_CLASSES_LOADED = false;
+
+function getTerminalGuiClasses() {
+  if (CACHED_TERMINAL_CLASSES_LOADED) {
+    return CACHED_TERMINAL_CLASSES;
+  }
+  CACHED_TERMINAL_CLASSES_LOADED = true;
+
+  if (typeof Java === 'undefined' || typeof Java.loadClass !== 'function') {
+    CACHED_TERMINAL_CLASSES = null;
+    return null;
+  }
+
+  const loaded = { TerminalMenuProvider: null, SimpleValidator: null };
+  try {
+    loaded.TerminalMenuProvider = Java.loadClass(
+      'io.github.lightman314.lightmanscurrency.common.menus.providers.TerminalMenuProvider'
+    );
+    loaded.SimpleValidator = Java.loadClass(
+      'io.github.lightman314.lightmanscurrency.common.menus.validation.types.SimpleValidator'
+    );
+  } catch (err) {
+    console.warn(`[HalucynacjeGTP2] Nie udało się załadować klas Trading Terminala LC: ${err}`);
+  }
+
+  CACHED_TERMINAL_CLASSES = loaded;
+  return loaded;
+}
+
+function safeTellPlayer(player, component) {
+  if (!player || typeof player.tell !== 'function') {
+    return;
+  }
+  try {
+    player.tell(component);
+  } catch (err) {
+    console.warn(`[HalucynacjeGTP2] safeTellPlayer nie powiódł się: ${err}`);
+  }
+}
+
 /**
  * Otwiera natywne graficzne GUI Trading Terminala Lightman's Currency (1.21-2.3.0.6)
  * z sieciowymi sklepami z `config/lightmanscurrency/PersistentTraders.json`.
  *
- * Zweryfikowane w bajtkodzie `CommandTerminal` i `TerminalMenuProvider`:
- *   `TerminalMenuProvider.OpenMenu(player, SimpleValidator.NULL)`
- * Jeśli z jakiegoś powodu ładowanie klasy Java się nie powiedzie, próbuje
- * natywnej komendy `/lcterminal` (włączonej w `config/lightmanscurrency-server.txt`).
+ * Zweryfikowane w bajtkodzie `CommandTerminal`, `TerminalMenuProvider` i `MinecraftServerKJS`:
+ *   1) Bezpośrednio: `TerminalMenuProvider.OpenMenu(player, SimpleValidator.NULL)`
+ *   2) Fallback przez natywny dispatcher Brigadiera `/lcterminal` (zwracający prawdziwy `int`,
+ *      ponieważ `server.runCommandSilent(...)` w KubeJS 7.2 zwraca `void`!).
  */
-function openTradingTerminalGui(player, server) {
+function openTradingTerminalGui(player, server, source) {
   try {
-    if (typeof Java !== 'undefined' && Java.loadClass) {
-      const TerminalMenuProvider = Java.loadClass(
-        'io.github.lightman314.lightmanscurrency.common.menus.providers.TerminalMenuProvider'
-      );
-      const SimpleValidator = Java.loadClass(
-        'io.github.lightman314.lightmanscurrency.common.menus.validation.types.SimpleValidator'
-      );
-      if (TerminalMenuProvider && SimpleValidator && TerminalMenuProvider.OpenMenu) {
-        TerminalMenuProvider.OpenMenu(player, SimpleValidator.NULL);
-        return true;
-      }
+    const classes = getTerminalGuiClasses();
+    if (
+      classes &&
+      classes.TerminalMenuProvider &&
+      classes.SimpleValidator &&
+      classes.TerminalMenuProvider.OpenMenu &&
+      classes.SimpleValidator.NULL
+    ) {
+      classes.TerminalMenuProvider.OpenMenu(player, classes.SimpleValidator.NULL);
+      return true;
     }
   } catch (err) {
     console.warn(`[HalucynacjeGTP2] TerminalMenuProvider.OpenMenu nie powiodło się: ${err}`);
   }
 
   try {
-    if (server && typeof server.runCommandSilent === 'function' && player && player.username) {
-      const res = server.runCommandSilent(`execute as ${player.username} run lcterminal`);
-      if (res > 0) {
-        return true;
+    const dispatcher =
+      server && server.commands && typeof server.commands.getDispatcher === 'function'
+        ? server.commands.getDispatcher()
+        : server && server.commands && server.commands.dispatcher
+          ? server.commands.dispatcher
+          : null;
+    if (dispatcher && typeof dispatcher.execute === 'function') {
+      let cmdSource = null;
+      if (source && typeof source.withPermission === 'function') {
+        cmdSource = source.withPermission(2);
+      } else if (player && typeof player.createCommandSourceStack === 'function') {
+        cmdSource = player.createCommandSourceStack().withPermission(2);
+      }
+      if (cmdSource && typeof cmdSource.withSuppressedOutput === 'function') {
+        cmdSource = cmdSource.withSuppressedOutput();
+      }
+      if (cmdSource) {
+        const res = Number(dispatcher.execute('lcterminal', cmdSource) || 0);
+        if (res > 0) {
+          return true;
+        }
       }
     }
   } catch (err2) {
-    console.warn(`[HalucynacjeGTP2] Fallback /lcterminal nie powiódł się: ${err2}`);
+    console.warn(`[HalucynacjeGTP2] Fallback Brigadier /lcterminal nie powiódł się: ${err2}`);
   }
 
   return false;
 }
 
-function handleOpenShopGui(player, server) {
-  if (openTradingTerminalGui(player, server)) {
+function handleOpenShopGui(player, server, source) {
+  try {
+    if (openTradingTerminalGui(player, server, source)) {
+      return 1;
+    }
+    safeTellPlayer(
+      player,
+      Text.yellow(
+        '[Sklep] Nie udało się otworzyć GUI Trading Terminala — wpisz /lcterminal, /sklep lista albo użyj Trading Terminala na Wyspie-Rynku.'
+      )
+    );
     return 1;
+  } catch (err) {
+    console.error(`[HalucynacjeGTP2] Błąd podczas wykonywania /sklep: ${err}`);
+    safeTellPlayer(
+      player,
+      Text.red('[Sklep] Wystąpił błąd otwierania sklepu — spróbuj /lcterminal lub /sklep lista.')
+    );
+    return 0;
   }
-  player.tell(
-    Text.yellow(
-      '[Sklep] Nie udało się otworzyć GUI Trading Terminala — wyświetlam katalog tekstowy (spróbuj też /lcterminal lub bloku Trading Terminal na Wyspie-Rynku).'
-    )
-  );
-  handleShowShop(player, server, null);
-  return 1;
 }
 
 function handleShowShop(player, server, requestedStage) {
-  const catalog = getMarketCatalog(false);
-  const currentStage = getCurrentUnlockedStage(player, server);
-  const filterStage = requestedStage != null ? Number(requestedStage) : null;
+  try {
+    const catalog = getMarketCatalog(false);
+    const currentStage = getCurrentUnlockedStage(player, server);
+    const filterStage = requestedStage != null ? Number(requestedStage) : null;
 
-  player.tell(
-    Text.gold(`=== Katalog Sklepu (Twój Etap: ${currentStage}${filterStage != null ? `, widok Etapu ${filterStage}` : ''}) ===`)
-  );
+    safeTellPlayer(
+      player,
+      Text.gold(
+        `=== Katalog Sklepu (Twój Etap: ${currentStage}${filterStage != null ? `, widok Etapu ${filterStage}` : ''}) ===`
+      )
+    );
 
-  let shown = 0;
-  for (let i = 0; i < catalog.buyList.length; i++) {
-    const entry = catalog.buyList[i];
-    if (filterStage != null) {
-      if (entry.stage !== filterStage) continue;
-    } else if (entry.stage > currentStage) {
-      continue;
+    let shown = 0;
+    for (let i = 0; i < catalog.buyList.length; i++) {
+      const entry = catalog.buyList[i];
+      if (filterStage != null) {
+        if (entry.stage !== filterStage) continue;
+      } else if (entry.stage > currentStage) {
+        continue;
+      }
+
+      const prefix = entry.stage > currentStage ? `[Wymaga Stage ${entry.stage}] ` : `[S${entry.stage}] `;
+      const lockTag = entry.stage > currentStage ? Text.red(prefix) : Text.green(prefix);
+      const limitNote = entry.teamLimit > 0 ? ` (limit ${entry.teamLimit})` : '';
+      const aliasStr = String(entry.alias || entry.id || '?');
+      const noteStr = String(entry.note || '');
+      safeTellPlayer(
+        player,
+        lockTag
+          .append(Text.aqua(`/kup ${aliasStr}`))
+          .append(Text.white(` — ${formatCoins(entry.buyPrice)} monet`))
+          .append(Text.gray(` | ${noteStr}${limitNote}`))
+      );
+      shown++;
     }
 
-    const lockTag = entry.stage > currentStage ? Text.red(`[Wymaga Stage ${entry.stage}] `) : Text.green(`[S${entry.stage}] `);
-    const limitNote = entry.teamLimit > 0 ? ` (limit ${entry.teamLimit})` : '';
-    player.tell(
-      lockTag
-        .append(Text.aqua(`/kup ${entry.alias}`))
-        .append(Text.white(` — ${formatCoins(entry.buyPrice)} monet`))
-        .append(Text.gray(` | ${entry.note}${limitNote}`))
-    );
-    shown++;
-  }
-
-  if (shown === 0) {
-    player.tell(Text.gray('Brak pozycji dla tego etapu. Sprawdź /sklep 0..5.'));
+    if (shown === 0) {
+      safeTellPlayer(player, Text.gray('Brak pozycji dla tego etapu. Sprawdź /sklep 0..5.'));
+    }
+  } catch (err) {
+    console.error(`[HalucynacjeGTP2] Błąd w handleShowShop: ${err}`);
+    safeTellPlayer(player, Text.red('[Sklep] Błąd wyświetlania katalogu tekstowego.'));
   }
 }
 
@@ -713,7 +791,7 @@ ServerEvents.commandRegistry((event) => {
       .executes((ctx) => {
         const player = ctx.source.player;
         if (!player) return 0;
-        return handleOpenShopGui(player, ctx.source.server);
+        return handleOpenShopGui(player, ctx.source.server, ctx.source);
       })
       .then(
         Commands.literal('lista')
@@ -800,9 +878,13 @@ ServerEvents.commandRegistry((event) => {
           `[HalucynacjeGTP2] Przeładowano prices.json (${Object.keys(cat.sellById).length} skup, ${cat.buyList.length} sklep, ${Object.keys(cat.tier0).length} blokad Tier 0).`
         );
         try {
-          ctx.source.sendSuccess(() => msg, true);
+          if (ctx && ctx.source && typeof ctx.source.sendSuccess === 'function') {
+            ctx.source.sendSuccess(msg, true);
+          } else if (ctx && ctx.source && ctx.source.player) {
+            ctx.source.player.tell(msg);
+          }
         } catch (e) {
-          if (ctx.source.player) ctx.source.player.tell(msg);
+          if (ctx && ctx.source && ctx.source.player) ctx.source.player.tell(msg);
         }
         return 1;
       })

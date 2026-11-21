@@ -200,19 +200,48 @@ test('skyblock_create_recipes.js: Create 6.0.10 neoforge:single & Mechanical Ext
 });
 
 // 3. economy_anti_exploit.js
-test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine i synchronizacja wszystkich cen z prices.json', () => {
+test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldData API (Tier 0 = 0) i brak ArrowFunction w sendSuccess', () => {
+  // Globalna straż regresji KubeJS 7.2: żadna komenda NIE może wywoływać `sendSuccess(() => ...)`!
+  for (const scriptFile of fs.readdirSync('kubejs/server_scripts')) {
+    if (!scriptFile.endsWith('.js')) continue;
+    const raw = fs.readFileSync(`kubejs/server_scripts/${scriptFile}`, 'utf8');
+    assert(
+      !/sendSuccess\s*\(\s*\(\s*\)\s*=>/.test(raw),
+      `Wykryto sendSuccess(() => ...) w ${scriptFile} — w KubeJS 7.2 wypisuje ArrowFunction(0) na czacie!`
+    );
+  }
+
   const removed = [];
+  const customPrices = new Map();
+  const feedbackSent = [];
   const sandbox = {
     console: { info: () => {}, warn: () => {}, error: () => {} },
     JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
     Text: makeTextProxy(),
+    Java: {
+      loadClass: (cls) => {
+        if (cls === 'com.velesbh.shoppers.economy.ShoppersWorldData') {
+          return {
+            get: (lvl) => {
+              assert(lvl && lvl.__isOverworld === true, 'ShoppersWorldData.get musi dostać Overworld');
+              return {
+                setCustomPrice: (id, worth) => customPrices.set(String(id), Number(worth))
+              };
+            }
+          };
+        }
+        throw new Error(`Unexpected class: ${cls}`);
+      }
+    },
     ServerEvents: {
       recipes: (cb) => cb({ remove: (filter) => removed.push(filter) }),
       loaded: () => {},
       commandRegistry: () => {}
     },
     assert,
-    __removed: removed
+    __removed: removed,
+    __customPrices: customPrices,
+    __feedbackSent: feedbackSent
   };
   const src =
     fs.readFileSync('kubejs/server_scripts/economy_anti_exploit.js', 'utf8') +
@@ -225,21 +254,67 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine i synchronizacja
       const positives = entries.filter((e) => e.worth > 0);
       assert(zeros.length === ${prices.tier_0_blocked.length}, 'all Tier 0 zeroed');
       assert(positives.length === 72, 'all 72 Tier 1-5 items synced');
+
+      const mockServer = { overworld: () => ({ __isOverworld: true }), runCommandSilent: () => {} };
+      const syncRes = applyShoppersTier0ZeroWorth(mockServer);
+      assert(syncRes.viaJavaApi === true, 'uses ShoppersWorldData Java API');
+      assert(syncRes.tier0 === ${prices.tier_0_blocked.length}, 'all Tier 0 written as 0 via API');
+      assert(syncRes.npc === 72, 'all 72 NPC prices written via API');
+      assert(__customPrices.get('minecraft:cobblestone') === 0, 'cobblestone worth === 0');
+      assert(__customPrices.get('minecraft:ancient_debris') === 0, 'ancient_debris worth === 0');
+
+      const msgComp = Text.green('OK');
+      sendCommandFeedback(
+        {
+          source: {
+            sendSuccess: (comp, broadcast) => {
+              assert(typeof comp !== 'function', 'sendSuccess nie może dostawać ArrowFunction!');
+              __feedbackSent.push({ s: comp.s, broadcast });
+            }
+          }
+        },
+        msgComp
+      );
+      assert(__feedbackSent.length === 1 && __feedbackSent[0].s === 'OK', 'sendSuccess przekazał Component');
     })();
     `;
   vm.runInNewContext(src, sandbox);
 });
 
 // 4. economy_market.js
-test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna reszta, gating i limit creative_motor', () => {
+test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna reszta, gating, limit creative_motor i /sklep GUI', () => {
+  let terminalOpened = 0;
+  let dispatcherExecs = 0;
   const sandbox = {
     console: { info: () => {}, warn: () => {}, error: () => {} },
     JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
     Item: makeItemFactory(),
     Text: makeTextProxy(),
+    Java: {
+      loadClass: (cls) => {
+        if (cls.endsWith('TerminalMenuProvider')) {
+          return {
+            OpenMenu: (p, v) => {
+              assert(p && v && v.__isNullValidator === true, 'OpenMenu receives player & SimpleValidator.NULL');
+              terminalOpened++;
+            }
+          };
+        }
+        if (cls.endsWith('SimpleValidator')) {
+          return { NULL: { __isNullValidator: true } };
+        }
+        throw new Error(`Unexpected class: ${cls}`);
+      }
+    },
     ServerEvents: { commandRegistry: () => {} },
     assert,
-    __makeCompound: makeCompound
+    __makeCompound: makeCompound,
+    __getTerminalOpened: () => terminalOpened,
+    __incDispatcher: () => {
+      dispatcherExecs++;
+      return 1;
+    },
+    __getDispatcherExecs: () => dispatcherExecs
   };
   const src =
     fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8') +
@@ -283,6 +358,30 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
       assert(handleBuy(player, server, 'creative_motor', 3) === 0, 'creative_motor team_limit=2 enforced');
       assert(handleBuy(player, server, 'creative_motor', 2) === 2, 'creative_motor buy 2 allowed');
       assert(handleBuy(player, server, 'creative_motor', 1) === 0, 'creative_motor 3rd blocked');
+
+      // Test /sklep GUI: ścieżka główna TerminalMenuProvider.OpenMenu
+      assert(handleOpenShopGui(player, server, null) === 1, '/sklep primary GUI ok');
+      assert(__getTerminalOpened() === 1, 'TerminalMenuProvider.OpenMenu called');
+
+      // Test /sklep GUI: ścieżka fallback Brigadier dispatcher.execute('lcterminal', cmdSource)
+      CACHED_TERMINAL_CLASSES = null;
+      CACHED_TERMINAL_CLASSES_LOADED = true;
+      const mockSrc = {
+        withPermission: () => mockSrc,
+        withSuppressedOutput: () => mockSrc
+      };
+      const serverWithDisp = {
+        commands: {
+          getDispatcher: () => ({
+            execute: (cmd, s) => {
+              assert(cmd === 'lcterminal' && s === mockSrc, 'dispatcher runs lcterminal');
+              return __incDispatcher();
+            }
+          })
+        }
+      };
+      assert(openTradingTerminalGui(player, serverWithDisp, mockSrc) === true, 'Brigadier /lcterminal fallback returns true');
+      assert(__getDispatcherExecs() === 1, 'dispatcher executed once');
     })();
     `;
   vm.runInNewContext(src, sandbox);
