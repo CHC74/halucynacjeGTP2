@@ -6,13 +6,13 @@ Modpack kooperacyjny typu **Create Skyblock Tycoon** budowany na **Minecraft 1.2
 
 ## Szybki start (5 minut — Exaroton + Klient)
 
-👉 **[docs/QUICKSTART_EXAROTON.md](docs/QUICKSTART_EXAROTON.md)** — gotowa instrukcja „krok po kroku” pobrania **`halucynacjeGTP2.mrpack`** (Prism Launcher — PC & Mac M2) oraz **`halucynacjeGTP2-server-exaroton.zip`** (komplet **55/55 JAR** + 3 binarne wyspy `.nbt` + `server.properties`) prosto z **[GitHub Releases](https://github.com/CHC74/halucynacjeGTP2/releases)**!
+👉 **[docs/QUICKSTART_EXAROTON.md](docs/QUICKSTART_EXAROTON.md)** — gotowa instrukcja „krok po kroku” pobrania **`halucynacjeGTP2-curseforge.zip`** (**CurseForge App** — PC & Mac M2; dostępny także `.mrpack` dla Prism/Modrinth) oraz **`halucynacjeGTP2-server-exaroton.zip`** (komplet **55/55 JAR** + 3 binarne wyspy `.nbt` + `server.properties`) prosto z **[GitHub Releases](https://github.com/CHC74/halucynacjeGTP2/releases)**!
 
 ---
 
 ## Szybkie linki do dokumentacji
 
-- [docs/QUICKSTART_EXAROTON.md](docs/QUICKSTART_EXAROTON.md) — **5-minutowa instrukcja instalacji klienta (Prism Launcher) i serwera Exaroton**
+- [docs/QUICKSTART_EXAROTON.md](docs/QUICKSTART_EXAROTON.md) — **5-minutowa instrukcja instalacji klienta (CurseForge App / Prism Launcher) i serwera Exaroton**
 - [AGENTS.md](AGENTS.md) — protokół współpracy wielu agentów AI (branching, claimowanie zadań, etykiety, checklisty PR)
 - [docs/VISION.md](docs/VISION.md) — pełny Game Design Document (pętla rozgrywki, wyspy, ochrona ekonomii, zasady QoL)
 - [docs/MODLIST.md](docs/MODLIST.md) — kuratorowana lista modów (**65 modów** z bibliotekami, limit Exaroton `<= 115`) oraz lista wykluczeń
@@ -57,7 +57,7 @@ Modpack kooperacyjny typu **Create Skyblock Tycoon** budowany na **Minecraft 1.2
 | **Faza 2** | Inicjalizacja `packwiz` (65 modów), eksport `.mrpack`, eksporter Exaroton i GitHub Actions CI | ✅ Ukończona |
 | **Faza 3** | Zweryfikowane configi *Skyblock Builder* 1.21.1 + 3 realne binarne wyspy `.nbt` (`DataVersion 3955`) | ✅ Ukończona |
 | **Faza 4** | Cennik `prices.json`, anty-exploit, księga *FTB Quests*, QoL pod Exaroton, spięcie KubeJS + FTB Quests | ✅ Ukończona |
-| **Faza 5** | Gotowe wydanie GitHub Release (`v1.0.0-playtest`) + live playtest na Exaroton i Apple Silicon Mac M2 | 🚀 Gotowe do gry! |
+| **Faza 5** | Gotowe wydanie GitHub Release (`v1.0.1-playtest`: CurseForge `.zip` + `.mrpack` + Exaroton `.zip`) + live playtest | 🚀 Gotowe do gry! |
 
 ---
 
@@ -65,11 +65,14 @@ Modpack kooperacyjny typu **Create Skyblock Tycoon** budowany na **Minecraft 1.2
 
 Pełna 5-minutowa instrukcja wdrożenia: **[docs/QUICKSTART_EXAROTON.md](docs/QUICKSTART_EXAROTON.md)** (oraz procedura smoke-testu w [docs/PLAYTEST_CHECKLIST.md](docs/PLAYTEST_CHECKLIST.md)).
 
-### Klient (Prism Launcher — rekomendowany na Windows i Mac M2)
-1. Pobierz **`halucynacjeGTP2.mrpack`** z zakładki **[Releases](https://github.com/CHC74/halucynacjeGTP2/releases)** (albo wyeksportuj lokalnie przez `packwiz`, patrz [packwiz/README.md](packwiz/README.md)).
-2. Przeciągnij plik `.mrpack` do **Prism Launcher** — paczka zawiera już komplet `overrides/config/`, 3 wyspy `.nbt` oraz `overrides/kubejs/`.
-3. Ustaw **Java 21** (na Mac M2: natywna wersja `arm64`, np. Azul Zulu lub Eclipse Temurin) oraz **6 GB RAM** (`-Xms4G -Xmx6G`).
-4. Użytkownicy Apple Silicon Mac M2 powinni zapoznać się z ustawieniami Flywheel pod OpenGL 4.1 w [docs/EXAROTON_AND_MAC_M2.md](docs/EXAROTON_AND_MAC_M2.md).
+### Klient — Opcja A (Główna): CurseForge App (`halucynacjeGTP2-curseforge.zip`)
+1. Pobierz **`halucynacjeGTP2-curseforge.zip`** z zakładki **[Releases](https://github.com/CHC74/halucynacjeGTP2/releases)** (albo wyeksportuj lokalnie przez `node scripts/export_curseforge_pack.mjs`).
+2. W **CurseForge App** kliknij **Create Custom Profile** → **Import** → wskaż pobrany plik `.zip` — profil automatycznie skonfiguruje NeoForge `21.1.267`, pobierze 15 natywnych modów CurseForge i rozpakuje 50 zweryfikowanych JAR-ów Modrinth + `config/` (3 wyspy `.nbt`) + `kubejs/`.
+3. W **Profile Options** ustaw **6 GB RAM (`6144 MB`)**, a na **Apple Silicon Mac M2** upewnij się, że CurseForge używa natywnej **Java 21 `arm64`** oraz zapoznaj się z ustawieniami Flywheel pod OpenGL 4.1 w [docs/EXAROTON_AND_MAC_M2.md](docs/EXAROTON_AND_MAC_M2.md).
+
+### Klient — Opcja B (Alternatywna): Prism Launcher / Modrinth App (`halucynacjeGTP2.mrpack`)
+1. Pobierz **`halucynacjeGTP2.mrpack`** z zakładki **[Releases](https://github.com/CHC74/halucynacjeGTP2/releases)** i przeciągnij do **Prism Launcher** (lub Modrinth App).
+2. Ustaw **Java 21** (na Mac M2: natywna `arm64`) oraz **6 GB RAM** (`-Xms4G -Xmx6G`).
 
 ### Serwer (Exaroton)
 1. Pobierz gotowe archiwum **`halucynacjeGTP2-server-exaroton.zip`** z zakładki **[Releases](https://github.com/CHC74/halucynacjeGTP2/releases)** (zawiera wszystkie **55/55 plików `.jar`**, `config/`, 3 wyspy `.nbt`, `kubejs/` oraz `server.properties` — alternatywnie zbuduj lokalnie przez `node scripts/export_server_pack.mjs`).

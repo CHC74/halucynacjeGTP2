@@ -1,4 +1,4 @@
-name: Release — HalucynacjeGTP2 Client (.mrpack) & Exaroton Server (.zip)
+name: Release — HalucynacjeGTP2 Client (CurseForge + .mrpack) & Exaroton Server (.zip)
 
 on:
   push:
@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag wydania GitHub Release (np. v1.0.0-playtest)'
+        description: 'Tag wydania GitHub Release (np. v1.0.1-playtest)'
         required: true
-        default: 'v1.0.0-playtest'
+        default: 'v1.0.1-playtest'
       prerelease:
         description: 'Oznaczyć jako pre-release (playtest)?'
         required: false
@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   build-and-release:
-    name: Budowa i publikacja Release (.mrpack + Exaroton Server .zip)
+    name: Budowa i publikacja Release (CurseForge .zip + .mrpack + Exaroton Server .zip)
     runs-on: ubuntu-latest
 
     steps:
@@ -71,21 +71,55 @@ jobs:
           go install github.com/packwiz/packwiz@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: 3. Budowa klienckiego halucynacjeGTP2.mrpack (+ overrides z config/, 3 wyspami .nbt i kubejs/)
+      - name: 3. Budowa natywnej paczki klienckiej CurseForge App (halucynacjeGTP2-curseforge.zip)
         run: |
           mkdir -p dist
+          node scripts/export_curseforge_pack.mjs --version "${{ steps.meta.outputs.tag }}"
+
+      - name: 4. Budowa alternatywnego klienckiego halucynacjeGTP2.mrpack (+ overrides z config/, 3 wyspami .nbt i kubejs/)
+        run: |
           (cd packwiz && packwiz refresh --build && packwiz mr export -o ../dist/halucynacjeGTP2.mrpack)
           node scripts/bundle_mrpack_overrides.mjs dist/halucynacjeGTP2.mrpack
 
-      - name: 4. Budowa gotowej paczki serwerowej halucynacjeGTP2-server-exaroton.zip (wszystkie 55/55 JAR)
+      - name: 5. Budowa gotowej paczki serwerowej halucynacjeGTP2-server-exaroton.zip (wszystkie 55/55 JAR)
         run: node scripts/export_server_pack.mjs
 
-      - name: 5. Weryfikacja integralności ZIP i dokładnej liczby serwerowych JAR-ów
+      - name: 6. Weryfikacja integralności CurseForge ZIP oraz Exaroton Server ZIP
         id: verify_zip
         run: |
           python3 - <<'PY'
           import json, os, zipfile
 
+          # 1. Weryfikacja klienckiego CurseForge ZIP
+          cf_zip = "dist/halucynacjeGTP2-curseforge.zip"
+          with zipfile.ZipFile(cf_zip, "r") as zf:
+              bad = zf.testzip()
+              assert bad is None, f"Uszkodzony wpis w CurseForge zip: {bad}"
+              names = set(zf.namelist())
+              cf_manifest = json.loads(zf.read("manifest.json").decode("utf-8"))
+              assert cf_manifest["manifestType"] == "minecraftModpack"
+              assert cf_manifest["manifestVersion"] == 1
+              assert cf_manifest["minecraft"]["version"] == "1.21.1"
+              assert cf_manifest["minecraft"]["modLoaders"][0]["id"] == "neoforge-21.1.267"
+              cf_entries = len(cf_manifest["files"])
+              embedded_jars = sorted(n for n in names if n.startswith("overrides/mods/") and n.endswith(".jar"))
+              cf_total = cf_entries + len(embedded_jars)
+              assert cf_total == 65, f"Niezgodna liczba modów klienckich w CurseForge zip: {cf_total} != 65"
+              for req in [
+                  "manifest.json",
+                  "modlist.html",
+                  "overrides/kubejs/startup_scripts/stage_tokens.js",
+                  "overrides/kubejs/assets/kubejs/lang/pl_pl.json",
+                  "overrides/config/skyblockbuilder/dimensions.json5",
+                  "overrides/config/skyblockbuilder/templates/islands/starter_island.nbt",
+                  "overrides/config/skyblockbuilder/templates/spreads/market_island.nbt",
+                  "overrides/config/skyblockbuilder/templates/spreads/industrial_island.nbt",
+                  "overrides/config/ftbquests/quests/data.snbt",
+              ]:
+                  assert req in names, f"Brak wymaganego pliku w CurseForge zip: {req}"
+              print(f"✅ Zweryfikowano CurseForge ZIP: {cf_entries} CF manifest + {len(embedded_jars)} overrides/mods JAR = {cf_total}/65 modów + 3 wyspy .nbt + config + kubejs.")
+
+          # 2. Weryfikacja serwerowego Exaroton ZIP
           srv_zip = "dist/halucynacjeGTP2-server-exaroton.zip"
           with zipfile.ZipFile(srv_zip, "r") as zf:
               bad = zf.testzip()
@@ -112,19 +146,22 @@ jobs:
                   assert req in names, f"Brak wymaganego pliku w server zip: {req}"
               print(f"✅ Zweryfikowano serwerowy ZIP: {len(jars)}/{expected} JAR ({manifest['downloaded_modrinth_jars']} Modrinth + {manifest['downloaded_curseforge_jars']} CurseForge ForgeCDN) + 3 wyspy .nbt + server.properties.")
               with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+                  out.write(f"cf_manifest_mods={cf_entries}\n")
+                  out.write(f"cf_embedded_jars={len(embedded_jars)}\n")
+                  out.write(f"cf_total_mods={cf_total}\n")
                   out.write(f"server_jars={len(jars)}\n")
                   out.write(f"server_expected={expected}\n")
                   out.write(f"modrinth_jars={manifest['downloaded_modrinth_jars']}\n")
                   out.write(f"cf_jars={manifest['downloaded_curseforge_jars']}\n")
           PY
 
-      - name: 6. Generacja sum kontrolnych SHA256
+      - name: 7. Generacja sum kontrolnych SHA256
         working-directory: dist
         run: |
-          sha256sum halucynacjeGTP2.mrpack halucynacjeGTP2-server-exaroton.zip > SHA256SUMS.txt
+          sha256sum halucynacjeGTP2-curseforge.zip halucynacjeGTP2-server-exaroton.zip halucynacjeGTP2.mrpack > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
-      - name: 7. Publikacja GitHub Release z paczką kliencką i serwerową
+      - name: 8. Publikacja GitHub Release z paczką kliencką (CurseForge + .mrpack) i serwerową
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -136,20 +173,22 @@ jobs:
           notes = """\
           ## HalucynacjeGTP2 — Create Skyblock Tycoon (NeoForge 1.21.1)
 
-          Gotowe wydanie typu **turnkey** — wszystko przygotowane do uruchomienia w 5 minut na **Exaroton** oraz u graczy na **Windows / Linux / Apple Silicon Mac M2**!
+          Gotowe wydanie typu **turnkey** — w pełni kompatybilne z **CurseForge App**, **Exaroton** oraz **Windows / Linux / Apple Silicon Mac M2**!
 
           ### Zawartość wydania
-          - **`halucynacjeGTP2.mrpack`** — kompletna paczka kliencka (**65 modów** dla NeoForge `21.1.267` / MC `1.21.1`, `overrides/config/`, `overrides/kubejs/`, 3 binarne wyspy `.nbt`, polskie tłumaczenia i tekstury Żetonów Etapów).
+          - **`halucynacjeGTP2-curseforge.zip`** ⭐ *(Główna paczka dla graczy — **CurseForge App**)* — natywny pakiet CurseForge (**${{ steps.verify_zip.outputs.cf_total_mods }}/65 modów** dla NeoForge `21.1.267` / MC `1.21.1`: **${{ steps.verify_zip.outputs.cf_manifest_mods }}** pobieranych natywnie z API CurseForge + **${{ steps.verify_zip.outputs.cf_embedded_jars }}** zweryfikowanych JAR-ów z Modrinth osadzonych w `overrides/mods/`, komplet `overrides/config/`, 3 binarne wyspy `.nbt`, `overrides/kubejs/`, polskie tłumaczenia i tekstury Żetonów Etapów).
           - **`halucynacjeGTP2-server-exaroton.zip`** — kompletna paczka serwerowa pod **Exaroton**: **${{ steps.verify_zip.outputs.server_jars }}/${{ steps.verify_zip.outputs.server_expected }} plików `.jar`** (${{ steps.verify_zip.outputs.modrinth_jars }} Modrinth + ${{ steps.verify_zip.outputs.cf_jars }} CurseForge ze zweryfikowanymi hashami, 10 modów czysto klienckich odfiltrowanych), `config/` ze zweryfikowanym schematem *Skyblock Builder* 1.21.1 + 3 realnymi plikami `.nbt`, `kubejs/` oraz gotowy `server.properties` (`level-type=skyblockbuilder\\:skyblock`, `allow-flight=true`).
-          - **`SHA256SUMS.txt`** — sumy kontrolne obu archiwów.
+          - **`halucynacjeGTP2.mrpack`** *(Opcja B — Prism Launcher / Modrinth App)* — kompletna paczka kliencka w formacie Modrinth (65 modów + `overrides/`).
+          - **`SHA256SUMS.txt`** — sumy kontrolne wszystkich archiwów.
 
           ### Szybki start (5 minut)
           Pełna instrukcja krok po kroku znajduje się w [docs/QUICKSTART_EXAROTON.md](https://github.com/CHC74/halucynacjeGTP2/blob/main/docs/QUICKSTART_EXAROTON.md):
-          1. **Klient (PC & Mac M2):** Pobierz `halucynacjeGTP2.mrpack` i przeciągnij do **Prism Launcher** (rekomendowany na Windows i Apple Silicon Mac M2 — obsługuje wszystkie 65 modów w 1 kliknięciu!), ustaw **Java 21** (`arm64` na M2) i **6 GB RAM**.
+          1. **Klient — CurseForge App (PC & Mac M2):** Pobierz **`halucynacjeGTP2-curseforge.zip`** → otwórz **CurseForge App** → kliknij **Create Custom Profile** → **Import** → wybierz pobrany plik `.zip` → w ustawieniach profilu ustaw **6 GB RAM (`6144 MB`)** (na **Mac M2** sprawdź użycie natywnej **Java 21 ARM64**) → **Play**!
           2. **Serwer Exaroton:** Software → **NeoForge `1.21.1` (`21.1.267`)** → Options: **RAM 6–8 GB**, **Allow Flight = ON** → Files: wrzuć rozpakowane `mods/`, `config/`, `kubejs/` z `halucynacjeGTP2-server-exaroton.zip` → Worlds → Generate → Worldtype: **`skyblockbuilder:skyblock`** → **Start**!
           3. **W grze:** Spawn na Wyspie Startowej `(0, 65, 0)` z widokiem wprost na Wyspę-Rynek `(+152E)`. Po postawieniu sklepów wpisz (jako OP) `/halucynacje_apply_shoppers`.
 
           ### Co zostało zweryfikowane w tej wersji
+          - ✅ Natywny import w **CurseForge App** (`halucynacjeGTP2-curseforge.zip`): wszystkie **65/65 modów** (15 CF + 50 zweryfikowanych JAR-ów Modrinth w `overrides/mods/`), `manifest.json` z `neoforge-21.1.267`, `modlist.html` i pełny `overrides/`.
           - ✅ Schemat `config/skyblockbuilder/*.json5` dopasowany 1:1 do kodu źródłowego `MelanX/SkyblockBuilder` (`21.1.37` / `1.21.x`): Overworld = pustka 3 wysp (`plains`), **Nether i End = 100% normalna generacja waniliowa** (`dimensions.json5`).
           - ✅ 3 binarne pliki struktur Minecraft 1.21.1 (`DataVersion 3955`, czyste bloki waniliowe): `starter_island.nbt` (15×13×15 ze skrzynią anty-softlock i Pirsem Wschodnim), `market_island.nbt` (29×9×25, 100% płaski plac pod `Shoppers`, 8 stoisk z tylną aleją Create, 3 pady ATM), `industrial_island.nbt` (21×7×21, Dok Północny).
           - ✅ Ekonomia, anty-arbitraż, księga *FTB Quests* (Stage 0–5), `keepInventory = true`, bezpieczeństwo Mac M2 (zero *Valkyrien Skies* / *Clockwork*, zero magii, zero *Ex Deorum*).
@@ -172,9 +211,9 @@ jobs:
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "HalucynacjeGTP2 $TAG — Create Skyblock Tycoon" --notes-file /tmp/release_notes.md "${EXTRA_FLAGS[@]}"
-            gh release upload "$TAG" dist/halucynacjeGTP2.mrpack dist/halucynacjeGTP2-server-exaroton.zip dist/SHA256SUMS.txt --clobber
+            gh release upload "$TAG" dist/halucynacjeGTP2-curseforge.zip dist/halucynacjeGTP2-server-exaroton.zip dist/halucynacjeGTP2.mrpack dist/SHA256SUMS.txt --clobber
           else
-            gh release create "$TAG" dist/halucynacjeGTP2.mrpack dist/halucynacjeGTP2-server-exaroton.zip dist/SHA256SUMS.txt \
+            gh release create "$TAG" dist/halucynacjeGTP2-curseforge.zip dist/halucynacjeGTP2-server-exaroton.zip dist/halucynacjeGTP2.mrpack dist/SHA256SUMS.txt \
               --title "HalucynacjeGTP2 $TAG — Create Skyblock Tycoon" \
               --notes-file /tmp/release_notes.md \
               "${EXTRA_FLAGS[@]}"

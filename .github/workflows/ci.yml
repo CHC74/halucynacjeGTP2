@@ -79,22 +79,36 @@ jobs:
       - name: 8. Dołączenie overrides/ (config/ + 3 wyspy .nbt + kubejs/) i weryfikacja .mrpack
         run: node scripts/bundle_mrpack_overrides.mjs dist/halucynacjeGTP2.mrpack
 
-      - name: 9. Walidacja budżetu modów i listy serwerowej Exaroton (dry-run na PR)
+      - name: 9. Walidacja budżetu modów, paczki CurseForge App i listy serwerowej Exaroton (dry-run na PR)
         if: github.event_name == 'pull_request'
-        run: node scripts/export_server_pack.mjs --dry-run
+        run: |
+          node scripts/export_curseforge_pack.mjs --dry-run
+          node scripts/export_server_pack.mjs --dry-run
 
-      - name: 9b. Pełny eksport gotowej paczki serwerowej Exaroton (55/55 JAR + config + kubejs + server.properties)
+      - name: 9b. Pełny eksport natywnej paczki klienckiej CurseForge App (15 CF + 50 JAR Modrinth + overrides)
+        if: github.event_name != 'pull_request'
+        run: node scripts/export_curseforge_pack.mjs
+
+      - name: 9c. Pełny eksport gotowej paczki serwerowej Exaroton (55/55 JAR + config + kubejs + server.properties)
         if: github.event_name != 'pull_request'
         run: node scripts/export_server_pack.mjs
 
-      - name: 10. Publikacja artefaktu klienckiego .mrpack (Prism Launcher / Modrinth App)
+      - name: 10. Publikacja artefaktu klienckiego CurseForge App (.zip)
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: halucynacjeGTP2-client-curseforge
+          path: dist/halucynacjeGTP2-curseforge.zip
+          if-no-files-found: error
+
+      - name: 11. Publikacja artefaktu klienckiego .mrpack (Prism Launcher / Modrinth App)
         uses: actions/upload-artifact@v4
         with:
           name: halucynacjeGTP2-client-mrpack
           path: dist/halucynacjeGTP2.mrpack
           if-no-files-found: error
 
-      - name: 11. Publikacja artefaktu serwerowego Exaroton (.zip)
+      - name: 12. Publikacja artefaktu serwerowego Exaroton (.zip)
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
