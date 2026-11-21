@@ -1,0 +1,22 @@
+# =============================================================================
+# HalucynacjeGTP2 — Konfiguracja serwerowa Lightman's Currency (1.21-2.3.0.6)
+# Zweryfikowano bezpośrednio na bajtkodzie `ConfigFile` i `LCConfig$Server`
+# z `lightmanscurrency-1.21-2.3.0.6.jar`:
+#   - Ścieżka pliku: `config/lightmanscurrency-server.txt` (NIE `.toml`!)
+#   - Składnia: `klucz=wartość` BEZ spacji wokół `=`!
+# =============================================================================
+
+[terminal]
+# Włącza natywną komendę graficznego GUI Trading Terminala `/lcterminal` dla wszystkich graczy
+# (wykorzystywaną również jako fallback dla `/sklep`).
+lcterminalCommand=true
+sortUnnamedTradersToBottom=true
+
+[bank_accounts]
+# Brak pasywnych odsetek bankowych (ochrona ekonomii przed AFK-inflacją, RFC #5)
+interest=0.0
+forceInterest=false
+
+[taxes]
+# Brak podatków transakcyjnych nakładanych przez graczy na prywatnym serwerze co-op
+adminOnlyActivation=true

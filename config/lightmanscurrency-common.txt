@@ -1,0 +1,34 @@
+# =============================================================================
+# HalucynacjeGTP2 — Konfiguracja wspólna Lightman's Currency (1.21-2.3.0.6)
+# Zweryfikowano bezpośrednio na bajtkodzie `ConfigFile` i `LCConfig$Common`
+# z `lightmanscurrency-1.21-2.3.0.6.jar`:
+#   - Ścieżka pliku: `config/lightmanscurrency-common.txt` (NIE `.toml`!)
+#   - Składnia: `klucz=wartość` BEZ spacji wokół `=`!
+#
+# Ochrona ekonomii (RFC #5): całkowite wyłączenie wybijania i przetapiania
+# monet w Coin Mint (równolegle receptury blokuje `economy_anti_exploit.js`).
+# =============================================================================
+
+[crafting]
+canCraftTaxCollector=false
+
+[crafting.coin_mint]
+canCraftCoinMint=false
+canMint=false
+canMelt=false
+
+[crafting.coin_mint.mint]
+copper=false
+iron=false
+gold=false
+emerald=false
+diamond=false
+netherite=false
+
+[crafting.coin_mint.melt]
+copper=false
+iron=false
+gold=false
+emerald=false
+diamond=false
+netherite=false
