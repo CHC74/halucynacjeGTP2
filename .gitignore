@@ -1,0 +1,38 @@
+# Minecraft / Modpack binaries & runtime files (never commit jars, worlds, or exports)
+*.jar
+*.mrpack
+*.zip
+!schematics/**/*.nbt
+
+# Build & export artifacts
+dist/
+build/
+out/
+.packwiz-cache/
+
+# Minecraft server / client runtime
+world/
+world_nether/
+world_the_end/
+logs/
+crash-reports/
+backups/
+local/
+mods/
+libraries/
+versions/
+eula.txt
+server.properties
+ops.json
+whitelist.json
+banned-*.json
+usercache.json
+usernamecache.json
+
+# OS / IDE clutter
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log

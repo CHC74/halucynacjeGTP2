@@ -1,0 +1,13 @@
+name = "HalucynacjeGTP2"
+author = "CHC74 & TATRAzCHARaKTEReM"
+version = "0.1.0"
+pack-format = "packwiz:1.1.0"
+
+[index]
+file = "index.toml"
+hash-format = "sha256"
+hash = "4dc192424b1249c2fcdcdd122456aed3e7d1607e0cb370ba36e82742ba940a47"
+
+[versions]
+minecraft = "1.21.1"
+neoforge = "21.1.267"
