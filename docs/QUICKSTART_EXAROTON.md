@@ -7,6 +7,8 @@ Ten poradnik pozwala postawić gotowy serwer **HalucynacjeGTP2** (NeoForge `1.21
 > - **`halucynacjeGTP2-curseforge.zip`** ⭐ *(Główna paczka dla graczy — **CurseForge App**)* — natywny pakiet CurseForge (**65/65 modów**: 15 pobieranych natywnie z CurseForge + 50 zweryfikowanych JAR-ów Modrinth w `overrides/mods/` + `config/` + 3 wyspy `.nbt` + `kubejs/`).
 > - **`halucynacjeGTP2-server-exaroton.zip`** — gotowy pakiet serwerowy pod Exaroton (**55/55 modów `.jar`** ze zweryfikowanymi sumami kontrolnymi, odfiltrowane 10 modów klienckich + `config/` + 3 wyspy `.nbt` + `kubejs/` + `server.properties`).
 > - **`halucynacjeGTP2.mrpack`** *(Opcja B — Prism Launcher / Modrinth App)* — ten sam zestaw 65 modów + `overrides/` w formacie Modrinth.
+>
+> **Dlaczego NeoForge zamiast starego Forge?** Od Minecrafta `1.21.1` **Create 6**, AE2, Mekanism, Farmer's Delight, Skyblock Builder, KubeJS, FTB i Lightman's Currency wspierają wyłącznie **NeoForge** (oficjalnego następcę Forge). **CurseForge App** instaluje NeoForge `21.1.267` automatycznie podczas importu `halucynacjeGTP2-curseforge.zip`!
 
 ---
 
@@ -74,6 +76,6 @@ Ten poradnik pozwala postawić gotowy serwer **HalucynacjeGTP2** (NeoForge `1.21
 3. Jeśli gracie wspólnie jako jedna drużyna, użyjcie `/skyblock` (lub `/ftbteams party create`) do zaproszenia znajomych na wspólną wyspę.
 4. *(Jednorazowo jako Operator / OP po ustawieniu sklepów na Wyspie-Rynku)* — wpisz komendę synchronizującą ceny i reguły dla NPC `Shoppers`:
    ```mcfunction
-   /halucynacje_apply_shoppers
+   /halucynacje_sync_shoppers
    ```
-5. Pełna lista komend ekonomii (`/rynek`, `/sklep`, `/etap`) znajduje się w [ECONOMY_GUIDE.md](ECONOMY_GUIDE.md), a szczegółowa checklista testów przed dłuższą kampanią w [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md).
+5. Pełna lista komend ekonomii (`/ekonomia`, `/sprzedaj`, `/sklep`, `/kup`, `/cennik`, `/kontrakt`) znajduje się w [ECONOMY_GUIDE.md](ECONOMY_GUIDE.md), a szczegółowa checklista testów przed dłuższą kampanią w [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md).
