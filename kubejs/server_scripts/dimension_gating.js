@@ -58,6 +58,16 @@ const STAGE_CONFIG = {
 
 const ALL_STAGE_IDS = ['stage_1', 'stage_2', 'stage_3', 'stage_4', 'stage_5'];
 
+// Deterministyczna mapa ID tasków `type: "custom"` z `config/ftbquests/README.md` (PR #12).
+// [VERIFY ON 1.21.1 BOOT]: Potwierdzić działanie komendy `ftbquests change_progress <gracz> complete <task_id>`.
+const FTB_QUEST_STAGE_TASK_IDS = {
+  stage_1: 'C100000000000102',
+  stage_2: 'C200000000000102',
+  stage_3: 'C300000000000102',
+  stage_4: 'C400000000000102',
+  stage_5: 'C500000000000102'
+};
+
 const DIMENSION_REQUIREMENTS = {
   'minecraft:the_nether': {
     stageId: 'stage_2',
@@ -157,7 +167,22 @@ function hasUnlockedStage(player, server, stageId) {
 }
 
 /**
- * Synchronizuje wszystkie odblokowane globalnie etapy co-op na persistentData gracza.
+ * Zalicza odpowiadający task typu `custom` w księdze `FTB Quests` dla gracza/drużyny.
+ */
+function completeFtbQuestStageTask(player, server, stageId) {
+  if (!player || !server || !stageId) {
+    return;
+  }
+  const taskId = FTB_QUEST_STAGE_TASK_IDS[stageId];
+  if (!taskId) {
+    return;
+  }
+  server.runCommandSilent(`ftbquests change_progress ${player.username} complete ${taskId}`);
+}
+
+/**
+ * Synchronizuje wszystkie odblokowane globalnie etapy co-op na persistentData gracza
+ * oraz uzupełnia odpowiadające taski w `FTB Quests` (np. gdy gracz dołączy później).
  */
 function syncGlobalStagesToPlayer(player, server) {
   if (!player || !server || !server.persistentData || !player.persistentData) {
@@ -171,6 +196,7 @@ function syncGlobalStagesToPlayer(player, server) {
   ALL_STAGE_IDS.forEach((stageId) => {
     if (globalStages && globalStages.getBoolean(stageId) && !playerStages.getBoolean(stageId)) {
       playerStages.putBoolean(stageId, true);
+      completeFtbQuestStageTask(player, server, stageId);
       changed = true;
     }
   });
@@ -181,8 +207,8 @@ function syncGlobalStagesToPlayer(player, server) {
 }
 
 /**
- * Zapisuje odblokowanie etapu w globalnych danych co-op serwera oraz synchronizuje
- * wszystkich aktualnie zalogowanych graczy (przygotowane pod FTB Teams / FTB Quests).
+ * Zapisuje odblokowanie etapu w globalnych danych co-op serwera, synchronizuje
+ * wszystkich zalogowanych graczy i zalicza task milowy w `FTB Quests`.
  */
 function grantStage(player, server, stageId) {
   if (server && server.persistentData) {
@@ -204,9 +230,8 @@ function grantStage(player, server, stageId) {
     player.persistentData.put(PLAYER_STAGES_KEY, playerStages);
   }
 
-  // TODO (Issue #4 — kolejna iteracja): Podłączyć per-team `FTB Teams` (jeśli na serwerze
-  // zagra więcej niż 1 niezależna drużyna) oraz trigger `FTB Quests`, np.:
-  // `server.runCommandSilent(\`ftbquests change_progress ${player.username} complete <TASK_ID>\`)`.
+  // Zaliczenie taska w FTB Quests (w drużynie FTB Teams rozpropaguje się na cały zespół)
+  completeFtbQuestStageTask(player, server, stageId);
 }
 
 /**
