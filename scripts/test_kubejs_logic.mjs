@@ -200,15 +200,71 @@ test('skyblock_create_recipes.js: Create 6.0.10 neoforge:single & Mechanical Ext
 });
 
 // 3. economy_anti_exploit.js
-test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldData API (Tier 0 = 0) i brak ArrowFunction w sendSuccess', () => {
-  // Globalna straż regresji KubeJS 7.2: żadna komenda NIE może wywoływać `sendSuccess(() => ...)`!
-  for (const scriptFile of fs.readdirSync('kubejs/server_scripts')) {
-    if (!scriptFile.endsWith('.js')) continue;
-    const raw = fs.readFileSync(`kubejs/server_scripts/${scriptFile}`, 'utf8');
-    assert(
-      !/sendSuccess\s*\(\s*\(\s*\)\s*=>/.test(raw),
-      `Wykryto sendSuccess(() => ...) w ${scriptFile} — w KubeJS 7.2 wypisuje ArrowFunction(0) na czacie!`
-    );
+test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldData API (Tier 0 = 0), brak ArrowFunction w sendSuccess i brak Rhino redeclaration', () => {
+  // Globalna straż regresji KubeJS 7.2 / Rhino 2101.2.7 dla wszystkich skryptów KubeJS:
+  // 1) żadna komenda NIE może wywoływać `sendSuccess(() => ...)` (wypisuje ArrowFunction(0) na czacie),
+  // 2) żadna funkcja NIE może deklarować dwa razy tej samej nazwy zmiennej (`var`/`let`/`const`),
+  //    ponieważ Rhino hoistuje je do zakresu funkcji i rzuca `TypeError: redeclaration of var ...`!
+  for (const dir of ['kubejs/server_scripts', 'kubejs/startup_scripts']) {
+    if (!fs.existsSync(dir)) continue;
+    for (const scriptFile of fs.readdirSync(dir)) {
+      if (!scriptFile.endsWith('.js')) continue;
+      const fullPath = `${dir}/${scriptFile}`;
+      const raw = fs.readFileSync(fullPath, 'utf8');
+      assert(
+        !/sendSuccess\s*\(\s*\(\s*\)\s*=>/.test(raw),
+        `Wykryto sendSuccess(() => ...) w ${fullPath} — w KubeJS 7.2 wypisuje ArrowFunction(0) na czacie!`
+      );
+
+      // Sprawdzenie duplikatów var/let/const w tym samym zakresie funkcji (ochrona Rhino)
+      const clean = raw
+        .replace(/\/\/.*/g, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/`(?:\\.|[^`\\])*`/g, '""')
+        .replace(/'(?:\\.|[^'\\])*'/g, '""')
+        .replace(/"(?:\\.|[^"\\])*"/g, '""');
+      const scopes = [{ name: '<top>', depth: 0, vars: new Map() }];
+      let depth = 0;
+      let pendingFn = null;
+      const tokRe = /\bfunction\b(?:\s+([A-Za-z0-9_$]+))?|=>\s*\{|\b(var|let|const)\s+([A-Za-z0-9_$]+)|[{}]/g;
+      let m;
+      while ((m = tokRe.exec(clean)) !== null) {
+        const tok = m[0];
+        if (tok.startsWith('function')) {
+          pendingFn = m[1] || '<anon>';
+        } else if (tok.startsWith('=>')) {
+          depth++;
+          scopes.push({ name: '<arrow>', depth, vars: new Map() });
+        } else if (tok === '{') {
+          depth++;
+          if (pendingFn !== null) {
+            scopes.push({ name: pendingFn, depth, vars: new Map() });
+            pendingFn = null;
+          }
+        } else if (tok === '}') {
+          if (scopes[scopes.length - 1].depth === depth && scopes.length > 1) {
+            const popped = scopes.pop();
+            for (const [vName, count] of popped.vars.entries()) {
+              assert(
+                count === 1,
+                `Rhino redeclaration w ${fullPath} [${popped.name}]: zmienna "${vName}" zadeklarowana ${count}x!`
+              );
+            }
+          }
+          depth--;
+        } else {
+          const vName = m[3];
+          const cur = scopes[scopes.length - 1];
+          cur.vars.set(vName, (cur.vars.get(vName) || 0) + 1);
+        }
+      }
+      for (const [vName, count] of scopes[0].vars.entries()) {
+        assert(
+          count === 1,
+          `Rhino redeclaration w ${fullPath} [<top>]: zmienna "${vName}" zadeklarowana ${count}x!`
+        );
+      }
+    }
   }
 
   const removed = [];
@@ -248,6 +304,7 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
     `
     ;(() => {
       assert(__removed.some((r) => r.output === 'lightmanscurrency:coinmint'), 'coinmint blocked');
+      assert(!__removed.some((r) => r.output === 'lightmanscurrency:coin_mint'), 'no invalid coin_mint warning');
       assert(__removed.some((r) => r.output === 'lightmanscurrency:slot_machine'), 'slot_machine blocked');
       const entries = loadShoppersPriceEntries();
       const zeros = entries.filter((e) => e.worth === 0);
@@ -282,9 +339,10 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
 });
 
 // 4. economy_market.js
-test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna reszta, gating, limit creative_motor i /sklep GUI', () => {
+test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna reszta, gating, limit creative_motor i /sklep -> /lcterminal', () => {
   let terminalOpened = 0;
-  let dispatcherExecs = 0;
+  const playerCmds = [];
+  const serverCmds = [];
   const sandbox = {
     console: { info: () => {}, warn: () => {}, error: () => {} },
     JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
@@ -310,11 +368,8 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
     assert,
     __makeCompound: makeCompound,
     __getTerminalOpened: () => terminalOpened,
-    __incDispatcher: () => {
-      dispatcherExecs++;
-      return 1;
-    },
-    __getDispatcherExecs: () => dispatcherExecs
+    __playerCmds: playerCmds,
+    __serverCmds: serverCmds
   };
   const src =
     fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8') +
@@ -340,9 +395,13 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
         persistentData: __makeCompound(),
         inventory: { getContainerSize: () => inv.length, getItem: (i) => inv[i] },
         give: (st) => inv.push(st),
-        tell: (t) => msgs.push(t.s)
+        tell: (t) => msgs.push(t.s),
+        runCommandSilent: (cmd) => __playerCmds.push(cmd)
       };
-      const server = { persistentData: __makeCompound() };
+      const server = {
+        persistentData: __makeCompound(),
+        runCommandSilent: (cmd) => __serverCmds.push(cmd)
+      };
 
       // Zakup Stage 0 (kelp za 250) -> reszta 9750
       assert(handleBuy(player, server, 'kelp', 1) === 1, 'buy kelp');
@@ -359,29 +418,18 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
       assert(handleBuy(player, server, 'creative_motor', 2) === 2, 'creative_motor buy 2 allowed');
       assert(handleBuy(player, server, 'creative_motor', 1) === 0, 'creative_motor 3rd blocked');
 
-      // Test /sklep GUI: ścieżka główna TerminalMenuProvider.OpenMenu
-      assert(handleOpenShopGui(player, server, null) === 1, '/sklep primary GUI ok');
-      assert(__getTerminalOpened() === 1, 'TerminalMenuProvider.OpenMenu called');
+      // Test /sklep GUI: ścieżka główna player.runCommandSilent('lcterminal')
+      assert(handleOpenShopGui(player, server, null) === 1, '/sklep primary player.runCommandSilent ok');
+      assert(__playerCmds.length === 1 && __playerCmds[0] === 'lcterminal', 'player.runCommandSilent ran lcterminal');
 
-      // Test /sklep GUI: ścieżka fallback Brigadier dispatcher.execute('lcterminal', cmdSource)
-      CACHED_TERMINAL_CLASSES = null;
-      CACHED_TERMINAL_CLASSES_LOADED = true;
-      const mockSrc = {
-        withPermission: () => mockSrc,
-        withSuppressedOutput: () => mockSrc
-      };
-      const serverWithDisp = {
-        commands: {
-          getDispatcher: () => ({
-            execute: (cmd, s) => {
-              assert(cmd === 'lcterminal' && s === mockSrc, 'dispatcher runs lcterminal');
-              return __incDispatcher();
-            }
-          })
-        }
-      };
-      assert(openTradingTerminalGui(player, serverWithDisp, mockSrc) === true, 'Brigadier /lcterminal fallback returns true');
-      assert(__getDispatcherExecs() === 1, 'dispatcher executed once');
+      // Test /sklep GUI: ścieżka 2 server.runCommandSilent('execute as Alex run lcterminal')
+      const playerNoRun = { username: 'Alex', tell: (t) => msgs.push(t.s) };
+      assert(openTradingTerminalGui(playerNoRun, server, null) === true, '/sklep server fallback ok');
+      assert(__serverCmds.length === 1 && __serverCmds[0] === 'execute as Alex run lcterminal', 'server ran execute as Alex run lcterminal');
+
+      // Test /sklep GUI: ścieżka 3 TerminalMenuProvider.OpenMenu
+      assert(openTradingTerminalGui(playerNoRun, {}, null) === true, '/sklep Java API fallback ok');
+      assert(__getTerminalOpened() === 1, 'TerminalMenuProvider.OpenMenu called');
     })();
     `;
   vm.runInNewContext(src, sandbox);
