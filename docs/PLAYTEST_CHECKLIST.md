@@ -18,11 +18,10 @@ Powiązane poradniki:
   mkdir -p dist
   packwiz --pack-file packwiz/pack.toml refresh --build
   packwiz --pack-file packwiz/pack.toml mr export -o dist/halucynacjeGTP2.mrpack
+  node scripts/bundle_mrpack_overrides.mjs dist/halucynacjeGTP2.mrpack
   ```
 - [ ] Zaimportuj `halucynacjeGTP2.mrpack` w **Prism Launcher** (zalecany na Mac M2 i PC) lub **Modrinth App**.
-- [ ] **KRYTYCZNE PRZED PIERWSZYM POŁĄCZENIEM:** sprawdź w katalogu instancji (`minecraft/`), czy `.mrpack` zawierał aktualne katalogi `config/` oraz `kubejs/`.
-  - Jeśli w instancji brakuje `kubejs/startup_scripts/stage_tokens.js` lub `kubejs/assets/`, **skopiuj ręcznie katalogi `config/` oraz `kubejs/` z głównego repozytorium do katalogu `minecraft/` instancji**.
-  - Bez `kubejs/startup_scripts/stage_tokens.js` klient NeoForge nie zarejestruje przedmiotów `kubejs:stage_1_token`..`stage_5_token` i serwer Exaroton odrzuci połączenie błędem niezgodności rejestru; bez `kubejs/assets/` żetony stracą polskie nazwy i ikony.
+- [ ] **Szybka weryfikacja po imporcie:** CI (`.github/workflows/ci.yml`) oraz skrypt `scripts/bundle_mrpack_overrides.mjs` automatycznie dołączają katalogi `overrides/config/` i `overrides/kubejs/` do `.mrpack` i weryfikują ich obecność przed publikacją artefaktu. Po imporcie upewnij się dla formalności, że w katalogu instancji (`minecraft/`) widnieją `kubejs/startup_scripts/stage_tokens.js` oraz `kubejs/assets/kubejs/lang/pl_pl.json` (gwarantuje to rejestrację `kubejs:stage_1_token`..`stage_5_token`, polskie nazwy i ikony).
 
 ### 1.2 Java 21 i pamięć RAM
 - [ ] **Windows PC:** Java 21 (64-bit, np. Eclipse Temurin 21), alokacja **6 GB RAM** (`-Xms4G -Xmx6G`).
@@ -38,14 +37,14 @@ Powiązane poradniki:
 
 - [ ] Wygeneruj paczkę serwerową z poziomu repozytorium:
   ```bash
-  node scripts/export_server_pack.mjs --dry-run   # szybka weryfikacja (56 modów serwerowych, 9 wykluczonych)
+  node scripts/export_server_pack.mjs --dry-run   # szybka weryfikacja (55 modów serwerowych, 10 wykluczonych)
   node scripts/export_server_pack.mjs             # pobiera mody Modrinth + pakuje config/ i kubejs/ do ZIP
   ```
 - [ ] Pobierz 13 modów z CurseForge wymienionych w `EXAROTON_MANIFEST.json` (pakiet FTB, `AllTheLeaks`, `Architectury API`, `Building Gadgets 2`, `GuideME`, `JEI`, `MezzConfig`) — najwygodniej przez `packwiz-installer-bootstrap.jar -g -s server <URL_do_pack.toml>` lub w panelu modów Exaroton (wersje zgodne z `packwiz/mods/*.pw.toml`).
 - [ ] Na panelu **Exaroton**:
   - [ ] Wybierz silnik **NeoForge `21.1.267`** dla **Minecraft `1.21.1`** i **Java 21**.
   - [ ] Ustaw budżet pamięci na **6–8 GB RAM** (docelowo 7–8 GB przy rozbudowanych halach Create + AE2 + Mekanism).
-  - [ ] Wgraj katalogi `mods/` (wyłącznie **56 modów serwerowych** — ZERO `sodium`, `entityculling`, `xaeros-*`, `mouse-tweaks`, `controlling`, `searchables`, `configured`, `ae2-jei-integration`), `config/` oraz `kubejs/`.
+  - [ ] Wgraj katalogi `mods/` (wyłącznie **55 modów serwerowych** — ZERO `sodium`, `entityculling`, `xaeros-*`, `mouse-tweaks`, `controlling`, `searchables`, `configured`, `ae2-jei-integration`, `better-advanced-tooltips`), `config/` oraz `kubejs/`.
   - [ ] Ustaw w `server.properties`: `view-distance=10`, `simulation-distance=8`, `allow-flight=true` (wymagane dla `Hypertubes` / jetpacków Mekanism / plecaków), `max-tick-time=120000`.
 - [ ] Wykonaj pierwszy start serwera i sprawdź `logs/latest.log`:
   - [ ] Brak krytycznych błędów ładowania modów (`ERROR`, `ClassNotFoundException`, `MixinApplyError`).
@@ -132,9 +131,9 @@ Wszystkie miejsca w repozytorium oznaczone `[VERIFY ON 1.21.1 BOOT]` zebrane w j
 
 | Obszar | Plik w repozytorium | Co dokładnie zweryfikować przy pierwszym starcie | Status |
 | :--- | :--- | :--- | :---: |
-| **Packwiz / FTB Quests** | `packwiz/mods/ftb-quests-forge.pw.toml` | Czy `ftb-quests-neoforge-2101.1.39.jar` ładuje się bez wymagania dodatkowego `FTB Filter System` (jeśli poprosi w logach -> dopisać do `packwiz`). | [ ] |
-| **Packwiz / Klient** | `packwiz/mods/better-advanced-tooltips.pw.toml` | Czy `better-advanced-tooltips` działa bezpiecznie na dedykowanym serwerze Exaroton, czy przełączyć na `side = "client"`. | [ ] |
-| **Packwiz / `.mrpack`** | `.github/workflows/ci.yml` | Czy docelowy artefakt `.mrpack` z CI zawiera `overrides/config/` i `overrides/kubejs/` (do dopięcia przed dystrybucją dla graczy). | [ ] |
+| **Packwiz / FTB Quests** | `packwiz/mods/ftb-quests-forge.pw.toml` | Zweryfikowano `META-INF/neoforge.mods.toml` w `ftb-quests-neoforge-2101.1.39.jar`: wymaga wyłącznie `architectury` (>=13.0.11), `ftblibrary` (>=2101.1.40), `ftbteams` (>=2101.1.9) + opcjonalny `ftbxmodcompat` (>=21.1.7). `FTB Filter System` **nie jest wymagany** (i nie jest używany w naszych `.snbt`). | [x] |
+| **Packwiz / Klient** | `packwiz/mods/better-advanced-tooltips.pw.toml` | Zweryfikowano `META-INF/neoforge.mods.toml` (`side = "CLIENT"`): przełączono na `side = "client"` + dopisano do `CLIENT_ONLY_GUARD` (55 modów serwerowych + 10 klienckich = 65). | [x] |
+| **Packwiz / `.mrpack`** | `.github/workflows/ci.yml`, `scripts/bundle_mrpack_overrides.mjs` | CI automatycznie wstrzykuje `overrides/config/` i `overrides/kubejs/` do `dist/halucynacjeGTP2.mrpack` i weryfikuje obecność kluczowych plików (`stage_tokens.js`, `pl_pl.json`, tekstury, `carryon-common.toml`, `data.snbt`, `prices.json`). | [x] |
 | **Skyblock Builder** | `config/skyblockbuilder/inventory.json5` | Schemat kluczy ekwipunku startowego (`Slot` + `Item: { id, count }`). | [ ] |
 | **Skyblock Builder** | `config/skyblockbuilder/spawn.json5` | Klucze `skipSelectionGui` / `autoCreate` przy pierwszym wejściu gracza. | [ ] |
 | **Skyblock Builder** | `config/skyblockbuilder/templates.json5` | Dokładne nazwy i offsety po wrzuceniu binarnych plików `starter_island.nbt`, `market_island.nbt`, `industrial_island.nbt`. | [ ] |
