@@ -402,3 +402,51 @@ PlayerEvents.changedDimension((event) => {
     `execute in minecraft:overworld run tp ${player.username} 0 65 0`
   );
 });
+
+// ----------------------------------------------------------------------------
+// 4. Komenda OP `/halucynacje_sync_stages` — ręczna resynchronizacja etapów co-op
+//    i tasków FTB Quests (przeniesiona z zamkniętego PR #16 bez konfliktów).
+// ----------------------------------------------------------------------------
+function sendStageCommandFeedback(ctx, component) {
+  try {
+    ctx.source.sendSuccess(() => component, true);
+  } catch (e) {
+    try {
+      ctx.source.sendSuccess(component, true);
+    } catch (e2) {
+      if (ctx.source.player) {
+        ctx.source.player.tell(component);
+      }
+    }
+  }
+}
+
+ServerEvents.commandRegistry((event) => {
+  const { commands: Commands } = event;
+  event.register(
+    Commands.literal('halucynacje_sync_stages')
+      .requires((src) => src.hasPermission(2))
+      .executes((ctx) => {
+        const server = ctx.source.server;
+        let syncedPlayers = 0;
+        if (server && server.players) {
+          server.players.forEach((onlinePlayer) => {
+            syncGlobalStagesToPlayer(onlinePlayer, server);
+            ALL_STAGE_IDS.forEach((stageId) => {
+              if (hasUnlockedStage(onlinePlayer, server, stageId)) {
+                completeFtbQuestStageTask(onlinePlayer, server, stageId);
+              }
+            });
+            syncedPlayers++;
+          });
+        }
+        sendStageCommandFeedback(
+          ctx,
+          Text.green(
+            `[HalucynacjeGTP2] Zsynchronizowano etapy co-op i taski FTB Quests dla ${syncedPlayers} graczy online.`
+          )
+        );
+        return syncedPlayers;
+      })
+  );
+});
