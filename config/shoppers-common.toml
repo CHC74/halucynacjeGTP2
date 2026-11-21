@@ -1,0 +1,55 @@
+# =============================================================================
+# HalucynacjeGTP2 — Konfiguracja Shoppers (Lightman's Currency Addon 1.0.2)
+# Zweryfikowana bezpośrednio na schemacie `ShoppersConfig.class` (ModConfig.Type.COMMON).
+#
+# Kluczowe strojenie pod Skyblock 3 wysp (`docs/ISLAND_DESIGN.md`) i Exaroton:
+# - Wyspa-Rynek ma wymiary 33x27 (promień ~13-16 bloków od (152, 64, 0)).
+#   Domyślny promień spawnu 24-40 wyrzucałby NPC w pustkę Skyblocka!
+#   Ustawiamy `spawnRadiusMin = 4` oraz `spawnRadiusMax = 12`, aby klienci
+#   zawsze pojawiali się bezpiecznie na płaskiej płycie placu `Y = 64`.
+# - Limit `maxShoppers = 10` chroni 20 TPS na Exaroton 6-8 GB RAM (RFC #5).
+# - `overpriceMultiplier = 1.25` blokuje wystawianie śmieci po zawyżonych cenach.
+# - `VirtualShoppingSimulator` (`simulatorTickRate = 600`, `simulatorChance = 0.35`)
+#   utrzymuje pasywny ruch handlowy na Wyspie-Rynku nawet gdy gracze budują
+#   fabryki na Wyspie Startowej 150 bloków dalej!
+# =============================================================================
+
+# Częstotliwość prób spawnu NPC (w tickach: 200 = co 10 s, oszczędza CPU serwera)
+spawnRate = 200
+# Maksymalna liczba aktywnych NPC wokół jednego hubu handlowego (RFC #5: 8-12)
+maxShoppers = 10
+# Bezpieczny promień spawnu mieszczący się na płaskiej Wyspie-Rynku 33x27 (Y = 64)
+spawnRadiusMin = 4
+spawnRadiusMax = 12
+# Maksymalny akceptowany narzut ceny względem Fair Value (powyżej +25% NPC odmawia zakupu)
+overpriceMultiplier = 1.25
+# Symulator w tle dla niezaładowanych/odległych sklepów (co 30 s, 35% szansy transakcji)
+simulatorTickRate = 600
+simulatorChance = 0.35
+# Szansa licytacji w Auction Stand i odwiedzin bankomatów ATM (3 ATM na Rynku)
+auctionBidChance = 0.15
+atmSpawnChance = 0.25
+
+[peasant]
+	# Klasa startowa (Stage 0-1) — zakupy podstawowych wypieków Tier 1 (monety żelazne = 10 copper)
+	spawnWeight = 35
+	minWallet = 5
+	maxWallet = 25
+
+[citizen]
+	# Klasa średnia (Stage 1-2) — zakupy dań Farmer's Delight / Create: Food Tier 2 (monety złote = 100 copper)
+	spawnWeight = 35
+	minWallet = 3
+	maxWallet = 15
+
+[merchant]
+	# Kupcy (Stage 2-4) — słodycze premium Tier 3 i komponenty Create Tier 4 (monety szmaragdowe = 1 000 copper)
+	spawnWeight = 20
+	minWallet = 2
+	maxWallet = 10
+
+[tycoon]
+	# Elita Tycoon (Stage 4-5) — eksport high-tech AE2 i Mekanism Tier 5 (monety netherytowe = 100 000 copper)
+	spawnWeight = 10
+	minWallet = 1
+	maxWallet = 3
