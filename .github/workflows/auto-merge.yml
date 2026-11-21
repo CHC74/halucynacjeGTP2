@@ -74,5 +74,8 @@ jobs:
               ;;
           esac
 
-          gh pr review "$PR_NUM" -R "$REPO" --approve --body "🤖 Auto-approved po przejściu zielonego CI (\`CI — HalucynacjeGTP2 Validation & Packwiz Export\`)."
+          # Próba automatycznego review (nie blokuje merge'a, jeśli GitHub Actions nie ma zaznaczonego approve)
+          gh pr review "$PR_NUM" -R "$REPO" --approve --body "🤖 Auto-approved po przejściu zielonego CI (\`CI — HalucynacjeGTP2 Validation & Packwiz Export\`)." \
+            || echo "⚠️ Pominięto gh pr review --approve (upewnij się, że w Settings -> Actions -> General zapisano 'Allow GitHub Actions to create and approve pull requests'). Przechodzę do merge'a."
+
           gh pr merge "$PR_NUM" -R "$REPO" --squash --delete-branch || gh pr merge "$PR_NUM" -R "$REPO" --auto --squash --delete-branch
