@@ -73,10 +73,13 @@ jobs:
           packwiz refresh --build
           packwiz mr export -o ../dist/halucynacjeGTP2.mrpack
 
-      - name: 7. Walidacja budżetu modów i listy serwerowej Exaroton (dry-run)
+      - name: 7. Dołączenie overrides/ (config/ + kubejs/) i weryfikacja .mrpack
+        run: node scripts/bundle_mrpack_overrides.mjs dist/halucynacjeGTP2.mrpack
+
+      - name: 8. Walidacja budżetu modów i listy serwerowej Exaroton (dry-run)
         run: node scripts/export_server_pack.mjs --dry-run
 
-      - name: 8. Publikacja artefaktu .mrpack (Prism Launcher / Modrinth App)
+      - name: 9. Publikacja artefaktu .mrpack (Prism Launcher / Modrinth App)
         uses: actions/upload-artifact@v4
         with:
           name: halucynacjeGTP2-client-mrpack

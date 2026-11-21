@@ -16,15 +16,16 @@ Ten katalog zawiera pełną, powtarzalną definicję modpacka **HalucynacjeGTP2*
 mkdir -p dist
 packwiz --pack-file packwiz/pack.toml refresh --build
 packwiz --pack-file packwiz/pack.toml mr export -o dist/halucynacjeGTP2.mrpack
+node scripts/bundle_mrpack_overrides.mjs dist/halucynacjeGTP2.mrpack
 ```
 
-> **Wskazówka:** GitHub Actions (`.github/workflows/ci.yml`) buduje plik `dist/halucynacjeGTP2.mrpack` automatycznie przy każdym PR i pushu na `main` jako artefakt gotowy do pobrania.
+> **Wskazówka:** GitHub Actions (`.github/workflows/ci.yml`) buduje plik `dist/halucynacjeGTP2.mrpack` (już wraz z `overrides/config/` i `overrides/kubejs/`) automatycznie przy każdym PR i pushu na `main` jako artefakt gotowy do pobrania.
 
 ---
 
 ## Eksport i walidacja paczki serwerowej pod Exaroton
 
-Skrypt `scripts/export_server_pack.mjs` automatycznie odfiltrowuje mody czysto klienckie (`side = "client"`, m.in. *Sodium*, *EntityCulling*, *Xaero's Minimap & World Map*, *Mouse Tweaks*, *Controlling*, *Searchables*, *Configured*) oraz pilnuje budżetu modów (`<= 115`).
+Skrypt `scripts/export_server_pack.mjs` automatycznie odfiltrowuje mody czysto klienckie (`side = "client"`, łącznie 10 modów: *Sodium*, *EntityCulling*, *Xaero's Minimap & World Map*, *Mouse Tweaks*, *Controlling*, *Searchables*, *Configured*, *AE2 JEI Integration*, *Better Advanced Tooltips*) oraz pilnuje budżetu modów (`<= 115`).
 
 ```bash
 # Szybka walidacja (bez pobierania .jar — używana w CI):

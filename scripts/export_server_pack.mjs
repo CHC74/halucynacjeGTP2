@@ -32,7 +32,10 @@ const CLIENT_ONLY_GUARD = new Set([
   'mouse-tweaks',
   'controlling',
   'configured',
-  'iris'
+  'iris',
+  'better-advanced-tooltips',
+  'searchables',
+  'ae2-jei-integration'
 ]);
 
 // Minimalny parser kluczowych pól z plików `packwiz` (*.pw.toml)
