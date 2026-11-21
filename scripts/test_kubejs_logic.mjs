@@ -264,6 +264,29 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
           `Rhino redeclaration w ${fullPath} [<top>]: zmienna "${vName}" zadeklarowana ${count}x!`
         );
       }
+
+      // 3) Żaden skrypt NIE może deklarować `const` wewnątrz bloku `try`/`catch`/`finally`,
+      //    ponieważ Rhino 2101.2.7 (`Interpreter.doSetConstVar`) rzuca wtedy
+      //    `InternalError: TypeError: redeclaration of var <nazwa>.` w czasie wykonania!
+      const cleanLines = clean.split('\n');
+      const blockStack = [];
+      for (let lineIdx = 0; lineIdx < cleanLines.length; lineIdx++) {
+        const ln = cleanLines[lineIdx];
+        if (/\b(try|catch|finally)\b[^{]*\{/.test(ln)) {
+          blockStack.push('try');
+        } else {
+          const opens = (ln.match(/\{/g) || []).length;
+          for (let k = 0; k < opens; k++) blockStack.push('other');
+        }
+        if (blockStack.includes('try') && /\bconst\s+/.test(ln)) {
+          assert(
+            false,
+            `Rhino const-in-try w ${fullPath}:${lineIdx + 1}: "${ln.trim()}" — użyj "var" zadeklarowanego przed blokiem try!`
+          );
+        }
+        const closes = (ln.match(/\}/g) || []).length;
+        for (let k = 0; k < closes; k++) blockStack.pop();
+      }
     }
   }
 
@@ -339,8 +362,10 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
 });
 
 // 4. economy_market.js
-test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna reszta, gating, limit creative_motor i /sklep -> /lcterminal', () => {
+test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna reszta, gating, limit creative_motor i /sklep -> EntityValidator', () => {
   let terminalOpened = 0;
+  let lastValidator = null;
+  let failOpenMenu = false;
   const playerCmds = [];
   const serverCmds = [];
   const sandbox = {
@@ -353,13 +378,26 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
         if (cls.endsWith('TerminalMenuProvider')) {
           return {
             OpenMenu: (p, v) => {
-              assert(p && v && v.__isNullValidator === true, 'OpenMenu receives player & SimpleValidator.NULL');
+              if (failOpenMenu) {
+                throw new Error('simulated OpenMenu failure');
+              }
+              assert(p && v && v.isNull() === false, 'OpenMenu receives player & non-null EntityValidator');
+              lastValidator = v;
               terminalOpened++;
             }
           };
         }
+        if (cls.endsWith('EntityValidator')) {
+          return {
+            of: (entity) => ({
+              __isEntityValidator: true,
+              entity,
+              isNull: () => false
+            })
+          };
+        }
         if (cls.endsWith('SimpleValidator')) {
-          return { NULL: { __isNullValidator: true } };
+          return { NULL: { __isNullValidator: true, isNull: () => true } };
         }
         throw new Error(`Unexpected class: ${cls}`);
       }
@@ -368,6 +406,10 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
     assert,
     __makeCompound: makeCompound,
     __getTerminalOpened: () => terminalOpened,
+    __getLastValidator: () => lastValidator,
+    __setFailOpenMenu: (v) => {
+      failOpenMenu = Boolean(v);
+    },
     __playerCmds: playerCmds,
     __serverCmds: serverCmds
   };
@@ -418,18 +460,20 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
       assert(handleBuy(player, server, 'creative_motor', 2) === 2, 'creative_motor buy 2 allowed');
       assert(handleBuy(player, server, 'creative_motor', 1) === 0, 'creative_motor 3rd blocked');
 
-      // Test /sklep GUI: ścieżka główna player.runCommandSilent('lcterminal')
-      assert(handleOpenShopGui(player, server, null) === 1, '/sklep primary player.runCommandSilent ok');
+      // Test /sklep GUI: ścieżka główna TerminalMenuProvider.OpenMenu(player, EntityValidator.of(player))
+      assert(handleOpenShopGui(player, server, null) === 1, '/sklep primary EntityValidator ok');
+      assert(__getTerminalOpened() === 1, 'TerminalMenuProvider.OpenMenu called');
+      assert(__getLastValidator() && __getLastValidator().__isEntityValidator === true, 'EntityValidator.of(player) used');
+
+      // Test /sklep GUI: fallback 1 player.runCommandSilent('lcterminal')
+      __setFailOpenMenu(true);
+      assert(openTradingTerminalGui(player, server, null) === true, '/sklep player fallback ok');
       assert(__playerCmds.length === 1 && __playerCmds[0] === 'lcterminal', 'player.runCommandSilent ran lcterminal');
 
-      // Test /sklep GUI: ścieżka 2 server.runCommandSilent('execute as Alex run lcterminal')
+      // Test /sklep GUI: fallback 2 server.runCommandSilent('execute as Alex run lcterminal')
       const playerNoRun = { username: 'Alex', tell: (t) => msgs.push(t.s) };
       assert(openTradingTerminalGui(playerNoRun, server, null) === true, '/sklep server fallback ok');
       assert(__serverCmds.length === 1 && __serverCmds[0] === 'execute as Alex run lcterminal', 'server ran execute as Alex run lcterminal');
-
-      // Test /sklep GUI: ścieżka 3 TerminalMenuProvider.OpenMenu
-      assert(openTradingTerminalGui(playerNoRun, {}, null) === true, '/sklep Java API fallback ok');
-      assert(__getTerminalOpened() === 1, 'TerminalMenuProvider.OpenMenu called');
     })();
     `;
   vm.runInNewContext(src, sandbox);

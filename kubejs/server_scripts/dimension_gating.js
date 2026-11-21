@@ -334,7 +334,7 @@ if (typeof NativeEvents !== 'undefined') {
     NativeEvents.onEvent(
       'net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent',
       (event) => {
-        const entity = event.entity;
+        var entity = event.entity;
         if (!entity || !entity.isPlayer || !entity.isPlayer()) {
           return;
         }
@@ -342,15 +342,15 @@ if (typeof NativeEvents !== 'undefined') {
           return;
         }
 
-        const targetDim = normalizeDimensionId(
+        var targetDim = normalizeDimensionId(
           typeof event.getDimension === 'function' ? event.getDimension() : event.dimension
         );
-        const requirement = DIMENSION_REQUIREMENTS[targetDim];
+        var requirement = DIMENSION_REQUIREMENTS[targetDim];
         if (!requirement) {
           return;
         }
 
-        const server = entity.server || (entity.level && entity.level.server);
+        var server = entity.server || (entity.level && entity.level.server);
         if (hasUnlockedStage(entity, server, requirement.stageId)) {
           return;
         }
@@ -378,20 +378,20 @@ if (typeof NativeEvents !== 'undefined') {
     NativeEvents.onEvent(
       'net.neoforged.neoforge.event.entity.player.PlayerEvent$PlayerChangedDimensionEvent',
       (event) => {
-        const player = typeof event.getEntity === 'function' ? event.getEntity() : event.entity;
+        var player = typeof event.getEntity === 'function' ? event.getEntity() : event.entity;
         if (!player) {
           return;
         }
-        const server = player.server || (player.level && player.level.server);
+        var server = player.server || (player.level && player.level.server);
         if (!server) {
           return;
         }
 
-        const rawTarget =
+        var rawTarget =
           (typeof event.getTo === 'function' ? event.getTo() : event.to) ||
           getDimensionId(player.level);
-        const targetDim = normalizeDimensionId(rawTarget);
-        const requirement = DIMENSION_REQUIREMENTS[targetDim];
+        var targetDim = normalizeDimensionId(rawTarget);
+        var requirement = DIMENSION_REQUIREMENTS[targetDim];
         if (!requirement) {
           return;
         }

@@ -529,10 +529,13 @@ function getTerminalGuiClasses() {
     return null;
   }
 
-  const loaded = { TerminalMenuProvider: null, SimpleValidator: null };
+  var loaded = { TerminalMenuProvider: null, EntityValidator: null, SimpleValidator: null };
   try {
     loaded.TerminalMenuProvider = Java.loadClass(
       'io.github.lightman314.lightmanscurrency.common.menus.providers.TerminalMenuProvider'
+    );
+    loaded.EntityValidator = Java.loadClass(
+      'io.github.lightman314.lightmanscurrency.common.menus.validation.types.EntityValidator'
     );
     loaded.SimpleValidator = Java.loadClass(
       'io.github.lightman314.lightmanscurrency.common.menus.validation.types.SimpleValidator'
@@ -560,21 +563,44 @@ function safeTellPlayer(player, component) {
  * Otwiera natywne graficzne GUI Trading Terminala Lightman's Currency (1.21-2.3.0.6)
  * z sieciowymi sklepami z `config/lightmanscurrency/PersistentTraders.json`.
  *
- * Zweryfikowane na żywym serwerze (`v1.0.4-playtest`) oraz w bajtkodzie `EntityKJS`:
- *   1) Bezpośrednio: `player.runCommandSilent('lcterminal')` — wywołuje natywną komendę
- *      `/lcterminal` jako ten sam gracz (`player.createCommandSourceStack().withSuppressedOutput()`),
- *      identycznie jak wpisanie `/lcterminal` na czacie!
- *   2) Fallback serwerowy: `server.runCommandSilent('execute as <gracz> run lcterminal')`.
- *   3) Fallback Java API: `TerminalMenuProvider.OpenMenu(player, SimpleValidator.NULL)`.
+ * Zweryfikowane w bajtkodzie `lightmanscurrency-1.21-2.3.0.6.jar` (`CommandTerminal`,
+ * `TerminalMenuProvider`, `EntityValidator`, `CPacketOpenNetworkTerminal$H`):
+ *   1) Ścieżka główna: `TerminalMenuProvider.OpenMenu(player, EntityValidator.of(player))`
+ *      — w przeciwieństwie do natywnego `/lcterminal` (który przekazuje `SimpleValidator.NULL`),
+ *      `EntityValidator.of(player)` zwraca `isNull() == false` i `stillValid(player) == true`,
+ *      dzięki czemu przycisk **"Back to Network Terminal"** w GUI sklepu przechodzi warunek
+ *      `!validator.isNull()` w `CPacketOpenNetworkTerminal$H.handle` i wraca do listy sklepów!
+ *   2) Fallback 1: `player.runCommandSilent('lcterminal')`.
+ *   3) Fallback 2: `server.runCommandSilent('execute as <gracz> run lcterminal')`.
  */
 function openTradingTerminalGui(player, server, source) {
+  var classes = null;
+  var validator = null;
+
+  try {
+    classes = getTerminalGuiClasses();
+    if (classes && classes.TerminalMenuProvider && classes.TerminalMenuProvider.OpenMenu) {
+      if (classes.EntityValidator && classes.EntityValidator.of && player) {
+        validator = classes.EntityValidator.of(player);
+      } else if (classes.SimpleValidator && classes.SimpleValidator.NULL) {
+        validator = classes.SimpleValidator.NULL;
+      }
+      if (validator) {
+        classes.TerminalMenuProvider.OpenMenu(player, validator);
+        return true;
+      }
+    }
+  } catch (err0) {
+    console.warn(`[HalucynacjeGTP2] TerminalMenuProvider.OpenMenu nie powiodło się: ${err0}`);
+  }
+
   try {
     if (player && typeof player.runCommandSilent === 'function') {
       player.runCommandSilent('lcterminal');
       return true;
     }
-  } catch (err0) {
-    console.warn(`[HalucynacjeGTP2] player.runCommandSilent('lcterminal') nie powiodło się: ${err0}`);
+  } catch (err1) {
+    console.warn(`[HalucynacjeGTP2] player.runCommandSilent('lcterminal') nie powiodło się: ${err1}`);
   }
 
   try {
@@ -582,24 +608,8 @@ function openTradingTerminalGui(player, server, source) {
       server.runCommandSilent(`execute as ${player.username} run lcterminal`);
       return true;
     }
-  } catch (err1) {
-    console.warn(`[HalucynacjeGTP2] server.runCommandSilent('execute as ... run lcterminal') nie powiodło się: ${err1}`);
-  }
-
-  try {
-    const classes = getTerminalGuiClasses();
-    if (
-      classes &&
-      classes.TerminalMenuProvider &&
-      classes.SimpleValidator &&
-      classes.TerminalMenuProvider.OpenMenu &&
-      classes.SimpleValidator.NULL
-    ) {
-      classes.TerminalMenuProvider.OpenMenu(player, classes.SimpleValidator.NULL);
-      return true;
-    }
   } catch (err2) {
-    console.warn(`[HalucynacjeGTP2] TerminalMenuProvider.OpenMenu nie powiodło się: ${err2}`);
+    console.warn(`[HalucynacjeGTP2] server.runCommandSilent('execute as ... run lcterminal') nie powiodło się: ${err2}`);
   }
 
   return false;
@@ -628,10 +638,22 @@ function handleOpenShopGui(player, server, source) {
 }
 
 function handleShowShop(player, server, requestedStage) {
+  var catalog = null;
+  var currentStage = 0;
+  var filterStage = null;
+  var shown = 0;
+  var i = 0;
+  var entry = null;
+  var prefix = '';
+  var lockTag = null;
+  var limitNote = '';
+  var aliasStr = '';
+  var noteStr = '';
+
   try {
-    const catalog = getMarketCatalog(false);
-    const currentStage = getCurrentUnlockedStage(player, server);
-    const filterStage = requestedStage != null ? Number(requestedStage) : null;
+    catalog = getMarketCatalog(false);
+    currentStage = getCurrentUnlockedStage(player, server);
+    filterStage = requestedStage != null ? Number(requestedStage) : null;
 
     safeTellPlayer(
       player,
@@ -640,20 +662,19 @@ function handleShowShop(player, server, requestedStage) {
       )
     );
 
-    let shown = 0;
-    for (let i = 0; i < catalog.buyList.length; i++) {
-      const entry = catalog.buyList[i];
+    for (i = 0; i < catalog.buyList.length; i++) {
+      entry = catalog.buyList[i];
       if (filterStage != null) {
         if (entry.stage !== filterStage) continue;
       } else if (entry.stage > currentStage) {
         continue;
       }
 
-      const prefix = entry.stage > currentStage ? `[Wymaga Stage ${entry.stage}] ` : `[S${entry.stage}] `;
-      const lockTag = entry.stage > currentStage ? Text.red(prefix) : Text.green(prefix);
-      const limitNote = entry.teamLimit > 0 ? ` (limit ${entry.teamLimit})` : '';
-      const aliasStr = String(entry.alias || entry.id || '?');
-      const noteStr = String(entry.note || '');
+      prefix = entry.stage > currentStage ? `[Wymaga Stage ${entry.stage}] ` : `[S${entry.stage}] `;
+      lockTag = entry.stage > currentStage ? Text.red(prefix) : Text.green(prefix);
+      limitNote = entry.teamLimit > 0 ? ` (limit ${entry.teamLimit})` : '';
+      aliasStr = String(entry.alias || entry.id || '?');
+      noteStr = String(entry.note || '');
       safeTellPlayer(
         player,
         lockTag
