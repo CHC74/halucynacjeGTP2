@@ -10,17 +10,17 @@ build/
 out/
 .packwiz-cache/
 
-# Minecraft server / client runtime
-world/
-world_nether/
-world_the_end/
-logs/
-crash-reports/
-backups/
-local/
-mods/
-libraries/
-versions/
+# Minecraft server / client runtime (anchored to repo root so packwiz/mods/ is tracked!)
+/world/
+/world_nether/
+/world_the_end/
+/logs/
+/crash-reports/
+/backups/
+/local/
+/mods/
+/libraries/
+/versions/
 eula.txt
 server.properties
 ops.json
