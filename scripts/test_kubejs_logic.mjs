@@ -204,7 +204,7 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine i synchronizacja
   const removed = [];
   const sandbox = {
     console: { info: () => {}, warn: () => {}, error: () => {} },
-    JsonIO: { read: () => prices },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
     Text: makeTextProxy(),
     ServerEvents: {
       recipes: (cb) => cb({ remove: (filter) => removed.push(filter) }),
@@ -234,7 +234,7 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine i synchronizacja
 test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna reszta, gating i limit creative_motor', () => {
   const sandbox = {
     console: { info: () => {}, warn: () => {}, error: () => {} },
-    JsonIO: { read: () => prices },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
     Item: makeItemFactory(),
     Text: makeTextProxy(),
     ServerEvents: { commandRegistry: () => {} },
@@ -292,7 +292,7 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
 test('economy_contracts.js: losowanie kontraktów per Etap, premia +35%, realizacja i cooldown rerollu', () => {
   const sandbox = {
     console: { info: () => {}, warn: () => {}, error: () => {} },
-    JsonIO: { read: () => prices },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
     Item: makeItemFactory(),
     Text: makeTextProxy(),
     ServerEvents: { commandRegistry: () => {} },

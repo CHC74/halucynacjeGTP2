@@ -1,55 +1,46 @@
 # Checklista Playtestu i Pierwszego Uruchomienia (Exaroton + PC + Apple Silicon Mac M2)
 
-Ten dokument jest praktyczną, krok-po-kroku checklistą smoke-testu przed oficjalnym startem serwera **HalucynacjeGTP2** (`Minecraft 1.21.1`, `NeoForge 21.1.267`, `Create 6.0.10`, 65 modów). Zbiera w jednym miejscu procedurę wdrożenia klienta i serwera, test Apple Silicon Mac M2, eksport 3 struktur wysp `.nbt`, weryfikację pętli Tycoona oraz kompletną listę punktów `[VERIFY ON 1.21.1 BOOT]` ze wszystkich plików `config/` i `kubejs/`.
+Ten dokument jest praktyczną, krok-po-kroku checklistą smoke-testu dla wydania **`v1.0.2-playtest`** modpacka **HalucynacjeGTP2** (`Minecraft 1.21.1`, `NeoForge 21.1.267`, `Create 6.0.10`, 65 modów). Zbiera w jednym miejscu procedurę wdrożenia klienta (CurseForge App / Prism Launcher) i serwera Exaroton, test Apple Silicon Mac M2, weryfikację 3 gotowych wysp `.nbt`, GUI sklepu *Lightman's Currency*, stanu konta pod TAB oraz zbiorczą tabelę `[VERIFY ON 1.21.1 BOOT]`.
 
 Powiązane poradniki:
+- [docs/QUICKSTART_EXAROTON.md](QUICKSTART_EXAROTON.md) — 5-minutowy przewodnik uruchomienia
 - [docs/EXAROTON_AND_MAC_M2.md](EXAROTON_AND_MAC_M2.md) — flagi JVM, Flywheel i strojenie serwera Exaroton
 - [docs/ISLAND_DESIGN.md](ISLAND_DESIGN.md) — dokładne wymiary i schematy 3 wysp *Skyblock Builder*
+- [docs/ECONOMY_GUIDE.md](ECONOMY_GUIDE.md) — przewodnik po GUI sklepu, kontraktach `+35%`, TAB-ie i *Shoppers*
 - [docs/QOL_AND_SERVER_CONFIGS.md](QOL_AND_SERVER_CONFIGS.md) — limity FTB Chunks/Essentials, Carry On blacklist i Sophisticated Storage
-- [packwiz/README.md](../packwiz/README.md) — komendy eksportu `.mrpack` i paczki serwerowej
 
 ---
 
 ## 1. Instalacja klienta (Windows PC + Apple Silicon Mac M2)
 
-### 1.1 Pobranie i import paczki `.mrpack`
-- [ ] Pobierz najnowszy artefakt **`halucynacjeGTP2-client-mrpack`** (`dist/halucynacjeGTP2.mrpack`) z zakładki **GitHub Actions** (workflow `CI — HalucynacjeGTP2 Validation & Packwiz Export`) lub wygeneruj lokalnie:
-  ```bash
-  mkdir -p dist
-  packwiz --pack-file packwiz/pack.toml refresh --build
-  packwiz --pack-file packwiz/pack.toml mr export -o dist/halucynacjeGTP2.mrpack
-  node scripts/bundle_mrpack_overrides.mjs dist/halucynacjeGTP2.mrpack
-  ```
-- [ ] Zaimportuj `halucynacjeGTP2.mrpack` w **Prism Launcher** (zalecany na Mac M2 i PC) lub **Modrinth App**.
-- [ ] **Szybka weryfikacja po imporcie:** CI (`.github/workflows/ci.yml`) oraz skrypt `scripts/bundle_mrpack_overrides.mjs` automatycznie dołączają katalogi `overrides/config/` i `overrides/kubejs/` do `.mrpack` i weryfikują ich obecność przed publikacją artefaktu. Po imporcie upewnij się dla formalności, że w katalogu instancji (`minecraft/`) widnieją `kubejs/startup_scripts/stage_tokens.js` oraz `kubejs/assets/kubejs/lang/pl_pl.json` (gwarantuje to rejestrację `kubejs:stage_1_token`..`stage_5_token`, polskie nazwy i ikony).
+### 1.1 Pobranie i import paczki (CurseForge App lub Prism Launcher)
+- [ ] Pobierz z **[GitHub Releases](https://github.com/CHC74/halucynacjeGTP2/releases)** (`v1.0.2-playtest` lub najnowsze wydanie):
+  - **Opcja A (CurseForge App):** **`halucynacjeGTP2-curseforge.zip`** → *Create Custom Profile → Import* (instaluje automatycznie **NeoForge `21.1.267`** + 15 modów CF + 50 JAR-ów Modrinth + `overrides/config/` + `overrides/kubejs/`).
+  - **Opcja B (Prism Launcher / Modrinth App — szczególnie na Mac M2):** **`halucynacjeGTP2.mrpack`** → przeciągnij do okna launchera.
+- [ ] **Szybka weryfikacja po imporcie:** upewnij się, że w katalogu instancji (`minecraft/`) widnieją `kubejs/startup_scripts/stage_tokens.js`, `kubejs/assets/kubejs/lang/pl_pl.json`, 3 wyspy `.nbt` w `config/skyblockbuilder/templates/` oraz `config/lightmanscurrency/PersistentTraders.json`.
 
 ### 1.2 Java 21 i pamięć RAM
-- [ ] **Windows PC:** Java 21 (64-bit, np. Eclipse Temurin 21), alokacja **6 GB RAM** (`-Xms4G -Xmx6G`).
+- [ ] **Windows PC:** Java 21 (64-bit, np. Eclipse Temurin 21), alokacja **6 GB RAM** (`6144 MB`).
 - [ ] **Apple Silicon Mac M2 (`arm64`):**
   - [ ] Zainstalowana **natywna Java 21 `aarch64` / `arm64`** (np. Azul Zulu 21 ARM64 lub Eclipse Temurin 21 ARM64) — **NIE używaj wersji x86_64 przez Rosettę 2**.
-  - [ ] W Prism Launcher → *Edit Instance* → *Settings* → *Java* wybrana ścieżka do JDK `arm64` (test *Auto-detect* / `java -version` pokazuje `aarch64`).
-  - [ ] Alokacja pamięci: **6 GB RAM** (`-Xms4G -Xmx6G`, nie przekraczać 8 GB na 16 GB unified memory).
-- [ ] Klient uruchamia się do menu głównego bez błędów `MissingModException`, z widocznymi **65 modami** (plus biblioteki wewnętrzne NeoForge/Create).
+  - [ ] W CurseForge App (`Settings → Game Specific → Minecraft → Java Version`) lub Prism Launcher wybrana ścieżka do JDK `arm64`.
+  - [ ] Alokacja pamięci: **6 GB RAM** (`6144 MB`, nie przekraczać 8 GB na 16 GB unified memory).
+- [ ] Klient uruchamia się do menu głównego bez błędów `MissingModException`, z widocznymi **65 modami**.
 
 ---
 
 ## 2. Wdrożenie paczki serwerowej na Exaroton (6–8 GB RAM)
 
-- [ ] Wygeneruj paczkę serwerową z poziomu repozytorium:
-  ```bash
-  node scripts/export_server_pack.mjs --dry-run   # szybka weryfikacja (55 modów serwerowych, 10 wykluczonych)
-  node scripts/export_server_pack.mjs             # pobiera mody Modrinth + pakuje config/ i kubejs/ do ZIP
-  ```
-- [ ] Pobierz 13 modów z CurseForge wymienionych w `EXAROTON_MANIFEST.json` (pakiet FTB, `AllTheLeaks`, `Architectury API`, `Building Gadgets 2`, `GuideME`, `JEI`, `MezzConfig`) — najwygodniej przez `packwiz-installer-bootstrap.jar -g -s server <URL_do_pack.toml>` lub w panelu modów Exaroton (wersje zgodne z `packwiz/mods/*.pw.toml`).
+- [ ] Pobierz gotowe archiwum **`halucynacjeGTP2-server-exaroton.zip`** z GitHub Releases (komplet **55/55 plików `.jar`**, `config/`, 3 wyspy `.nbt`, `kubejs/`, `server.properties`) albo zbuduj lokalnie przez `node scripts/export_server_pack.mjs`.
 - [ ] Na panelu **Exaroton**:
   - [ ] Wybierz silnik **NeoForge `21.1.267`** dla **Minecraft `1.21.1`** i **Java 21**.
   - [ ] Ustaw budżet pamięci na **6–8 GB RAM** (docelowo 7–8 GB przy rozbudowanych halach Create + AE2 + Mekanism).
-  - [ ] Wgraj katalogi `mods/` (wyłącznie **55 modów serwerowych** — ZERO `sodium`, `entityculling`, `xaeros-*`, `mouse-tweaks`, `controlling`, `searchables`, `configured`, `ae2-jei-integration`, `better-advanced-tooltips`), `config/` oraz `kubejs/`.
-  - [ ] Ustaw w `server.properties`: `view-distance=10`, `simulation-distance=8`, `allow-flight=true` (wymagane dla `Hypertubes` / jetpacków Mekanism / plecaków), `max-tick-time=120000`.
+  - [ ] Wgraj rozpakowane katalogi `mods/` (55 modów serwerowych), `config/` oraz `kubejs/`.
+  - [ ] Ustaw w **Options**: `allow-flight = ON`, `view-distance = 8`, `simulation-distance = 6`, oraz w **Worlds → Generate** wpisz Worldtype: **`skyblockbuilder:skyblock`**.
 - [ ] Wykonaj pierwszy start serwera i sprawdź `logs/latest.log`:
   - [ ] Brak krytycznych błędów ładowania modów (`ERROR`, `ClassNotFoundException`, `MixinApplyError`).
-  - [ ] Brak błędów składni/ładowania skryptów KubeJS (`stage_tokens.js`, `dimension_gating.js`, `skyblock_create_recipes.js`, `economy_anti_exploit.js`).
-  - [ ] Potwierdzony wpis w logach: `[HalucynacjeGTP2] Wymuszono gamerule keepInventory = true.` oraz `[HalucynacjeGTP2] Zarejestrowano główny gating wymiarów (EntityTravelToDimensionEvent).`
+  - [ ] **ZERO błędów KubeJS** (brak `Unknown event 'PlayerEvents.changedDimension'` oraz brak `redeclaration of var cfg`!).
+  - [ ] Potwierdzony wpis w logach: `[HalucynacjeGTP2] Wymuszono gamerule keepInventory = true.` oraz oba natywne eventy gatingu (`EntityTravelToDimensionEvent` + `PlayerEvent$PlayerChangedDimensionEvent`).
   - [ ] Obaj gracze (Windows PC + Mac M2) dołączają bez błędu synchronizacji rejestru.
 
 ---
@@ -62,101 +53,81 @@ Wykonywane bezpośrednio na **Mac M2** po wejściu na serwer:
 - [ ] **Flywheel (Create 6.0.10) pod OpenGL 4.1:**
   - [ ] Postaw kilka obracających się kół wodnych, pasów transmisyjnych, młynów i pras mechanicznych.
   - [ ] Sprawdź aktualny backend komendą `/flywheel backend` (domyślnie `flywheel:instancing` lub `flywheel:batching`).
-  - [ ] W razie artefaktów graficznych, mikrozacięć lub błędów GL w `latest.log` przełącz na `/flywheel backend flywheel:off` (szczegóły w [docs/EXAROTON_AND_MAC_M2.md](EXAROTON_AND_MAC_M2.md)).
+  - [ ] W razie artefaktów graficznych, mikrozacięć lub błędów GL w `latest.log` przełącz na `/flywheel backend off` (szczegóły w [docs/EXAROTON_AND_MAC_M2.md](EXAROTON_AND_MAC_M2.md)).
 - [ ] **Create: Steam 'n' Rails (`0.3.0-beta.2`) & logistyka Create 6:**
   - [ ] Połóż odcinek torów Create (proste + łuk), postaw `Train Station`, złóż prosty 1-wagonowy pociąg i przejedź kilka bloków.
   - [ ] Postaw `Chain Conveyor`, `Frogport`, `Packager` oraz krótki tunel `Hypertube` i przeleć przez niego — brak crasha klienta na Mac M2 i brak kicka za latanie z serwera Exaroton (`allow-flight=true`).
 
 ---
 
-## 4. Eksport 3 binarnych struktur `.nbt` wysp (*Skyblock Builder*, Issue #2)
+## 4. Weryfikacja 3 gotowych binarnych wysp `.nbt` (*Skyblock Builder*)
 
-Szczegółowa specyfikacja blok-po-bloku znajduje się w [docs/ISLAND_DESIGN.md](ISLAND_DESIGN.md). Przed startem właściwego świata należy wyeksportować 3 pliki `.nbt` w świecie testowym (tryb Creative) przy pomocy Vanilla **Structure Block** (lub narzędzia *Skyblock Builder*) i wrzucić je do `config/skyblockbuilder/templates/`:
+Wszystkie 3 pliki `.nbt` są już wygenerowane przez `scripts/generate_island_nbt.py` (`DataVersion 3955`) i zweryfikowane pod kątem bloków `create`, `createdeco` oraz `lightmanscurrency`:
 
-- [ ] **`starter_island.nbt`** (Wyspa Startowa / Fabryczna, ok. `18×18`, środek `(0, 64, 0)`, spawn `(0, 65, 0)`):
-  - [ ] Bezpieczna płyta startowa, drzewo dębowe, źródło wody + wiadro/źródło lawy (lub ekstruder startowy), skrzynka startowa i miejsce na pierwszy generator bruku/młyn Create.
-- [ ] **`market_island.nbt`** (Wyspa-Rynek w odległości `~150` bloków, ok. `28×28`, środek `(150, 64, 0)`):
-  - [ ] Płaski, czytelny plac handlowy pod **3× ATM** (*Lightman's Currency*) + stanowiska pod NPC **Shoppers** + terminal hurtowy/Waystone.
-  - [ ] Wydzielony peron stacji kolejowej Create skierowany w stronę Wyspy Startowej (gotowy pod tory i `Chain Conveyor` / `Hypertube`).
-- [ ] **`industrial_island.nbt`** (Opcjonalna Wyspa Ekspansji Przemysłowej, środek `(0, 64, 150)`):
-  - [ ] Płaska platforma pod przyszłe hale `Mekanism` / `AE2` / elektrownie w Etapie 3–4.
-- [ ] **Weryfikacja na żywym serwerze po wrzuceniu `.nbt`:**
-  - [ ] Nowy świat generuje się jako pustka Skyblock (bez waniliowego terenu Overworlda).
-  - [ ] Gracz spawnuje się bezpiecznie na `(0, 65, 0)` i otrzymuje ekwipunek startowy z `config/skyblockbuilder/inventory.json5`.
-  - [ ] Wyspa-Rynek jest widoczna/osiągalna w odległości `~150` bloków (płaski plac + działające 3 ATM-y *Lightman's Currency*).
+- [ ] **`starter_island.nbt`** (`15×13×15`, środek `(0, 64, 0)`, spawn `(0, 65, 0)` patrząc na Wschód):
+  - [ ] Gracz spawnuje się bezpiecznie na trawie z widokiem na Pirs Wschodni i Wielką Wyspę-Rynek na horyzoncie, skrzynią anty-softlock (11 pozycji), stołem rzemieślniczym, dębem i niecką cobble-gen.
+- [ ] **`market_island.nbt`** (**Wielka Wyspa-Rynek**, `45×25×35`, środek `(152, 64, 0)`, `offset: [152, 4, 0]`):
+  - [ ] Płaski plac mozaikowy na `Y = 64` (bez przeszkód dla AI *Shoppers*), **3 działające bankomaty `lightmanscurrency:atm`** w kioskach, **Centralna Rotunda z miedzianą kopułą i działającym `lightmanscurrency:terminal`**, Zachodnia Hala Dworca z podkładami `Y=64`, 8 dwupiętrowych butików z szyldami i tylną estakadą `brass_catwalk`, wschodni ogród z fontanną.
+- [ ] **`industrial_island.nbt`** (**Huta Południowa**, `33×21×33`, środek `(0, 64, 152)`, `offset: [0, 4, 152]`):
+  - [ ] 4 płaskie hale `11×11` na `Y = 64`, północny dok kolejowy z suwnicą bramową, dymiący komin przemysłowy oraz przeszklona dyspozytornia z działającym `lightmanscurrency:terminal`.
 
 ---
 
-## 5. Test pętli Tycoona, progresji i zabezpieczeń anty-exploitowych
+## 5. Test pętli Tycoona, GUI sklepu, TAB-a i zabezpieczeń anty-exploitowych
 
-### 5.1 Ochrona ekonomii (`Lightman's Currency` + `Shoppers`)
-- [ ] W **JEI** wyszukaj `Coin Mint` i `Slot Machine` — **receptury craftingu muszą być usunięte** (`economy_anti_exploit.js`).
-- [ ] Sprawdź, że nie da się wybijać monet ze sztabek żelaza/złota (`canMint = false` w configu *Lightman's Currency*).
-- [ ] Jako OP uruchom `/halucynacje_sync_shoppers` i sprawdź w logach oraz w GUI *Shoppers*:
-  - [ ] Surowce **Tier 0** (`cobblestone`, `netherrack`, `blackstone`, `quartz`, `gold_ingot`, `iron_ingot`, `diamond`, `end_stone`, `chorus_fruit`, `shulker_shell`, `ancient_debris`) mają cenę skupu **`0`** (NPC ich nie skupują).
-  - [ ] Towary przetworzone **Tier 1–5** (np. posiłki *Farmer's Delight*, słodycze *Create: Confectionery*, `Precision Mechanism`, tory, paliwa) mają poprawne ceny zgodne z `config/halucynacje_economy/prices.json` (z premią `+20%` za fizyczny handel NPC vs hurt).
-  - [ ] Jeśli komenda `/shoppers value set <item> <worth>` działa bez błędów, można przełączyć `AUTO_APPLY_SHOPPERS_TIER0 = true` w `kubejs/server_scripts/economy_anti_exploit.js`.
+### 5.1 Graficzny Sklep GUI, Kontrakty i TAB (`Lightman's Currency` + `Shoppers`)
+- [ ] **Graficzne GUI Sklepu (`/sklep`, `/lcterminal`, blok Terminala w Rotundzie):**
+  - [ ] Wpisanie `/sklep` (lub PPM na `lightmanscurrency:terminal` w Rotundzie) otwiera **graficzne GUI Terminala** z widocznymi sieciowymi sklepami z `PersistentTraders.json` (Żetony Etapów, Startery Skyblocka, Skup Hurtowy Tier 1–5).
+  - [ ] Zakup startera i sprzedaż przetworzonego dobra działają bez błędów w konsoli.
+- [ ] **Stan konta pod TAB:**
+  - [ ] Przytrzymanie klawisza **TAB** pokazuje aktualny stan konta w monetach *Lightman's Currency* obok nicku każdego gracza.
+- [ ] **Dynamiczne Kontrakty (`/kontrakt`):**
+  - [ ] `/kontrakt` wyświetla aktualne zlecenie z premią `+35%`, `/kontrakt oddaj` odbiera towar i wypłaca fizyczne monety, `/kontrakt nowy` respektuje 5-minutowy cooldown.
+- [ ] **Ochrona anty-exploitowa (`Coin Mint`, `Slot Machine`, Tier 0):**
+  - [ ] W **JEI** brak receptury craftingu `Coin Mint` i `Slot Machine` (`economy_anti_exploit.js` + `lightmanscurrency-common.txt`).
+  - [ ] Jako OP uruchom `/halucynacje_sync_shoppers` — potwierdź brak błędów i ceny `0` dla surowców Tier 0 oraz `+20%` dla towarów Tier 1–5.
 
 ### 5.2 Pure-Create Skyblock (receptury KubeJS)
 - [ ] W **JEI** potwierdź obecność i poprawność receptur z `kubejs/server_scripts/skyblock_create_recipes.js`:
-  - [ ] Generacja `minecraft:tuff` (Extruder / Compacting) + płukanie `tuff` na bryłki.
-  - [ ] Wczesny `minecraft:red_sand` w `Millstone` (`terracotta -> red_sand`) oraz mieszanie `sand + red_dye -> red_sand`.
-  - [ ] Ścieżki dla `crimsite`, `asurine`, `veridium`, `ochrum`, `netherrack`, `blackstone`, `quartz`, `soul_sand`, `blaze_rod` (bez *Ex Deorum* / *Ex Nihilo*).
+  - [ ] Generacja `minecraft:tuff` (`create_mechanical_extruder:extruding` + `compacting`) oraz płukanie `tuff` na bryłki.
+  - [ ] Płynowe receptury Create `6.0.10` (`neoforge:single`): mieszanie `netherrack`, `blackstone`, `soul_sand`, `blaze_rod` (bez *Ex Deorum* / *Ex Nihilo*).
 
 ### 5.3 Żetony Etapów, Gating Wymiarów i FTB Quests
 - [ ] **Test `keepInventory`:** skocz w próżnię — po odrodzeniu cały ekwipunek i pasek szybkiego dostępu zostają nienaruszone.
 - [ ] **Blokada wymiarów (Etap 0/1):**
-  - [ ] Wejdź w zapalony portal do **Netheru** przed aktywacją `stage_2` -> gracz zostaje zablokowany przez `EntityTravelToDimensionEvent` (lub cofnięty przez fallback na `(0, 65, 0)`) z komunikatem po polsku bez spamu na czacie.
+  - [ ] Wejdź w zapalony portal do **Netheru** przed aktywacją `stage_2` -> gracz zostaje zablokowany przez `EntityTravelToDimensionEvent` (lub cofnięty przez `PlayerEvent$PlayerChangedDimensionEvent` na `(0, 65, 0)`) z komunikatem po polsku bez spamu na czacie.
   - [ ] Wejdź w portal do **Endu** przed aktywacją `stage_4` -> analogiczna blokada.
 - [ ] **Realizacja Żetonów (`kubejs:stage_1_token`..`stage_5_token`):**
-  - [ ] Daj graczowi żetony przez `/give @s kubejs:stage_1_token` (itd.) — sprawdź poprawne **tekstury** i **polskie nazwy** z `kubejs/assets/`.
-  - [ ] Próba użycia `stage_2_token` przed `stage_1` zostaje zablokowana (żeton nie znika).
-  - [ ] PPM z `stage_1_token`: pojawia się ogłoszenie na czacie i dźwięk awansu, żeton znika (w Survival), a w księdze **FTB Quests** automatycznie zalicza się task `custom` (`C100000000000102`).
-  - [ ] **Test co-op (2 graczy):** po aktywacji `stage_2_token` przez Gracza A, Gracz B (zarówno online, jak i po przelogowaniu) ma dostęp do **Netheru** oraz zaliczony task `C200000000000102` w **FTB Quests**.
-  - [ ] Po aktywacji `stage_4_token` obaj gracze mogą wejść do **Endu**.
+  - [ ] PPM z `stage_1_token`: pojawia się ogłoszenie i dźwięk awansu, żeton znika (w Survival), a w księdze **FTB Quests** automatycznie zalicza się task `custom` (`C100000000000102`).
+  - [ ] **Test co-op (2 graczy):** po aktywacji `stage_2_token` przez Gracza A, Gracz B ma dostęp do **Netheru** oraz zaliczony task `C200000000000102`.
 
 ### 5.4 QoL, limity Exaroton i profilowanie Spark
-- [ ] **FTB Teams:** obaj gracze tworzą wspólną drużynę (`/ftbteams party create`), współdzielą postęp *FTB Quests* oraz zclaimowane chunki.
-- [ ] **FTB Chunks:** maksymalnie `16` chunków forceloaded na drużynę, wyłączony griefing mobów na claimach (`config/ftbchunks/ftbchunks-world.snbt`).
-- [ ] **FTB Essentials:** działają `/home`, `/back`, `/tpa`, `/spawn`; brak `/rtp` (wyłączone na Skyblocku!).
-- [ ] **Carry On blacklist:** próba podniesienia `Shift + PPM` bloków z listy zakazanej (`Lightman's Currency` ATM/traders, `Shoppers`, `Create` maszyny/magazyny, `AE2` ME Drive, `Mekanism` maszyny, `Sophisticated Storage`, `Waystones`) jest zablokowana (`config/carryon-common.toml`).
-- [ ] **Spark (wydajność serwera):** uruchom `/spark tps` oraz `/spark profiler --timeout 60` przy pracującej próbnej linii Create:
-  - [ ] Cel: **20.0 TPS**, średnie **MSPT < 25 ms**, stabilne zużycie RAM bez ciągłego wzrostu (brak wycieków pamięci — `AllTheLeaks` aktywne).
+- [ ] **FTB Teams / Chunks / Essentials:** wspólna drużyna (`/ftbteams party create`), limit `16` chunków forceloaded, działają `/home`, `/back`, `/tpa`, `/spawn`, brak `/rtp`.
+- [ ] **Carry On blacklist:** blokada `Shift + PPM` na maszynach Create, `create_hypertube:*`, `Lightman's Currency`, AE2, Mekanism, `Waystones`.
+- [ ] **Spark (wydajność serwera):** `/spark tps` -> cel **20.0 TPS**, średnie **MSPT < 25 ms**.
 
 ---
 
 ## 6. Zbiorcza lista punktów `[VERIFY ON 1.21.1 BOOT]`
 
-Wszystkie miejsca w repozytorium oznaczone `[VERIFY ON 1.21.1 BOOT]` zebrane w jednej tabeli do szybkiego odhaczenia podczas pierwszego uruchomienia serwera `NeoForge 1.21.1`:
-
-| Obszar | Plik w repozytorium | Co dokładnie zweryfikować przy pierwszym starcie | Status |
+| Obszar | Plik w repozytorium | Status weryfikacji JAR / Playtest | Status |
 | :--- | :--- | :--- | :---: |
-| **Packwiz / FTB Quests** | `packwiz/mods/ftb-quests-forge.pw.toml` | Zweryfikowano `META-INF/neoforge.mods.toml` w `ftb-quests-neoforge-2101.1.39.jar`: wymaga wyłącznie `architectury` (>=13.0.11), `ftblibrary` (>=2101.1.40), `ftbteams` (>=2101.1.9) + opcjonalny `ftbxmodcompat` (>=21.1.7). `FTB Filter System` **nie jest wymagany** (i nie jest używany w naszych `.snbt`). | [x] |
-| **Packwiz / Klient** | `packwiz/mods/better-advanced-tooltips.pw.toml` | Zweryfikowano `META-INF/neoforge.mods.toml` (`side = "CLIENT"`): przełączono na `side = "client"` + dopisano do `CLIENT_ONLY_GUARD` (55 modów serwerowych + 10 klienckich = 65). | [x] |
-| **Packwiz / `.mrpack`** | `.github/workflows/ci.yml`, `scripts/bundle_mrpack_overrides.mjs` | CI automatycznie wstrzykuje `overrides/config/` i `overrides/kubejs/` do `dist/halucynacjeGTP2.mrpack` i weryfikuje obecność kluczowych plików (`stage_tokens.js`, `pl_pl.json`, tekstury, `carryon-common.toml`, `data.snbt`, `prices.json`). | [x] |
-| **Skyblock Builder** | `config/skyblockbuilder/inventory.json5` | Schemat kluczy ekwipunku startowego (`Slot` + `Item: { id, count }`). | [ ] |
-| **Skyblock Builder** | `config/skyblockbuilder/spawn.json5` | Klucze `skipSelectionGui` / `autoCreate` przy pierwszym wejściu gracza. | [ ] |
-| **Skyblock Builder** | `config/skyblockbuilder/templates.json5` | Dokładne nazwy i offsety po wrzuceniu binarnych plików `starter_island.nbt`, `market_island.nbt`, `industrial_island.nbt`. | [ ] |
-| **Skyblock Builder** | `config/skyblockbuilder/world.json5` | Schemat sekcji `surface` / `dimensions` oraz `biomes` / `singleBiome` w `SkyblockBuilder-21.1.37`. | [ ] |
-| **Ekonomia (LC)** | `config/lightmanscurrency-server.toml` | Nazwy sekcji i kluczy TOML (zwłaszcza `canMint = false`, wyłączone kasyno/slot machine, przeniesienie pliku do `world/serverconfig/` jeśli wymagane przez NeoForge). | [ ] |
-| **Ekonomia (Shoppers)** | `config/shoppers-common.toml` | Zweryfikowano klucze w `ShoppersConfig.class` (`maxShoppers = 10`, bezpieczny promień `4–12` na Wyspie-Rynku, `overpriceMultiplier = 1.25`) — potwierdzić na starcie 1.21.1. | [ ] |
-| **Rynek Hurtowy (KubeJS)** | `kubejs/server_scripts/economy_market.js` | Przetestować komendy `/ekonomia`, `/cennik 1`, `/sklep`, `/sprzedaj`, `/kup kelp 1` z fizycznymi monetami `Lightman's Currency`. | [ ] |
-| **KubeJS (Anty-exploit)** | `kubejs/server_scripts/economy_anti_exploit.js` | 1) Dokładne ID bloków `Coin Mint` i `Slot Machine` w LC 2.3.0.6; 2) Składnia `/shoppers value set <item> 0` w `Shoppers v1.0.2`; 3) Sygnatura `ctx.source.sendSuccess(() => Text..., true)` w komendzie `/halucynacje_sync_shoppers`. | [ ] |
-| **KubeJS (Gating + Quests)** | `kubejs/server_scripts/dimension_gating.js` | 1) Rejestracja `NativeEvents.onEvent('...EntityTravelToDimensionEvent')` i `event.setCanceled(true)`; 2) Składnia `/ftbquests change_progress <gracz> complete <task_id>` w `FTB Quests 2101.1.39`; 3) Fallback teleportu `(0, 65, 0)` vs spawn drużyny. | [ ] |
-| **KubeJS (Receptury)** | `kubejs/server_scripts/skyblock_create_recipes.js` | Schemat JSON receptur Create `6.0.10` (milling, splashing, mixing, compacting) oraz `create_mechanical_extruder:extruding` (`2.2.2-6.0.10`). | [ ] |
-| **FTB Quests (SNBT)** | `config/ftbquests/quests/README.md` | Parsowanie plików `.snbt` (rozdziały `stage_0`..`stage_5`), ikony itemów modowych (`create:*`, `farmersdelight:*`, `ae2:*`, `mekanism:*`) oraz zaliczanie tasków `C1..C5`. | [ ] |
-| **FTB Chunks** | `config/ftbchunks/ftbchunks-common.snbt`, `ftbchunks-world.snbt` | Nazwy kluczy w `FTB Chunks 2101.1.24` oraz lokalizacja pliku (`config/` vs `world/serverconfig/`). | [ ] |
-| **FTB Essentials** | `config/ftbessentials/ftbessentials.snbt` | Lokalizacja pliku (`config/` vs `world/serverconfig/`) oraz wyłączenie `/rtp` w `FTB Essentials 2101.1.10`. | [ ] |
-| **Carry On** | `config/carryon-common.toml` | Dokładne nazwy sekcji/kluczy TOML blacklisty bloków i encji w `Carry On 2.2.6.13`. | [ ] |
-| **Sophisticated Storage** | `config/sophisticatedstorage-common.toml` | Dokładne nazwy kluczy TOML wygenerowanych przez `Sophisticated Storage 1.6.20` (limit zasięgu kontrolera). | [ ] |
+| **Packwiz / CurseForge / `.mrpack`** | `scripts/export_curseforge_pack.mjs`, `scripts/bundle_mrpack_overrides.mjs`, `scripts/export_server_pack.mjs` | Zweryfikowano 65/65 modów klienckich (15 CF + 50 Modrinth) i 55/55 serwerowych; automatyczny build w CI & Release. | [x] |
+| **Skyblock Builder & 3 Wyspy `.nbt`** | `config/skyblockbuilder/*.json5`, `scripts/generate_island_nbt.py` | Schemat 1:1 ze źródłem `SkyblockBuilder-21.1.37` (`Origin.CENTER`), 3 binarne `.nbt` (`DataVersion 3955`) + audyt 54/54 bloków modowanych i 17/17 szyldów. | [x] |
+| **Create 6.0.10 & Extruder 2.2.2** | `kubejs/server_scripts/skyblock_create_recipes.js` | Zweryfikowano format `neoforge:single` oraz `blockIngredients` na prawdziwych JAR-ach 1.21.1 + testy w `test_kubejs_logic.mjs`. | [x] |
+| **KubeJS 7.2 Gating Wymiarów** | `kubejs/server_scripts/dimension_gating.js` | Usunięto nieistniejący `PlayerEvents.changedDimension`; użyto zweryfikowanych `EntityTravelToDimensionEvent` + `PlayerEvent$PlayerChangedDimensionEvent`. | [x] |
+| **KubeJS Rhino JSON Loader** | `kubejs/server_scripts/economy_*.js` | Zastąpiono `const cfg = JsonIO.read(...)` przez bezpieczne w Rhino `JSON.parse(String(JsonIO.readString(...)))` (fix `redeclaration of var cfg`). | [x] |
+| **Shoppers AI & Promień Spawnu** | `config/shoppers-common.toml` | Zweryfikowano klucze w `ShoppersConfig.class`; `maxShoppers = 10`, `spawnRadiusMin = 4`, `spawnRadiusMax = 15` pod nową Wyspę-Rynek `45×35`. | [x] |
+| **Lightman's Currency GUI & Config** | `config/lightmanscurrency/PersistentTraders.json`, `config/lightmanscurrency-*.txt` | Zweryfikować na żywym starcie `v1.0.2-playtest` działanie `/sklep`, `/lcterminal` i brak `Coin Mint` w craftingu. | [ ] |
+| **Stan Konta pod TAB** | `kubejs/server_scripts/economy_tab_balance.js` | Potwierdzić na żywo odświeżanie salda (ekwipunek + portfel + bank) pod klawiszem TAB. | [ ] |
+| **Live Playtest Exaroton + Mac M2** | Cała paczka `v1.0.2-playtest` | Potwierdzić `0` błędów KubeJS w `latest.log`, poprawne generowanie 3 wysp oraz stabilne `60+ FPS` na Mac M2 i `20 TPS` na Exaroton. | [ ] |
 
 ---
 
 ## 7. Kryterium Go / No-Go przed startem kampanii
 
 Serwer jest gotowy do startu gry we dwóch (**GO**), gdy:
-1. Obaj gracze (PC + Mac M2) bezproblemowo wchodzą na serwer Exaroton i widzą poprawne ikony/nazwy `kubejs:stage_1..5_token`.
-2. Na Mac M2 działają stabilnie `Sodium`, `Create 6.0.10`, `Steam 'n' Rails` i `Hypertubes` bez crashy OpenGL 4.1.
-3. Wszystkie 3 wyspy `.nbt` generują się poprawnie, `keepInventory = true` działa, a `Coin Mint` / `Slot Machine` / skup surowców Tier 0 są zablokowane.
-4. Realizacja Żetonów odblokowuje Nether (Stage 2), End (Stage 4) i zalicza taski `C1..C5` w `FTB Quests` dla całej drużyny.
-5. `/spark tps` utrzymuje `20.0 TPS` przy stabilnym zużyciu pamięci na Exaroton.
+1. Obaj gracze (PC + Mac M2) bezproblemowo wchodzą na serwer Exaroton bez błędów KubeJS i widzą poprawne ikony/nazwy `kubejs:stage_1..5_token`.
+2. Działają graficzne GUI sklepu (`/sklep`, `/lcterminal`, Terminal w Rotundzie), stan konta pod TAB oraz dynamiczne kontrakty (`/kontrakt`).
+3. Na Mac M2 działają stabilnie `Sodium`, `Create 6.0.10`, `Steam 'n' Rails` i `Hypertubes` bez crashy OpenGL 4.1.
+4. Wszystkie 3 wyspy `.nbt` generują się poprawnie na `Y = 64`, `keepInventory = true` działa, a `Coin Mint` / `Slot Machine` / skup surowców Tier 0 są zablokowane.
