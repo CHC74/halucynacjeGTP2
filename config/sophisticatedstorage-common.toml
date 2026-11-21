@@ -1,0 +1,22 @@
+# HalucynacjeGTP2 — Sophisticated Storage (NeoForge 1.21.1)
+# Rozsądne limity sieci magazynowej chroniące TPS Exaroton i pakiety sieciowe NBT.
+# [VERIFY ON 1.21.1 BOOT]: Zweryfikować dokładne nazwy kluczy TOML wygenerowanych przez
+# Sophisticated Storage 1.21.1 (część opcji może znajdować się w `sophisticatedstorage-server.toml`).
+
+[common]
+	# Ograniczenie zasięgu wyszukiwania Storage Controllera (w blokach), aby zapobiec
+	# kosztownemu skanowaniu rozległych hal przy każdej zmianie bloku.
+	controllerSearchRange = 15
+	# Ograniczenie maksymalnego zasięgu Storage Linków podpiętych do jednego kontrolera
+	storageLinkMaxRange = 15
+
+[upgrades]
+	# Sensowne limity prędkości transferu i filtrowania (bez zbędnego spamowania tickami)
+	hopperUpgradeTransferRate = 4
+	advancedHopperUpgradeTransferRate = 8
+	pickupUpgradeEnabled = true
+	compactingUpgradeEnabled = true
+	voidUpgradeEnabled = true
+	magnetUpgradeEnabled = true
+	# Rozsądny limit zasięgu magnesu (chroni wydajność skanowania bytów na ziemi)
+	magnetUpgradeRadius = 5

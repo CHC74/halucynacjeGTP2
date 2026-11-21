@@ -1,0 +1,32 @@
+{
+  "general": {
+    "enabled": true,
+    "displayMode": "TOGGLE",
+    "hideFromDebug": true,
+    "hideFromTabList": true,
+    "bossBarOverlapMode": "PUSH_DOWN",
+    "displayEntities": true,
+    "displayFluids": true,
+    "itemModNameTooltip": true
+  },
+  "pluginConfigs": {
+    "minecraft:item_storage": {
+      "showNameAmount": 5,
+      "normalAmount": 27,
+      "detailedAmount": 54,
+      "itemsPerLine": 9
+    },
+    "minecraft:fluid_storage": {
+      "enabled": true
+    },
+    "minecraft:energy_storage": {
+      "enabled": true
+    },
+    "minecraft:progress": {
+      "enabled": true
+    },
+    "jade:mod_name": {
+      "enabled": true
+    }
+  }
+}

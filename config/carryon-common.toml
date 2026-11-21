@@ -1,0 +1,90 @@
+# HalucynacjeGTP2 — Carry On (NeoForge 1.21.1)
+# Pozwala na wygodne przenoszenie zwykłych skrzyń, beczek i zwierząt gospodarskich na Skyblocku,
+# jednocześnie BEZWZGLĘDNIE blokując podnoszenie maszyn multiblock, sieci kinetycznych,
+# kontrolerów magazynów, terminali ekonomii oraz NPC Shoppers (ochrona przed korupcją zapisów).
+#
+# [VERIFY ON 1.21.1 BOOT]: Sprawdzić dokładne nazwy sekcji/kluczy TOML wygenerowanych
+# przez Carry On 1.21.1 (szczególnie `[settings]` vs `[blacklist]` i obsługę wildcard `*`).
+
+[settings]
+	maxDistance = 2.5
+	maxEntityWidth = 1.5
+	maxEntityHeight = 2.5
+	# Zakaz podnoszenia wrogich mobów (ochrona przed exploitami w Netherze/Endzie)
+	pickupHostileMobs = false
+	heavyTiles = true
+	slownessInCreative = false
+	stackableEntities = true
+	maxEntityStackLimit = 10
+	pickupAllBlocks = false
+	hitWhileCarrying = false
+	dropCarriedWhenHit = false
+	useWhitelistBlocks = false
+	useWhitelistEntities = false
+	useWhitelistStacking = false
+
+[blacklist]
+	# Czarna lista bloków / tile-entities (ochrona przed korupcją NBT, duplikacją i crashami)
+	forbiddenTiles = [
+		# --- Create 6 + Addony (kotły, zbiorniki, skarbce, pociągi, Packagery, Frogporty) ---
+		"create:*",
+		"railways:*",
+		"hypertubes:*",
+		"createaddition:*",
+		"create_enchantment_industry:*",
+		"trading_floor:*",
+		"create_mechanical_extruder:*",
+		"create_central_kitchen:*",
+		"sliceanddice:*",
+		"create_connected:*",
+		"copycats:*",
+		"createappliedkinetics:*",
+
+		# --- Mekanism & Mekanism Generators (reaktory, turbiny, kotły, rury, QIO) ---
+		"mekanism:*",
+		"mekanismgenerators:*",
+
+		# --- Applied Energistics 2 (ME Controller, ME Drive, kable, CPU autokraftingu) ---
+		"ae2:*",
+
+		# --- Ekonomia & Handel (NIGDY nie pozwalać na podnoszenie bankomatów i sklepów!) ---
+		"lightmanscurrency:*",
+		"shoppers:*",
+
+		# --- Teleportacja, kontrolery magazynów i system zadań ---
+		"waystones:*",
+		"sophisticatedstorage:controller",
+		"sophisticatedstorage:storage_link",
+		"sophisticatedstorage:storage_io",
+		"sophisticatedstorage:storage_input",
+		"sophisticatedstorage:storage_output",
+		"ftbquests:*",
+
+		# --- Bloki techniczne Vanilla ---
+		"minecraft:spawner",
+		"minecraft:trial_spawner",
+		"minecraft:vault",
+		"minecraft:end_portal_frame",
+		"minecraft:command_block",
+		"minecraft:repeating_command_block",
+		"minecraft:chain_command_block"
+	]
+
+	# Czarna lista bytów (zakaz podnoszenia NPC Shoppers, kontrapcji Create oraz bossów)
+	forbiddenEntities = [
+		"shoppers:*",
+		"create:carriage_contraption",
+		"create:contraption",
+		"create:stationary_contraption",
+		"create:gantry_contraption",
+		"minecraft:ender_dragon",
+		"minecraft:wither",
+		"minecraft:warden",
+		"minecraft:elder_guardian"
+	]
+
+	# Zakaz układania w stosy bytów ekonomicznych i kontrapcji
+	forbiddenStacking = [
+		"shoppers:*",
+		"create:*"
+	]
