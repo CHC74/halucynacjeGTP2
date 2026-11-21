@@ -170,11 +170,11 @@
 				"B100000000000003"
 			]
 			description: [
-				"Zajmij jedno z 8 modularnych stoisk (&fS1–S8&r) na Wyspie-Rynku &b(152, 64, 0)&r i postaw tam swój fizyczny sklep &bLightman's Currency&r."
+				"Zajmij jeden z 8 dwupiętrowych butików (&f1–8&r) na &bWielkiej Wyspie-Rynku (152, 64, 0)&r i postaw tam swój fizyczny sklep &bLightman's Currency&r."
 				""
-				"• Front stoiska kieruj do głównej alei placu — tam spacerują NPC &bShoppers&r."
-				"• Zasilaj stoisko od tyłu przez zamknięty korytarz serwisowy (&bZ = -9..-10&r lub &bZ = +9..+10&r), nie blokując ścieżek NPC."
-				"• Zawsze miej przy sobie portfel (&fWallet&r), aby wygodnie zbierać utarg!"
+				"• Front butiku wychodzi na płaski plac, po którym spacerują NPC &bShoppers&r (3 gotowe bankomaty &bATM&r już czekają przy alejach!)."
+				"• Zasilaj stoisko od tyłu przez 3-blokową aleję serwisową z gotową estakadą &bCreate&r (&fChain Conveyors&r / &fFrogports&r / taśmy), nie blokując ścieżek NPC."
+				"• Zawsze miej przy sobie portfel (&fWallet&r) i korzystaj z konta drużynowego w bankomacie!"
 			]
 			id: "B100000000000004"
 			rewards: [

@@ -77,28 +77,45 @@ function getContractStage(server) {
   return highest;
 }
 
+function readContractsPricesJson(filePath) {
+  var rawText = null;
+  if (typeof JsonIO !== 'undefined') {
+    if (typeof JsonIO.readString === 'function') {
+      rawText = JsonIO.readString(filePath);
+      if (rawText) {
+        return JSON.parse(String(rawText));
+      }
+    }
+    if (typeof JsonIO.read === 'function') {
+      return JsonIO.read(filePath);
+    }
+  }
+  return null;
+}
+
 function loadContractPoolForStage(stage) {
-  const profile = STAGE_CONTRACT_PROFILE[stage] || STAGE_CONTRACT_PROFILE[0];
-  const pool = [];
+  var profile = STAGE_CONTRACT_PROFILE[stage] || STAGE_CONTRACT_PROFILE[0];
+  var pool = [];
+  var parsedCfg = null;
+  var t = 0;
+  var i = 0;
 
   try {
-    if (typeof JsonIO !== 'undefined' && JsonIO.read) {
-      const cfg = JsonIO.read(CONTRACT_PRICES_FILE);
-      if (cfg && cfg.sell_tiers) {
-        for (let t = 0; t < profile.tiers.length; t++) {
-          const tierKey = profile.tiers[t];
-          const tierObj = cfg.sell_tiers[tierKey];
-          const items = (tierObj && tierObj.items) || [];
-          for (let i = 0; i < items.length; i++) {
-            const it = items[i];
-            if (!it || !it.id || !(it.wholesale_gui > 0)) continue;
-            pool.push({
-              id: String(it.id),
-              packSize: it.pack_size && Number(it.pack_size) > 1 ? Number(it.pack_size) : 1,
-              wholesale: Number(it.wholesale_gui),
-              tierKey: tierKey
-            });
-          }
+    parsedCfg = readContractsPricesJson(CONTRACT_PRICES_FILE);
+    if (parsedCfg && parsedCfg.sell_tiers) {
+      for (t = 0; t < profile.tiers.length; t++) {
+        var tierKey = profile.tiers[t];
+        var tierObj = parsedCfg.sell_tiers[tierKey];
+        var tierItems = (tierObj && tierObj.items) || [];
+        for (i = 0; i < tierItems.length; i++) {
+          var it = tierItems[i];
+          if (!it || !it.id || !(it.wholesale_gui > 0)) continue;
+          pool.push({
+            id: String(it.id),
+            packSize: it.pack_size && Number(it.pack_size) > 1 ? Number(it.pack_size) : 1,
+            wholesale: Number(it.wholesale_gui),
+            tierKey: tierKey
+          });
         }
       }
     }

@@ -318,13 +318,14 @@
 				"B000000000000006"
 			]
 			description: [
-				"Twoja baza ma już stabilne żelazo, andezyt i pierwszą kuchnię. Czas spojrzeć na wschód — w stronę &bWyspy-Rynku (152, 64, 0)&r!"
+				"Twoja baza ma już stabilne żelazo, andezyt i pierwszą kuchnię. Czas spojrzeć na wschód — w stronę &bWielkiej Wyspy-Rynku (152, 64, 0)&r!"
 				""
-				"&eZasada premii rynkowej:&r"
-				"• Szybki skup hurtowy w terminalu GUI płaci stawkę bazową (&f100%&r)."
-				"• Sprzedaż w Twoich fizycznych stoiskach &bLightman's Currency&r klientom NPC &bShoppers&r na Wyspie-Rynku daje premię &a+20%&r!"
+				"&eTrzy kanały zarobku (ekonomia Tycoona):&r"
+				"• &f/sklep&r oraz centralny &bTrading Terminal&r w Rotundzie &b(152, 65, 0)&r — graficzny skup hurtowy (&f100%&r) i zakup Żetonów Etapów."
+				"• Własne stoiska &bLightman's Currency&r dla NPC &bShoppers&r na Wyspie-Rynku — premia &a+20%&r!"
+				"• Dynamiczne zlecenia fabryczne &f/kontrakt&r (&f/kontrakt oddaj&r) — najwyższa premia &6+35%&r!"
 				""
-				"Uzbieraj &610 000 monet&r, kup &bŻeton Etapu 1&r i otwórz kolejny rozdział księgi."
+				"Uzbieraj &610 000 monet&r (sprawdzaj stan konta pod &eTAB&r lub &f/ekonomia&r), kup &bŻeton Etapu 1&r i otwórz kolejny rozdział księgi."
 			]
 			icon: {
 				id: "kubejs:stage_1_token"

@@ -80,15 +80,34 @@ function splitIntoCoinStacks(amount) {
   return stacks;
 }
 
+function readMarketPricesJson(filePath) {
+  var rawText = null;
+  if (typeof JsonIO !== 'undefined') {
+    if (typeof JsonIO.readString === 'function') {
+      rawText = JsonIO.readString(filePath);
+      if (rawText) {
+        return JSON.parse(String(rawText));
+      }
+    }
+    if (typeof JsonIO.read === 'function') {
+      return JsonIO.read(filePath);
+    }
+  }
+  return null;
+}
+
 /**
  * Wczytuje i indeksuje `config/halucynacje_economy/prices.json`.
+ * Używa `JsonIO.readString` + `JSON.parse` oraz pojedynczych deklaracji `var` na początku
+ * funkcji, aby uniknąć błędu Rhino `TypeError: redeclaration of var cfg` oraz konwersji
+ * Javowej `java.util.Map` w KubeJS 7.2 (Issue #31).
  */
 function getMarketCatalog(forceReload) {
   if (CACHED_MARKET && !forceReload) {
     return CACHED_MARKET;
   }
 
-  const catalog = {
+  var catalog = {
     tier0: {},
     sellById: {},
     tiersList: [],
@@ -96,85 +115,101 @@ function getMarketCatalog(forceReload) {
     buyList: [],
     stageTokens: []
   };
+  var parsedCfg = null;
+  var tier0 = null;
+  var sellTiers = null;
+  var tierKeys = null;
+  var tokens = null;
+  var buyItems = null;
+  var i = 0;
+  var t = 0;
+  var j = 0;
+  var tierKey = '';
+  var tierObj = null;
+  var tierItems = null;
+  var parsedItems = null;
+  var it = null;
+  var parsed = null;
+  var tok = null;
+  var b = null;
+  var entry = null;
 
   try {
-    if (typeof JsonIO !== 'undefined' && JsonIO.read) {
-      const cfg = JsonIO.read(MARKET_PRICES_FILE);
-      if (cfg) {
-        const tier0 = cfg.tier_0_blocked || [];
-        for (let i = 0; i < tier0.length; i++) {
-          const entry = tier0[i];
-          if (entry && entry.id) {
-            catalog.tier0[String(entry.id)] = String(entry.reason || 'Surowiec zablokowany (Tier 0)');
-          }
+    parsedCfg = readMarketPricesJson(MARKET_PRICES_FILE);
+    if (parsedCfg) {
+      tier0 = parsedCfg.tier_0_blocked || [];
+      for (i = 0; i < tier0.length; i++) {
+        entry = tier0[i];
+        if (entry && entry.id) {
+          catalog.tier0[String(entry.id)] = String(entry.reason || 'Surowiec zablokowany (Tier 0)');
         }
+      }
 
-        const sellTiers = cfg.sell_tiers || {};
-        const tierKeys = Object.keys(sellTiers);
-        for (let t = 0; t < tierKeys.length; t++) {
-          const tierKey = tierKeys[t];
-          const tierObj = sellTiers[tierKey];
-          const items = (tierObj && tierObj.items) || [];
-          const parsedItems = [];
-          for (let j = 0; j < items.length; j++) {
-            const it = items[j];
-            if (!it || !it.id) continue;
-            const parsed = {
-              id: String(it.id),
-              tierKey: tierKey,
-              tierNum: t + 1,
-              packSize: it.pack_size && Number(it.pack_size) > 1 ? Number(it.pack_size) : 1,
-              wholesale: Number(it.wholesale_gui || 0),
-              npc: Number(it.npc_shoppers || 0)
-            };
-            catalog.sellById[parsed.id] = parsed;
-            parsedItems.push(parsed);
-          }
-          catalog.tiersList.push({
+      sellTiers = parsedCfg.sell_tiers || {};
+      tierKeys = Object.keys(sellTiers);
+      for (t = 0; t < tierKeys.length; t++) {
+        tierKey = tierKeys[t];
+        tierObj = sellTiers[tierKey];
+        tierItems = (tierObj && tierObj.items) || [];
+        parsedItems = [];
+        for (j = 0; j < tierItems.length; j++) {
+          it = tierItems[j];
+          if (!it || !it.id) continue;
+          parsed = {
+            id: String(it.id),
+            tierKey: tierKey,
             tierNum: t + 1,
-            key: tierKey,
-            description: String((tierObj && tierObj.description) || tierKey),
-            items: parsedItems
-          });
-        }
-
-        const tokens = cfg.stage_tokens || [];
-        for (let i = 0; i < tokens.length; i++) {
-          const tok = tokens[i];
-          if (!tok || !tok.id) continue;
-          const entry = {
-            id: String(tok.id),
-            alias: String(tok.alias || `stage_${tok.stage}`),
-            stage: Number(tok.required_stage != null ? tok.required_stage : Math.max(0, Number(tok.stage) - 1)),
-            unlocksStage: Number(tok.stage || i + 1),
-            buyPrice: Number(tok.buy_price || 0),
-            teamLimit: 0,
-            isStageToken: true,
-            note: String(tok.name || tok.id)
+            packSize: it.pack_size && Number(it.pack_size) > 1 ? Number(it.pack_size) : 1,
+            wholesale: Number(it.wholesale_gui || 0),
+            npc: Number(it.npc_shoppers || 0)
           };
-          catalog.stageTokens.push(entry);
-          catalog.buyList.push(entry);
-          catalog.buyByKey[entry.alias.toLowerCase()] = entry;
-          catalog.buyByKey[entry.id.toLowerCase()] = entry;
+          catalog.sellById[parsed.id] = parsed;
+          parsedItems.push(parsed);
         }
+        catalog.tiersList.push({
+          tierNum: t + 1,
+          key: tierKey,
+          description: String((tierObj && tierObj.description) || tierKey),
+          items: parsedItems
+        });
+      }
 
-        const buyItems = cfg.buy_catalog || [];
-        for (let i = 0; i < buyItems.length; i++) {
-          const b = buyItems[i];
-          if (!b || !b.id) continue;
-          const entry = {
-            id: String(b.id),
-            alias: String(b.alias || String(b.id).split(':')[1] || b.id),
-            stage: Number(b.stage || 0),
-            buyPrice: Number(b.buy_price || 0),
-            teamLimit: Number(b.team_limit || 0),
-            isStageToken: false,
-            note: String(b.note || '')
-          };
-          catalog.buyList.push(entry);
-          catalog.buyByKey[entry.alias.toLowerCase()] = entry;
-          catalog.buyByKey[entry.id.toLowerCase()] = entry;
-        }
+      tokens = parsedCfg.stage_tokens || [];
+      for (i = 0; i < tokens.length; i++) {
+        tok = tokens[i];
+        if (!tok || !tok.id) continue;
+        entry = {
+          id: String(tok.id),
+          alias: String(tok.alias || `stage_${tok.stage}`),
+          stage: Number(tok.required_stage != null ? tok.required_stage : Math.max(0, Number(tok.stage) - 1)),
+          unlocksStage: Number(tok.stage || i + 1),
+          buyPrice: Number(tok.buy_price || 0),
+          teamLimit: 0,
+          isStageToken: true,
+          note: String(tok.name || tok.id)
+        };
+        catalog.stageTokens.push(entry);
+        catalog.buyList.push(entry);
+        catalog.buyByKey[entry.alias.toLowerCase()] = entry;
+        catalog.buyByKey[entry.id.toLowerCase()] = entry;
+      }
+
+      buyItems = parsedCfg.buy_catalog || [];
+      for (i = 0; i < buyItems.length; i++) {
+        b = buyItems[i];
+        if (!b || !b.id) continue;
+        entry = {
+          id: String(b.id),
+          alias: String(b.alias || String(b.id).split(':')[1] || b.id),
+          stage: Number(b.stage || 0),
+          buyPrice: Number(b.buy_price || 0),
+          teamLimit: Number(b.team_limit || 0),
+          isStageToken: false,
+          note: String(b.note || '')
+        };
+        catalog.buyList.push(entry);
+        catalog.buyByKey[entry.alias.toLowerCase()] = entry;
+        catalog.buyByKey[entry.id.toLowerCase()] = entry;
       }
     }
   } catch (err) {
