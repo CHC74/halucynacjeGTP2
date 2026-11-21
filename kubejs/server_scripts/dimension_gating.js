@@ -19,12 +19,17 @@
 // - [VERIFY ON 1.21.1 BOOT] Potwierdzić w logach serwera, że `NativeEvents.onEvent`
 //   poprawnie rejestruje `net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent`
 //   i czy `event.setCanceled(true)` zatrzymuje przejście przez portal Netheru/Endu.
-// - [TODO — kolejna iteracja] Podłączyć integrację per-team `FTB Teams` oraz
-//   automatyczne zaliczanie zadań `FTB Quests` po zdefiniowaniu ID questów.
+// - [VERIFY ON 1.21.1 BOOT] Potwierdzić dokładną składnię komendy
+//   `/ftbquests change_progress <player> complete <task_id>` w `FTB Quests 2101.1.39`
+//   (NeoForge 1.21.1) oraz czy zaliczenie dla jednego gracza w drużynie automatycznie
+//   propaguje się na cały zespół `FTB Teams` (poniżej i tak synchronizujemy każdego gracza).
+// - [VERIFY ON 1.21.1 BOOT] Sprawdzić sygnaturę `ctx.source.sendSuccess(...)` w KubeJS 7
+//   pod NeoForge 1.21.1 (Supplier `() => Text...` vs bezpośredni obiekt `Component`).
 // ============================================================================
 
 const GLOBAL_STAGES_KEY = 'halucynacje_global_stages';
 const PLAYER_STAGES_KEY = 'halucynacje_stages';
+const SYNCED_QUEST_TASKS_KEY = 'halucynacje_synced_quest_tasks';
 const PORTAL_MSG_COOLDOWN_KEY = 'halucynacje_portal_msg_tick';
 const PORTAL_MSG_COOLDOWN_TICKS = 40; // 2 sekundy (zapobiega spamowi na czacie w portalu)
 
@@ -57,6 +62,19 @@ const STAGE_CONFIG = {
 };
 
 const ALL_STAGE_IDS = ['stage_1', 'stage_2', 'stage_3', 'stage_4', 'stage_5'];
+
+/**
+ * Deterministyczne 16-znakowe ID tasków typu `custom` w księdze `FTB Quests`
+ * (zgodnie z `config/ftbquests/quests/README.md` oraz `chapters/stage_1..5_*.snbt`).
+ * Gracz nie może ich ręcznie odklikać — zalicza je wyłącznie ten skrypt po realizacji żetonu.
+ */
+const STAGE_QUEST_TASK_IDS = {
+  stage_1: 'C100000000000102',
+  stage_2: 'C200000000000102',
+  stage_3: 'C300000000000102',
+  stage_4: 'C400000000000102',
+  stage_5: 'C500000000000102'
+};
 
 const DIMENSION_REQUIREMENTS = {
   'minecraft:the_nether': {
@@ -157,9 +175,53 @@ function hasUnlockedStage(player, server, stageId) {
 }
 
 /**
- * Synchronizuje wszystkie odblokowane globalnie etapy co-op na persistentData gracza.
+ * Zalicza odpowiadający etapowi task `custom` w `FTB Quests` dla danego gracza.
+ * Zapamiętuje zsynchronizowane taski w `player.persistentData`, aby nie wywoływać
+ * zbędnych komend przy każdym kolejnym logowaniu (chyba że `force === true`).
  */
-function syncGlobalStagesToPlayer(player, server) {
+function completeStageQuestTask(player, server, stageId, force) {
+  if (!player || !server || !player.username) {
+    return false;
+  }
+
+  const taskId = STAGE_QUEST_TASK_IDS[stageId];
+  if (!taskId) {
+    return false;
+  }
+
+  let syncedTasks = null;
+  if (player.persistentData) {
+    syncedTasks = player.persistentData.getCompound(SYNCED_QUEST_TASKS_KEY);
+    if (!force && syncedTasks && syncedTasks.getBoolean(stageId)) {
+      return false;
+    }
+  }
+
+  try {
+    // [VERIFY ON 1.21.1 BOOT]: Potwierdzić składnię komendy w FTB Quests 2101.1.39
+    server.runCommandSilent(
+      `ftbquests change_progress ${player.username} complete ${taskId}`
+    );
+
+    if (player.persistentData && syncedTasks) {
+      syncedTasks.putBoolean(stageId, true);
+      player.persistentData.put(SYNCED_QUEST_TASKS_KEY, syncedTasks);
+    }
+
+    return true;
+  } catch (err) {
+    console.warn(
+      `[HalucynacjeGTP2] Nie udało się zsynchronizować taska FTB Quests (${stageId} -> ${taskId}) dla ${player.username}: ${err}`
+    );
+    return false;
+  }
+}
+
+/**
+ * Synchronizuje wszystkie odblokowane globalnie etapy co-op na persistentData gracza
+ * oraz dopina zaliczenie powiązanych tasków `custom` w `FTB Quests`.
+ */
+function syncGlobalStagesToPlayer(player, server, forceQuestSync) {
   if (!player || !server || !server.persistentData || !player.persistentData) {
     return;
   }
@@ -169,9 +231,16 @@ function syncGlobalStagesToPlayer(player, server) {
   let changed = false;
 
   ALL_STAGE_IDS.forEach((stageId) => {
-    if (globalStages && globalStages.getBoolean(stageId) && !playerStages.getBoolean(stageId)) {
+    const unlockedGlobal = Boolean(globalStages && globalStages.getBoolean(stageId));
+    const unlockedPlayer = Boolean(playerStages && playerStages.getBoolean(stageId));
+
+    if (unlockedGlobal && !unlockedPlayer) {
       playerStages.putBoolean(stageId, true);
       changed = true;
+    }
+
+    if (unlockedGlobal || unlockedPlayer) {
+      completeStageQuestTask(player, server, stageId, Boolean(forceQuestSync));
     }
   });
 
@@ -181,8 +250,8 @@ function syncGlobalStagesToPlayer(player, server) {
 }
 
 /**
- * Zapisuje odblokowanie etapu w globalnych danych co-op serwera oraz synchronizuje
- * wszystkich aktualnie zalogowanych graczy (przygotowane pod FTB Teams / FTB Quests).
+ * Zapisuje odblokowanie etapu w globalnych danych co-op serwera, synchronizuje
+ * wszystkich aktualnie zalogowanych graczy oraz zalicza task `custom` w `FTB Quests`.
  */
 function grantStage(player, server, stageId) {
   if (server && server.persistentData) {
@@ -190,10 +259,10 @@ function grantStage(player, server, stageId) {
     globalStages.putBoolean(stageId, true);
     server.persistentData.put(GLOBAL_STAGES_KEY, globalStages);
 
-    // Synchronizuj wszystkich aktywnych graczy co-op na serwerze
+    // Synchronizuj wszystkich aktywnych graczy co-op na serwerze (+ FTB Quests)
     if (server.players) {
       server.players.forEach((onlinePlayer) => {
-        syncGlobalStagesToPlayer(onlinePlayer, server);
+        syncGlobalStagesToPlayer(onlinePlayer, server, false);
       });
     }
   }
@@ -204,9 +273,27 @@ function grantStage(player, server, stageId) {
     player.persistentData.put(PLAYER_STAGES_KEY, playerStages);
   }
 
-  // TODO (Issue #4 — kolejna iteracja): Podłączyć per-team `FTB Teams` (jeśli na serwerze
-  // zagra więcej niż 1 niezależna drużyna) oraz trigger `FTB Quests`, np.:
-  // `server.runCommandSilent(\`ftbquests change_progress ${player.username} complete <TASK_ID>\`)`.
+  // Gwarantowane wywołanie FTB Quests dla gracza realizującego żeton
+  completeStageQuestTask(player, server, stageId, true);
+}
+
+/**
+ * Bezpieczne wysyłanie odpowiedzi komendy OP (obsługuje Supplier w NeoForge 1.21.1).
+ */
+function sendCommandFeedback(ctx, component) {
+  if (!ctx || !ctx.source) {
+    return;
+  }
+  try {
+    // [VERIFY ON 1.21.1 BOOT]: NeoForge 1.21.1 CommandSourceStack#sendSuccess(Supplier<Component>, boolean)
+    ctx.source.sendSuccess(() => component, true);
+  } catch (err) {
+    try {
+      ctx.source.sendSuccess(component, true);
+    } catch (fallbackErr) {
+      console.info(`[HalucynacjeGTP2] Feedback komendy: ${component}`);
+    }
+  }
 }
 
 /**
@@ -371,9 +458,49 @@ PlayerEvents.changedDimension((event) => {
   notifyDimensionLocked(player, targetDim, requirement);
 
   // Bezpieczny powrót na płytę Wyspy Startowej Overworlda (zgodnie z docs/ISLAND_DESIGN.md: 0, 65, 0)
-  // TODO (Issue #4 — kolejna iteracja): Zastąpić fallback `(0, 65, 0)` dynamicznym spawnem
-  // wyspy drużyny z Skyblock Builder / FTB Essentials (`/spawn`), jeśli zagra wiele drużyn.
+  // [VERIFY ON 1.21.1 BOOT]: Jeśli zagra wiele niezależnych drużyn Skyblock Builder,
+  // rozważyć zastąpienie fallbacku `(0, 65, 0)` dynamicznym teleportem `/spawn` lub spawnem wyspy drużyny.
   server.runCommandSilent(
     `execute in minecraft:overworld run tp ${player.username} 0 65 0`
+  );
+});
+
+// ----------------------------------------------------------------------------
+// 4. Komenda administracyjna (OP): /halucynacje_sync_stages
+//    Wymusza pełną resynchronizację globalnych etapów co-op oraz tasków FTB Quests
+//    dla wszystkich graczy online (przydatne podczas playtestu i debugowania).
+// ----------------------------------------------------------------------------
+ServerEvents.commandRegistry((event) => {
+  const { commands: Commands } = event;
+  event.register(
+    Commands.literal('halucynacje_sync_stages')
+      .requires((src) => src.hasPermission(2))
+      .executes((ctx) => {
+        const server = ctx.source.server;
+        const globalStages =
+          server && server.persistentData
+            ? server.persistentData.getCompound(GLOBAL_STAGES_KEY)
+            : null;
+        const unlocked = ALL_STAGE_IDS.filter(
+          (stageId) => globalStages && globalStages.getBoolean(stageId)
+        );
+
+        let syncedPlayers = 0;
+        if (server && server.players) {
+          server.players.forEach((onlinePlayer) => {
+            syncGlobalStagesToPlayer(onlinePlayer, server, true);
+            syncedPlayers++;
+          });
+        }
+
+        const unlockedLabel = unlocked.length > 0 ? unlocked.join(', ') : '(brak — Etap 0)';
+        sendCommandFeedback(
+          ctx,
+          Text.green(
+            `[HalucynacjeGTP2] Zsynchronizowano etapy [${unlockedLabel}] oraz taski FTB Quests dla ${syncedPlayers} graczy online.`
+          )
+        );
+        return syncedPlayers;
+      })
   );
 });
