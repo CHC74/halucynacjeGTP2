@@ -1012,7 +1012,51 @@ def build_market_island() -> StructureBuilder:
         _build_boutique(sb, x0, 26, False, wool, accent, wall, flr, r_st, r_sl, slines, scol, floor_y)
 
     # Dekoracyjna sztaba monet w narożniku sklepu #8 (Bazar VIP)
+    # -----------------------------------------------------------------------
+    # 4b. Tematyczne dekoracje wnętrz wszystkich 8 butików (w narożnikach —
+    #     środkowy front 2x2 pozostaje w 100% wolny na sklepy Lightman's Currency!)
+    # -----------------------------------------------------------------------
+    # #1 Piekarnia (x=10..15, z=5..8): rozpalony smoker, snopek siana, mak w doniczce
+    sb.set(11, floor_y + 1, 6, "minecraft:smoker", {"facing": "south", "lit": "true"})
+    sb.set(14, floor_y + 1, 6, "minecraft:hay_block", {"axis": "y"})
+    sb.set(14, floor_y + 2, 6, "minecraft:potted_poppy")
+    # #2 Bistro FD (x=17..22, z=5..8): stół rzemieślniczy, beczka, paproć w doniczce
+    sb.set(18, floor_y + 1, 6, "minecraft:crafting_table")
+    sb.set(21, floor_y + 1, 6, "minecraft:barrel", {"facing": "up", "open": "false"})
+    sb.set(21, floor_y + 2, 6, "minecraft:potted_fern")
+    # #3 Cukiernia (x=24..29, z=5..8): plaster miodu, beczka, różowy tulipan
+    sb.set(25, floor_y + 1, 6, "minecraft:honeycomb_block")
+    sb.set(28, floor_y + 1, 6, "minecraft:barrel", {"facing": "up", "open": "false"})
+    sb.set(28, floor_y + 2, 6, "minecraft:potted_pink_tulip")
+    # #4 Mechanika Create (x=31..36, z=5..8): stół kowalski, obudowa andezytowa, latarnia
+    sb.set(32, floor_y + 1, 6, "minecraft:smithing_table")
+    sb.set(35, floor_y + 1, 6, "create:andesite_casing")
+    sb.set(35, floor_y + 2, 6, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
+    # #5 Skład Kolei & Paliwa (x=10..15, z=26..29): rozpalony piec hutniczy, blok węgla, skrzynia kolejowa
+    sb.set(11, floor_y + 1, 28, "minecraft:blast_furnace", {"facing": "north", "lit": "true"})
+    sb.set(14, floor_y + 1, 28, "minecraft:coal_block")
+    sb.set(14, floor_y + 2, 28, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
+    # #6 Elektronika AE2 (x=17..22, z=26..29): serwer z azurytu, latarnia morska, szklana gablotka
+    sb.set(18, floor_y + 1, 28, "create:cut_asurine_bricks")
+    sb.set(18, floor_y + 2, 28, "minecraft:sea_lantern")
+    sb.set(21, floor_y + 1, 28, "create:framed_glass")
+    # #7 Przemysł Mekanism (x=24..29, z=26..29): obudowa miedziana, kowadło, przemysłowe żelazo
+    sb.set(25, floor_y + 1, 28, "create:copper_casing")
+    sb.set(25, floor_y + 2, 28, "minecraft:copper_bulb", {"lit": "true", "powered": "false"})
+    sb.set(28, floor_y + 1, 28, "minecraft:anvil", {"facing": "north"})
+    # #8 Bazar VIP Kontrakty +35% (x=31..36, z=26..29): sztaba monet, stos monet, szmaragd, pulpit
     sb.set(32, floor_y + 1, 28, "lightmanscurrency:coinblock_gold")
+    sb.set(32, floor_y + 2, 28, "lightmanscurrency:coinpile_gold", {"facing": "north", "waterlogged": "false"})
+    sb.set(35, floor_y + 1, 28, "minecraft:emerald_block")
+    sb.set(35, floor_y + 2, 28, "minecraft:potted_orange_tulip")
+
+    # Ładunki bagażowe i donice na peronach Zachodniego Dworca (poza torem z=15..19!)
+    sb.set(2, floor_y + 1, 12, "minecraft:barrel", {"facing": "up", "open": "false"})
+    sb.set(3, floor_y + 1, 12, "create:copper_casing")
+    sb.set(2, floor_y + 2, 12, "minecraft:potted_oak_sapling")
+    sb.set(2, floor_y + 1, 22, "minecraft:barrel", {"facing": "up", "open": "false"})
+    sb.set(3, floor_y + 1, 22, "create:brass_casing")
+    sb.set(3, floor_y + 2, 22, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
 
     # Estakada logistyczna (napowietrzny pomost Create w tylnych alejach na y = 13, x = 8..36)
     # Pozwala graczom od razu wieszać Chain Conveyors, Frogporty i zsypy za wszystkimi 8 sklepami!
@@ -1043,6 +1087,16 @@ def build_market_island() -> StructureBuilder:
         sb.set(px, floor_y + 6, pz, "create:brass_casing")
         # Ozdobne kinkiety latarniowe na kolumnach
         sb.set(px, floor_y + 5, pz + (1 if pz == 14 else -1), "minecraft:lantern", {"hanging": "true", "waterlogged": "false"})
+
+    # 4 donice kwiatowe przy zewnętrznych narożnikach Rotundy
+    for fx, fz, flower in [
+        (18, 14, "minecraft:potted_dandelion"),
+        (26, 14, "minecraft:potted_blue_orchid"),
+        (18, 20, "minecraft:potted_orange_tulip"),
+        (26, 20, "minecraft:potted_azalea_bush"),
+    ]:
+        sb.set(fx, floor_y + 1, fz, "create:cut_limestone_bricks")
+        sb.set(fx, floor_y + 2, fz, flower)
 
     # PRAWDZIWY działający Terminal Handlowy Lightman's Currency w sercu Rotundy!
     sb.set(cx, floor_y + 1, cz, "lightmanscurrency:terminal", {"facing": "west"})
@@ -1093,26 +1147,40 @@ def build_market_island() -> StructureBuilder:
         sb.set(25, 15, z, "create:weathered_copper_shingle_stairs", {"facing": "west", "half": "bottom", "shape": "straight"})
 
     # Wielowarstwowa patynowana miedziana kopuła (y = 18..21) + mosiężna iglica (y = 22..24)
-    # y = 18: 5x5 bez narożników (weathered copper)
     for x in range(20, 25):
         for z in range(15, 20):
             if (x in (20, 24)) and (z in (15, 19)):
                 continue
             sb.set(x, 18, z, "create:weathered_copper_shingles")
-    # y = 19: 3x3 pełne (exposed copper) + okapy
     sb.fill(21, 19, 16, 23, 19, 18, "create:exposed_copper_shingles")
     sb.set(cx, 19, 15, "create:exposed_copper_shingle_stairs", {"facing": "south", "half": "bottom", "shape": "straight"})
     sb.set(cx, 19, 19, "create:exposed_copper_shingle_stairs", {"facing": "north", "half": "bottom", "shape": "straight"})
     sb.set(20, 19, cz, "create:exposed_copper_shingle_stairs", {"facing": "east", "half": "bottom", "shape": "straight"})
     sb.set(24, 19, cz, "create:exposed_copper_shingle_stairs", {"facing": "west", "half": "bottom", "shape": "straight"})
-    # y = 20: krzyżyk z jasnej miedzi
     for dx, dz in [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)]:
         sb.set(cx + dx, 20, cz + dz, "create:copper_shingles")
-    # y = 21..24: latarnia zwieńczenia + mosiężna iglica z piorunochronem (widoczna z Wyspy Startowej!)
     sb.set(cx, 21, cz, "minecraft:copper_bulb", {"lit": "true", "powered": "false"})
     sb.set(cx, 22, cz, "create:brass_block")
     sb.set(cx, 23, cz, "create:brass_bars", {"east": "false", "north": "false", "south": "false", "west": "false"})
     sb.set(cx, 24, cz, "minecraft:lightning_rod", {"facing": "up", "powered": "false", "waterlogged": "false"})
+
+    # 2 ozdobne arkady wiszące z latarniami nad głównym bulwarem (x = 16 i x = 29, z = 12..22)
+    for lx in (16, 29):
+        for lz in (12, 22):
+            sb.set(lx, floor_y + 1, lz, "create:cut_limestone_bricks")
+            sb.set(lx, floor_y + 2, lz, "create:brass_bars", {"east": "false", "north": "false", "south": "false", "west": "false"})
+            sb.set(lx, floor_y + 3, lz, "create:brass_bars", {"east": "false", "north": "false", "south": "false", "west": "false"})
+            sb.set(lx, floor_y + 4, lz, "create:brass_casing")
+            sb.set(lx, floor_y + 5, lz, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
+        # Napowietrzny łuk z girlandą świetlną nad aleją (y = 13, 5 bloków nad ziemią)
+        for gz in range(13, 22):
+            if gz in (13, 21):
+                sb.set(lx, floor_y + 5, gz, "create:brass_bars", {"east": "false", "north": "true", "south": "true", "west": "false"})
+            elif gz in (15, 19):
+                sb.set(lx, floor_y + 5, gz, "create:brass_casing")
+                sb.set(lx, floor_y + 4, gz, "minecraft:lantern", {"hanging": "true", "waterlogged": "false"})
+            else:
+                sb.set(lx, floor_y + 5, gz, "create:metal_girder", {"bottom": "false", "top": "false", "x": "false", "z": "true"})
 
     # -----------------------------------------------------------------------
     # 6. 3 PRAWDZIWE działające Bankomaty `lightmanscurrency:atm` w kioskach
@@ -1124,17 +1192,13 @@ def build_market_island() -> StructureBuilder:
         (34, 23, "north"),  # ATM #3 (SE Bulwar — 12 bloków od #2, 25.9 od #1!)
     ]
     for ax, az, face in atm_kiosks:
-        # Złoty cokół w podłodze (weryfikowany przez walidator jako 3 punkty ATM!)
         sb.set(ax, floor_y, az, "minecraft:gold_block")
         for dx, dz in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
             sb.set(ax + dx, floor_y, az + dz, "create:brass_casing")
-        # Prawdziwy bezstanowy blok `lightmanscurrency:atm` (2 bloki wysokości: bottom=true + bottom=false)
         sb.set(ax, floor_y + 1, az, "lightmanscurrency:atm", {"bottom": "true", "facing": face})
         sb.set(ax, floor_y + 2, az, "lightmanscurrency:atm", {"bottom": "false", "facing": face})
-        # Mini-zadaszenie kiosku z miedzianą lampą
         sb.set(ax, floor_y + 3, az, "minecraft:copper_bulb", {"lit": "true", "powered": "false"})
         sb.set(ax, floor_y + 4, az, "create:copper_shingle_slab", {"type": "bottom"})
-        # Szyld na koronie kiosku (na wysokości y=11, front)
         sz_sign = az + (1 if face == "south" else -1)
         sb.set(
             ax,
@@ -1148,7 +1212,6 @@ def build_market_island() -> StructureBuilder:
     # -----------------------------------------------------------------------
     # 7. Wschodni Taras Ogrodowy, Fontanna i Balkon Widokowy (x = 37..44)
     # -----------------------------------------------------------------------
-    # Fontanna z wapienia i mosiądzu (x = 38..42, z = 15..19) — ogrodzona pełną cembrowiną!
     for x in range(38, 43):
         for z in range(15, 20):
             on_rim = x in (38, 42) or z in (15, 19)
@@ -1159,13 +1222,12 @@ def build_market_island() -> StructureBuilder:
             else:
                 sb.set(x, floor_y, z, "minecraft:sea_lantern")
                 sb.set(x, floor_y + 1, z, "minecraft:water", {"level": "0"})
-    # Centralna kolumna fontanny z mosiądzu i wody
     sb.set(40, floor_y + 1, 17, "create:brass_casing")
     sb.set(40, floor_y + 2, 17, "create:cut_limestone_brick_wall", {"east": "none", "north": "none", "south": "none", "up": "true", "west": "none"})
     sb.set(40, floor_y + 3, 17, "create:brass_block")
     sb.set(40, floor_y + 4, 17, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
 
-    # 2 bujne klomby botaniczne w narożnikach wschodnich (NE: x=39..42, z=7..10; SE: x=39..42, z=24..27)
+    # 2 bujne klomby botaniczne w narożnikach wschodnich z rozłożystymi drzewkami azaliowymi
     for z0, z1 in [(7, 10), (24, 27)]:
         for x in range(39, 43):
             for z in range(z0, z1 + 1):
@@ -1177,13 +1239,19 @@ def build_market_island() -> StructureBuilder:
                     sb.set(x, floor_y + 1, z, "minecraft:moss_block")
                     leaf = "minecraft:flowering_azalea_leaves" if (x + z) % 2 == 0 else "minecraft:azalea_leaves"
                     sb.set(x, floor_y + 2, z, leaf, {"distance": "1", "persistent": "true", "waterlogged": "false"})
-        # Ozdobne drzewko azaliowe pośrodku klombu
         mid_z = (z0 + z1) // 2
         sb.set(40, floor_y + 2, mid_z, "minecraft:oak_log", {"axis": "y"})
-        sb.set(40, floor_y + 3, mid_z, "minecraft:flowering_azalea_leaves", {"distance": "1", "persistent": "true", "waterlogged": "false"})
-        sb.set(41, floor_y + 3, mid_z, "minecraft:azalea_leaves", {"distance": "1", "persistent": "true", "waterlogged": "false"})
-        sb.set(40, floor_y + 3, mid_z + 1, "minecraft:azalea_leaves", {"distance": "1", "persistent": "true", "waterlogged": "false"})
-        sb.set(40, floor_y + 4, mid_z, "minecraft:flowering_azalea_leaves", {"distance": "1", "persistent": "true", "waterlogged": "false"})
+        sb.set(40, floor_y + 3, mid_z, "minecraft:oak_log", {"axis": "y"})
+        for dx in (-1, 0, 1):
+            for dz in (-1, 0, 1):
+                if abs(dx) == 1 and abs(dz) == 1:
+                    continue
+                leaf = "minecraft:flowering_azalea_leaves" if (dx + dz) % 2 == 0 else "minecraft:azalea_leaves"
+                sb.set(40 + dx, floor_y + 4, mid_z + dz, leaf, {"distance": "1", "persistent": "true", "waterlogged": "false"})
+        sb.set(40, floor_y + 5, mid_z, "minecraft:flowering_azalea_leaves", {"distance": "1", "persistent": "true", "waterlogged": "false"})
+        # Kwieciste doniczki na narożnikach murków klombów
+        sb.set(39, floor_y + 2, z0, "minecraft:potted_poppy")
+        sb.set(39, floor_y + 2, z1, "minecraft:potted_blue_orchid")
 
     # -----------------------------------------------------------------------
     # 8. Ozdobna balustrada obwodowa z latarniami (zero spadania NPC w pustkę!)
@@ -1198,27 +1266,17 @@ def build_market_island() -> StructureBuilder:
                 sb.set(x, floor_y + 1, bz, "create:cut_limestone_brick_wall", {"east": "low", "north": "none", "south": "none", "up": "false", "west": "low"})
 
     for z in range(1, sz - 1):
-        # Krawędź wschodnia (x = sx - 1)
         if z % 5 == 0:
             sb.set(sx - 1, floor_y + 1, z, "create:brass_casing")
             sb.set(sx - 1, floor_y + 2, z, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
         else:
             sb.set(sx - 1, floor_y + 1, z, "create:cut_limestone_brick_wall", {"east": "none", "north": "low", "south": "low", "up": "false", "west": "none"})
-        # Krawędź zachodnia (x = 0) — otwarta na Stację Kolejową z = 11..23!
         if not (11 <= z <= 23):
             if z % 5 == 0:
                 sb.set(0, floor_y + 1, z, "create:brass_casing")
                 sb.set(0, floor_y + 2, z, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
             else:
                 sb.set(0, floor_y + 1, z, "create:cut_limestone_brick_wall", {"east": "none", "north": "low", "south": "low", "up": "false", "west": "none"})
-
-    # Boczne latarnie ozdobne wzdłuż bulwaru
-    for lx in (16, 29):
-        for lz in (12, 22):
-            sb.set(lx, floor_y + 1, lz, "create:cut_limestone_bricks")
-            sb.set(lx, floor_y + 2, lz, "create:brass_bars", {"east": "false", "north": "false", "south": "false", "west": "false"})
-            sb.set(lx, floor_y + 3, lz, "create:brass_bars", {"east": "false", "north": "false", "south": "false", "west": "false"})
-            sb.set(lx, floor_y + 4, lz, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
 
     return sb
 
@@ -1406,10 +1464,45 @@ def build_industrial_island() -> StructureBuilder:
     # Dach dyspozytorni z płaskich płyt miedzi
     sb.fill(24, floor_y + 5, 5, 27, floor_y + 5, 9, "create:weathered_copper_shingle_slab", {"type": "bottom"})
     sb.set(25, floor_y + 4, 7, "minecraft:copper_bulb", {"lit": "true", "powered": "false"})
-    # Wyposażenie dyspozytorni: działający Terminal Handlowy + stół rzemieślniczy + beczka
+    # Wyposażenie wnętrza dyspozytorni: Terminal LC, stół rzemieślniczy, beczka, piec, stół kowalski, kaktus
     sb.set(26, floor_y + 1, 6, "lightmanscurrency:terminal", {"facing": "west"})
     sb.set(26, floor_y + 1, 7, "minecraft:crafting_table")
     sb.set(26, floor_y + 1, 8, "minecraft:barrel", {"facing": "up", "open": "false"})
+    sb.set(25, floor_y + 1, 6, "minecraft:blast_furnace", {"facing": "south", "lit": "true"})
+    sb.set(25, floor_y + 1, 8, "minecraft:smithing_table")
+    sb.set(25, floor_y + 2, 8, "minecraft:potted_cactus")
+    # Szyld Dyspozytorni od strony placu (z = 9, nad wejściem na belce y = floor_y + 4)
+    sb.set(
+        25,
+        floor_y + 4,
+        10,
+        "minecraft:oak_wall_sign",
+        {"facing": "south", "waterlogged": "false"},
+        make_sign_nbt(("DYSPOZYTORNIA", "TERMINAL LC", "Strefa Huty", "Stage 2-5"), color="cyan", glowing=True),
+    )
+
+    # 4b. Zbiornik przemysłowy z miedzi i szkła obok Komina (x = 25..26, z = 2..3, y = 7..12)
+    for tx in (25, 26):
+        for tz in (2, 3):
+            sb.set(tx, floor_y + 1, tz, "create:copper_casing")
+            sb.set(tx, floor_y + 2, tz, "create:framed_glass")
+            sb.set(tx, floor_y + 3, tz, "create:framed_glass")
+            sb.set(tx, floor_y + 4, tz, "create:copper_casing")
+            sb.set(tx, floor_y + 5, tz, "create:copper_shingle_slab", {"type": "bottom"})
+    sb.set(25, floor_y + 5, 2, "minecraft:copper_bulb", {"lit": "true", "powered": "false"})
+
+    # 4c. Plac kontenerowy / skrzynie towarowe przy Doku Północnym (x = 7..9, z = 2..5)
+    sb.fill(7, floor_y + 1, 2, 9, floor_y + 1, 3, "create:copper_casing")
+    sb.fill(7, floor_y + 2, 2, 8, floor_y + 2, 3, "create:brass_casing")
+    sb.set(9, floor_y + 2, 2, "minecraft:lantern", {"hanging": "false", "waterlogged": "false"})
+    sb.set(8, floor_y + 1, 5, "minecraft:barrel", {"facing": "up", "open": "false"})
+    sb.set(9, floor_y + 1, 5, "create:railway_casing")
+    sb.set(9, floor_y + 2, 5, "minecraft:barrel", {"facing": "up", "open": "false"})
+
+    # 4d. 4 słupki ostrzegawcze na narożnikach skrzyżowania centralnego (poza 4 zatokami 11x11!)
+    for sx_b, sz_b in [(13, 13), (19, 13), (13, 19), (19, 19)]:
+        sb.set(sx_b, floor_y + 1, sz_b, "create:industrial_iron_block")
+        sb.set(sx_b, floor_y + 2, sz_b, "minecraft:copper_bulb", {"lit": "true", "powered": "false"})
 
     # 5. Murki ochronne obwodowe + słupy oświetleniowe (otwarty Dok Północny x=13..19, z=0!)
     for x in range(0, sx):
