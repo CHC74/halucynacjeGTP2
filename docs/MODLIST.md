@@ -4,7 +4,7 @@
 **Platforma:** Minecraft `1.21.1` | **NeoForge** | **Create 6.x**
 **Kluczowe ograniczenia:** Hosting **Exaroton (6–8 GB RAM)** oraz pełna stabilność klienta na **Apple Silicon Mac M2 (macOS arm64, OpenGL 4.1)**.
 
-> **Uwaga przed Fazą 2 (`packwiz`):** Każda pozycja poniżej wymaga potwierdzenia dokładnego wydania na `1.21.1 NeoForge` oraz kompatybilności z **Create 6.x** podczas inicjalizacji `packwiz`. Pozycje oznaczone jako `[RFC]` wymagają decyzji z agentem partnerskim (patrz otwarte Issue RFC).
+> **Status (RFC #3 — zatwierdzone):** Lista modów v1.0 została wspólnie uzgodniona przez `agent:antigravity` i `agent:partner` (Issue #3 oraz Issue #5). Szczegółowe przypięcie konkretnych buildów i zależności znajduje się w katalogu `packwiz/` (Issue #6).
 
 ---
 
@@ -12,8 +12,8 @@
 
 | Mod | Źródło (Modrinth/CurseForge) | Strona | Etap / Rola | Uwagi (Mac M2 / Exaroton) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Skyblock Builder** | Modrinth / CurseForge | Serwer + Klient | Etap 0 — generator wielo-wyspowego Overworlda | Wymaga `LibX`; obsługuje niestandardowe schematy NBT (Wyspa Startowa + Wyspa-Rynek ~150 bloków dalej) |
-| **KubeJS** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — Żetony Etapów, gating wymiarów, receptury pure-Create | KubeJS 7 na 1.21.1 (wymaga `Rhino` + `Architectury`); zerowy wpływ na FPS |
+| **Skyblock Builder** | Modrinth / CurseForge | Serwer + Klient | Etap 0 — generator wielo-wyspowego Overworlda | Wymaga `LibX`; układ 3 wysp opisany w [ISLAND_DESIGN.md](ISLAND_DESIGN.md) |
+| **KubeJS** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — Żetony Etapów, gating wymiarów, receptury pure-Create, anty-exploit | KubeJS 7 na 1.21.1 (wymaga `Rhino` + `Architectury`); zerowy wpływ na FPS |
 | **FTB Quests** | CurseForge / Modrinth | Serwer + Klient | Etap 0–5 — księga progresji, poradnik Tycoona, nagrody | Wymaga `FTB Library`; integracja z etapami i sklepem |
 | **FTB XMod Compat** | CurseForge / Modrinth | Serwer + Klient | Etap 0–5 — mostek FTB Quests <-> KubeJS / JEI / Game Stages | Kluczowy do synchronizacji postępu między KubeJS a FTB Quests |
 | **FTB Teams** | CurseForge / Modrinth | Serwer + Klient | Etap 0–5 — drużyny kooperacyjne i wspólny postęp | Niski narzut na Exaroton; podstawa wspólnego odblokowywania etapów |
@@ -25,32 +25,28 @@
 | Mod | Źródło (Modrinth/CurseForge) | Strona | Etap / Rola | Uwagi (Mac M2 / Exaroton) |
 | :--- | :--- | :--- | :--- | :--- |
 | **Create (6.x)** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — serce paczki (Packagers, Chain Conveyors, Frogports, pociągi) | Zawiera wbudowany `Flywheel` + `Ponder`; na Mac M2 zweryfikować backend Flywheel (`instancing` vs `off`) |
-| **Create: Steam 'n' Rails (NeoForge)** | Modrinth / CurseForge | Serwer + Klient | Etap 1–4 — rozbudowa kolei, monorail, wąskie tory, semafory | Sprawdzić build pod Create 6 na 1.21.1 NeoForge podczas inicjalizacji `packwiz` |
-| **Create: Hypertubes** | Modrinth / CurseForge | Serwer + Klient | Etap 2–4 — szybki transport graczy między wyspami w rurach | Świetna synergia z układem Wyspa Startowa <-> Wyspa-Rynek; lekki dla serwera |
-| **Create: Mechanical Extruder** | Modrinth / CurseForge | Serwer + Klient | Etap 0–2 — czyste generatory bruku, kamienia, andezytu, bazaltu bez lagujących farm tłokowych | Ogromna poprawa TPS na Exaroton zamiast wielkich generatorów bloków |
-| **Create: Enchantment Industry** | Modrinth / CurseForge | Serwer + Klient | Etap 2–4 — przemysłowe zaklinanie narzędzi (mechanika, zero magii) | Sprawdzić zgodność wydania z Create 6 (1.21.1) |
-| **Create: Crafts & Additions** | Modrinth / CurseForge | Serwer + Klient | Etap 2–4 — silniki elektryczne (SU <-> FE), alternatory, druty, biopaliwo | **[RFC]** Zdecydować z partnerem: czy zostawiamy samo C&A, samo *New Age*, czy oba (ryzyko dublowania FE/SU) |
-| **Create: New Age** | Modrinth / CurseForge | Serwer + Klient | Etap 3–4 — prądnice magnetyczne, cewki, ciepło jądrowe/solarne pod Create | **[RFC]** Oznaczony do decyzji z partnerem (jedno z *C&A* / *New Age* lub oba z wyczyszczonymi duplikatami) |
-| **Create: Stuff 'N Additions** | Modrinth / CurseForge | Serwer + Klient | Etap 1–3 — jetpacki parowe/miedziane, narzędzia parowe, akcesoria | Przydatne do budowania mostów i fabryk nad pustką; zweryfikować build Create 6 |
-| **Create: Connected** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — dodatkowe skrzynie biegów, katalizatory (fan catalysts), sprzęgła | Bardzo przydatne dla kompaktowych fabryk (mniejsze zużycie chunków i lepsze TPS) |
+| **Steam 'n' Rails Neoforge** *(nieoficjalny port `create-steam-n-rails-1.21.1`)* | Modrinth | Serwer + Klient | Etap 1–4 — rozbudowa kolei, monorail, wąskie tory, semafory | **Przypięte w `packwiz`** do kompatybilnej wersji Create `6.0.x`; priorytet do smoke-testu na Mac M2 / Exaroton (fallback: czyste pociągi Create 6) |
+| **Create: Hypertubes** | Modrinth / CurseForge | Serwer + Klient | Etap 2–4 — szybki transport graczy między wyspami w rurach | Oficjalne NeoForge `1.21.1`; świetna synergia z układem 3 wysp; lekki dla serwera |
+| **Create: Mechanical Extruder** | Modrinth / CurseForge | Serwer + Klient | Etap 0–2 — czyste generatory bruku, kamienia, andezytu, tufu, bazaltu | Oficjalne NeoForge `1.21.1` (wymaga `Mechanicals Lib`); ogromna poprawa TPS na Exaroton |
+| **Create: Enchantment Industry** | Modrinth / CurseForge | Serwer + Klient | Etap 2–4 — przemysłowe zaklinanie narzędzi (mechanika, zero magii) | Oficjalne NeoForge `1.21.1` (wymaga `Create: Dragons Plus`) |
+| **Create: Crafts & Additions** | Modrinth / CurseForge | Serwer + Klient | Etap 2–4 — silniki elektryczne (SU <-> FE), alternatory, druty, Liquid Blaze Burner, biopaliwo | **Zatwierdzone jako jedyny mod elektryczności Create** (rezygnacja z *Create: New Age* — brak duplikatów przed *Mekanism*) |
+| **Create: Stuff 'N Additions** | Modrinth / CurseForge | Serwer + Klient | Etap 1–3 — jetpacki parowe/miedziane, narzędzia parowe, akcesoria | Oficjalne NeoForge `1.21.1`; bardzo przydatne do budowy mostów i fabryk nad pustką |
+| **Create: Connected** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — dodatkowe skrzynie biegów, katalizatory (fan catalysts), sprzęgła | Kompaktowe fabryki = mniej chunków i lepsze TPS |
 | **Create: Copycats+** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — estetyczne panele, schody, płyty dla hal fabrycznych i stacji | Bezpieczny na Mac M2; minimalny narzut na serwer |
 | **Create: Deco** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — przemysłowe dekoracje, cegły, kładki, barierki, lampy | Buduje klimat dzielnicy fabrycznej i Wyspy-Rynku |
-| **Create: Trading Floor** | Modrinth / CurseForge | Serwer + Klient | Etap 1–4 — mechaniczny depozyt handlowy dla wieśniaków/handlu | Świetnie łączy się z koncepcją Wyspy-Rynku; potwierdzić wersję Create 6 |
-| **Create: Big Cannons** | Modrinth / CurseForge | Serwer + Klient | Etap 3–5 — inżynieria artyleryjska / fun-factor (opcjonalny endgame) | **[RFC]** Zweryfikować aktualny status 1.21.1 Create 6 i brak problemów na Mac M2 (brak zależności od Valkyrien Skies) |
-| **Create: Applied Kinetics** | Modrinth / CurseForge | Serwer + Klient | Etap 4–5 — integracja Create 6 z *Applied Energistics 2* | Kluczowy most między mechaniką Create a cyfrową logistyką AE2 w late-game |
+| **Create: Trading Floor** | Modrinth / CurseForge | Serwer + Klient | Etap 1–4 — mechaniczny depozyt handlowy dla wieśniaków/handlu | Oficjalne NeoForge `1.21.1`; świetnie łączy się z Wyspą-Rynkiem |
+| **Create: Applied Kinetics** | Modrinth / CurseForge | Serwer + Klient | Etap 4–5 — integracja Create 6 z *Applied Energistics 2* | Oficjalne NeoForge `1.21.1`; kluczowy most między Create a cyfrową logistyką AE2 |
 
 ---
 
-## 3. Ekonomia i Sklep
+## 3. Ekonomia i Sklep (Jednolita waluta — RFC #5 zatwierdzone)
 
 | Mod | Źródło (Modrinth/CurseForge) | Strona | Etap / Rola | Uwagi (Mac M2 / Exaroton) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Lightman's Currency** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — fizyczne sklepy, kasy, portfele, terminale aukcyjne i bank | Główny rdzeń ekonomii fizycznej; bardzo stabilny na NeoForge 1.21.1 |
-| **Shoppers (Lightman's Currency Addon)** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — NPC klienci odwiedzający sklepy graczy na Wyspie-Rynku | Tworzy „żywy rynek” napędzany dostawami Create; wymaga strojenia limitu NPC pod TPS Exaroton |
-| **SDM Shop** *lub* **Economics (NeoForge)** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — hurtowy sklep GUI (skup masowy, zakup Żetonów Etapów i odblokowań) | **[RFC]** Wybrać jeden mod GUI + ujednolicić walutę z *Lightman's Currency* (patrz uwaga RFC poniżej) |
+| **Lightman's Currency** | Modrinth / CurseForge | Serwer + Klient | Etap 0–5 — jedyny rdzeń ekonomii: fizyczne sklepy, wspólne konta bankowe (Team Bank Account), ATM oraz hurtowy **Trading Terminal** (`Creative Network Traders`) | **Obowiązkowa ochrona anty-exploitowa:** wyłączony `Coin Mint` (`canMint = false`) oraz usunięte receptury `Coin Mint` i `Slot Machine` w KubeJS |
+| **Shoppers (Lightman's Currency Addon)** | Modrinth | Serwer + Klient | Etap 0–5 — NPC klienci odwiedzający fizyczne sklepy graczy na Wyspie-Rynku (premia **+20%** względem hurtu) | Limit **8–12 aktywnych NPC**, 3 ATM na Rynku w odstępie >6 bloków, wartości surowców Tier 0 wyzerowane (`/shoppers value set <item> 0`) |
 
-> **Uwaga RFC — `Create: Numismatics` i jednolita waluta:**
-> Do rozważenia z agentem partnerskim w Issue RFC #2: czy dodać **`Create: Numismatics`** (idealny klimat Create: karty bankowe, terminale, automaty Blaze Banker — jeśli wersja 1.21.1 Create 6 jest stabilna), czy pozostać przy **jednej walucie** z *Lightman's Currency* spiętej ze sklepem GUI (*SDM Shop* / *FTB Quests* + KubeJS), aby uniknąć zamieszania z dwoma równoległymi systemami monet.
+> **Decyzja RFC #3 i #5 (zamknięte):** Rezygnujemy z **`SDM Shop (Legacy)`**, **`Economics (NeoForge)`** oraz **`Create: Numismatics`**, aby utrzymać **jedną spójną walutę** (`Lightman's Currency`) dla fizycznych sklepów NPC i hurtowego skupu w `Trading Terminal` (z opcjonalnym `Lightman's Currency Tech` po weryfikacji braku konfliktów).
 
 ---
 
@@ -125,11 +121,14 @@
 | **Mohist / Arclight** (hybrydy Bukkit+Forge/NeoForge) | Znane z psucia kontrapcji Create, pociągów, Packagerów oraz zdarzeń KubeJS. Używamy wyłącznie czystego **NeoForge 1.21.1**. |
 | **Simple Voice Chat / Plasmo Voice** | Zbędny narzut portów i konfiguracji na Exaroton — gracze rozmawiają na Discordzie. |
 | **Corpse / Gravestone / Tombstone** | Całkowicie zbędne przy permanentnie włączonej regule `keepInventory = true`. |
+| **Create: New Age** | Wyłączone w RFC #3 — dubluje konwersję SU <-> FE z *Create: Crafts & Additions* oraz reaktory z *Mekanism Generators*. |
+| **Create: Big Cannons** | Odłożone po v1.0 w RFC #3 — oszczędność slotów w budżecie modów/bibliotek (`Ritchie's Projectile Library`) i mniejsze ryzyko dla TPS na pustce. |
+| **SDM Shop (Legacy) / Economics / Create: Numismatics** | Wyłączone w RFC #3 i #5 — utrzymujemy **jedną spójną walutę** (`Lightman's Currency` + `Shoppers` + `Creative Network Traders`). |
 
 ---
 
-## Szacowany bilans liczby modów
+## Szacowany bilans liczby modów (po finalizacji RFC #3)
 
-- Mody merytoryczne (tabele 1–7): **~54–58 modów**
-- Wymagane biblioteki i zależności (*Architectury*, *Rhino*, *FTB Library*, *LibX*, *Sophisticated Core*, *Balm*, *GuideME*, *Curios* / *Accessories*, *Cloth Config*, *Polytone*/*Kotlin* jeśli wymagane przez addony): **~25–35 modów**
-- **Razem szacunkowo:** **~85–95 modów** — z bezpiecznym zapasem poniżej górnego limitu **115 modów** na ewentualne drobne addony ustalone w RFC.
+- Mody merytoryczne (tabele 1–7): **~50–52 mody**
+- Wymagane biblioteki i zależności (*Architectury*, *Rhino*, *FTB Library*, *LibX*, *Mechanicals Lib*, *Create: Dragons Plus*, *Sophisticated Core*, *Balm*, *GuideME*, *Curios* / *Cloth Config* itp.): **~25–35 modów**
+- **Razem szacunkowo:** **~78–88 modów** — z dużym, bezpiecznym zapasem poniżej górnego limitu **115 modów** (idealnie pod Exaroton 6–8 GB RAM i Apple Silicon Mac M2).
