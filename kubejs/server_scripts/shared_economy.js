@@ -600,6 +600,45 @@ function readPricesRawText(filePath) {
 }
 
 /**
+ * Deterministyczny 64-bitowy hash tekstowy (dwa niezależne 32-bitowe hashe FNV-1a / DJB2 w hex).
+ */
+function computeStringHash(text) {
+  var s = String(text || '');
+  var h1 = 2166136261;
+  var h2 = 5381;
+  var i = 0;
+  var ch = 0;
+  for (i = 0; i < s.length; i++) {
+    ch = s.charCodeAt(i);
+    h1 ^= ch;
+    h1 = (h1 + (h1 << 1) + (h1 << 4) + (h1 << 7) + (h1 << 8) + (h1 << 24)) >>> 0;
+    h2 = (((h2 << 5) + h2) ^ ch) >>> 0;
+  }
+  return h1.toString(16) + ':' + h2.toString(16);
+}
+
+/**
+ * Oblicza hash aktualnej treści `config/halucynacje_economy/prices.json` do wykrywania edycji.
+ */
+function computePricesContentHash() {
+  var rawText = null;
+  var parsed = null;
+  try {
+    rawText = readPricesRawText(HALUCYNACJE_PRICES_FILE);
+    if (rawText != null) {
+      return computeStringHash(rawText);
+    }
+    parsed = readPricesJson(true);
+    if (parsed) {
+      return computeStringHash(JSON.stringify(parsed));
+    }
+  } catch (err) {
+    console.warn(`[HalucynacjeGTP2] Nie udało się obliczyć hasha ${HALUCYNACJE_PRICES_FILE}: ${err}`);
+  }
+  return '';
+}
+
+/**
  * Czyści globalny cache `prices.json` (używane przy przeładowaniu ekonomii).
  */
 function clearPricesJsonCache() {
