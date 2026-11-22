@@ -160,14 +160,238 @@ function chargePlayerCoins(player, cost) {
   return chargePlayerMoney(player, cost);
 }
 
-function recordExportStats(server, earnedCoins, itemsCount) {
+const TYCOON_MILESTONES_KEY = 'halucynacje_tycoon_milestones';
+const TYCOON_EXPORT_BY_ITEM_KEY = 'halucynacje_export_by_item';
+const TYCOON_EXPORT_BY_PLAYER_KEY = 'halucynacje_export_by_player';
+const TYCOON_EXPORT_MILESTONES = [
+  { threshold: 10000, title: 'Pierwsze 10 000 monet eksportu — Mała Manufaktura!' },
+  { threshold: 50000, title: '50 000 monet eksportu — Rozpędzona Fabryka!' },
+  { threshold: 100000, title: '100 000 monet eksportu — Zakład Przemysłowy!' },
+  { threshold: 250000, title: '250 000 monet eksportu — Potęga Logistyczna!' },
+  { threshold: 500000, title: '500 000 monet eksportu — Pół Miliona Tycoona!' },
+  { threshold: 1000000, title: '1 000 000 monet eksportu — MILIONERZY HALUCYNACJEGTP2!' }
+];
+
+function readStatsJsonMap(server, key) {
+  var raw = '';
+  var parsed = null;
+  if (!server || !server.persistentData) return {};
+  try {
+    raw = String(server.persistentData.getString(key) || '');
+    if (raw) {
+      parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    // Ignoruj uszkodzony wpis
+  }
+  return {};
+}
+
+function writeStatsJsonMap(server, key, mapObj) {
   if (!server || !server.persistentData) return;
-  const stats = server.persistentData.getCompound(MARKET_STATS_KEY);
-  const prevEarned = Number(stats.getLong('total_earned') || 0);
-  const prevItems = Number(stats.getLong('total_items_sold') || 0);
-  stats.putLong('total_earned', prevEarned + earnedCoins);
-  stats.putLong('total_items_sold', prevItems + itemsCount);
+  try {
+    server.persistentData.putString(key, JSON.stringify(mapObj || {}));
+  } catch (err) {
+    // Ignoruj błąd zapisu
+  }
+}
+
+function checkAndBroadcastTycoonMilestones(server, newTotalEarned) {
+  var reachedTag = null;
+  var i = 0;
+  var m = null;
+  var flagKey = '';
+  var triggered = [];
+
+  if (!server || !server.persistentData || newTotalEarned <= 0) {
+    return triggered;
+  }
+
+  reachedTag = server.persistentData.getCompound(TYCOON_MILESTONES_KEY);
+  for (i = 0; i < TYCOON_EXPORT_MILESTONES.length; i++) {
+    m = TYCOON_EXPORT_MILESTONES[i];
+    flagKey = 'm_' + String(m.threshold);
+    if (newTotalEarned >= m.threshold && !reachedTag.getBoolean(flagKey)) {
+      reachedTag.putBoolean(flagKey, true);
+      triggered.push(m);
+      if (typeof server.tell === 'function') {
+        server.tell(
+          Text.gold('🏆 [KAMIEŃ MILOWY TYCOONA] ')
+            .append(Text.aqua(m.title))
+            .append(Text.gray(` (łącznie: ${formatCoins(newTotalEarned)} monet • zobacz /ekonomia top)`))
+        );
+      }
+      if (typeof server.runCommandSilent === 'function') {
+        try {
+          server.runCommandSilent(
+            'execute as @a at @s run playsound minecraft:entity.player.levelup master @s ~ ~ ~ 0.6 1.0'
+          );
+        } catch (errSnd) {
+          // Dźwięk jest opcjonalny
+        }
+      }
+    }
+  }
+
+  if (triggered.length > 0) {
+    server.persistentData.put(TYCOON_MILESTONES_KEY, reachedTag);
+  }
+  return triggered;
+}
+
+function recordExportStats(server, earnedCoins, itemsCount, exporterLabel, itemBreakdown) {
+  var stats = null;
+  var prevEarned = 0;
+  var prevItems = 0;
+  var newEarned = 0;
+  var byPlayer = null;
+  var pKey = '';
+  var pEntry = null;
+  var byItem = null;
+  var i = 0;
+  var row = null;
+  var iKey = '';
+  var iEntry = null;
+
+  if (!server || !server.persistentData) return [];
+
+  stats = server.persistentData.getCompound(MARKET_STATS_KEY);
+  prevEarned = Number(stats.getLong('total_earned') || 0);
+  prevItems = Number(stats.getLong('total_items_sold') || 0);
+  newEarned = prevEarned + Math.max(0, Math.floor(Number(earnedCoins) || 0));
+  stats.putLong('total_earned', newEarned);
+  stats.putLong('total_items_sold', prevItems + Math.max(0, Math.floor(Number(itemsCount) || 0)));
   server.persistentData.put(MARKET_STATS_KEY, stats);
+
+  if (exporterLabel && earnedCoins > 0) {
+    byPlayer = readStatsJsonMap(server, TYCOON_EXPORT_BY_PLAYER_KEY);
+    pKey = String(exporterLabel);
+    pEntry = byPlayer[pKey] || { coins: 0, items: 0 };
+    pEntry.coins = Number(pEntry.coins || 0) + Math.floor(Number(earnedCoins) || 0);
+    pEntry.items = Number(pEntry.items || 0) + Math.floor(Number(itemsCount) || 0);
+    byPlayer[pKey] = pEntry;
+    writeStatsJsonMap(server, TYCOON_EXPORT_BY_PLAYER_KEY, byPlayer);
+  }
+
+  if (Array.isArray(itemBreakdown) && itemBreakdown.length > 0) {
+    byItem = readStatsJsonMap(server, TYCOON_EXPORT_BY_ITEM_KEY);
+    for (i = 0; i < itemBreakdown.length; i++) {
+      row = itemBreakdown[i];
+      if (!row || !row.itemId) continue;
+      iKey = String(row.itemId);
+      iEntry = byItem[iKey] || { coins: 0, items: 0 };
+      iEntry.coins = Number(iEntry.coins || 0) + Math.floor(Number(row.payout || 0));
+      iEntry.items = Number(iEntry.items || 0) + Math.floor(Number(row.soldItems || 0));
+      byItem[iKey] = iEntry;
+    }
+    writeStatsJsonMap(server, TYCOON_EXPORT_BY_ITEM_KEY, byItem);
+  }
+
+  return checkAndBroadcastTycoonMilestones(server, newEarned);
+}
+
+function handleShowEconomyTop(player, server) {
+  var stats = server && server.persistentData ? server.persistentData.getCompound(MARKET_STATS_KEY) : null;
+  var totalEarned = stats ? Number(stats.getLong('total_earned') || 0) : 0;
+  var totalItems = stats ? Number(stats.getLong('total_items_sold') || 0) : 0;
+  var cStats = server && server.persistentData ? server.persistentData.getCompound('halucynacje_contract_stats') : null;
+  var contractsDone = cStats ? Number(cStats.getInt('completed') || 0) : 0;
+  var bestStreak = cStats ? Number(cStats.getInt('best_streak') || 0) : 0;
+  var docksCount = typeof readExportDocks === 'function' ? readExportDocks(server).length : 0;
+
+  var nextMilestone = null;
+  var mIdx = 0;
+  var byItem = readStatsJsonMap(server, TYCOON_EXPORT_BY_ITEM_KEY);
+  var itemRows = [];
+  var itemKeys = Object.keys(byItem);
+  var kIdx = 0;
+  var byPlayer = readStatsJsonMap(server, TYCOON_EXPORT_BY_PLAYER_KEY);
+  var playerRows = [];
+  var playerKeys = Object.keys(byPlayer);
+  var pIdx = 0;
+  var rIdx = 0;
+  var pct = 0;
+
+  for (mIdx = 0; mIdx < TYCOON_EXPORT_MILESTONES.length; mIdx++) {
+    if (totalEarned < TYCOON_EXPORT_MILESTONES[mIdx].threshold) {
+      nextMilestone = TYCOON_EXPORT_MILESTONES[mIdx];
+      break;
+    }
+  }
+
+  for (kIdx = 0; kIdx < itemKeys.length; kIdx++) {
+    itemRows.push({
+      id: itemKeys[kIdx],
+      coins: Number(byItem[itemKeys[kIdx]].coins || 0),
+      items: Number(byItem[itemKeys[kIdx]].items || 0)
+    });
+  }
+  itemRows.sort(function (a, b) {
+    return b.coins - a.coins;
+  });
+
+  for (pIdx = 0; pIdx < playerKeys.length; pIdx++) {
+    playerRows.push({
+      name: playerKeys[pIdx],
+      coins: Number(byPlayer[playerKeys[pIdx]].coins || 0),
+      items: Number(byPlayer[playerKeys[pIdx]].items || 0)
+    });
+  }
+  playerRows.sort(function (a, b) {
+    return b.coins - a.coins;
+  });
+
+  player.tell(Text.gold('=== 🏆 Statystyki i Ranking Tycoona (/ekonomia top) ==='));
+  player.tell(
+    Text.white('• Łączny eksport drużyny: ')
+      .append(Text.gold(`${formatCoins(totalEarned)} monet`))
+      .append(Text.gray(` (${formatCoins(totalItems)} szt. | Kontrakty: ${contractsDone}, rekord serii: ${bestStreak} | Doki: ${docksCount}/${EXPORT_DOCK_MAX})`))
+  );
+
+  if (nextMilestone) {
+    pct = Math.min(99, Math.floor((totalEarned / nextMilestone.threshold) * 100));
+    player.tell(
+      Text.white('• Kolejny kamień milowy: ')
+        .append(Text.aqua(`${formatCoins(nextMilestone.threshold)} monet`))
+        .append(Text.gray(` (${pct}% — brakuje ${formatCoins(nextMilestone.threshold - totalEarned)})`))
+    );
+  } else {
+    player.tell(Text.gold('★ Wszystkie kamienie milowe eksportu (do 1 000 000 monet) zdobyte!'));
+  }
+
+  player.tell(Text.yellow('— TOP 5 eksportowanych produktów —'));
+  if (itemRows.length === 0) {
+    player.tell(Text.gray('  (Brak danych — sprzedaj pierwsze towary przez /sprzedaj lub /rynek_eksport)'));
+  } else {
+    for (rIdx = 0; rIdx < Math.min(5, itemRows.length); rIdx++) {
+      player.tell(
+        Text.white(`  ${rIdx + 1}. `)
+          .append(Text.aqua(itemRows[rIdx].id))
+          .append(Text.white(' — '))
+          .append(Text.gold(`${formatCoins(itemRows[rIdx].coins)} monet`))
+          .append(Text.gray(` (${formatCoins(itemRows[rIdx].items)} szt.)`))
+      );
+    }
+  }
+
+  player.tell(Text.yellow('— Ranking eksporterów (gracze + Automatyczne Doki) —'));
+  if (playerRows.length === 0) {
+    player.tell(Text.gray('  (Brak zapisanych transakcji)'));
+  } else {
+    for (rIdx = 0; rIdx < Math.min(5, playerRows.length); rIdx++) {
+      player.tell(
+        Text.white(`  ${rIdx + 1}. `)
+          .append(Text.green(playerRows[rIdx].name))
+          .append(Text.white(' — '))
+          .append(Text.gold(`${formatCoins(playerRows[rIdx].coins)} monet`))
+          .append(Text.gray(` (${formatCoins(playerRows[rIdx].items)} szt.)`))
+      );
+    }
+  }
+  return 1;
 }
 
 function getTeamBuyCount(server, itemId) {
@@ -510,7 +734,9 @@ function handleSellHand(player, server) {
   const dyn = applyDynamicMarketBonuses(server, locationBase, res.itemId, div, boom);
 
   giveCoinsToPlayer(player, dyn.finalPayout);
-  recordExportStats(server, dyn.finalPayout, res.soldItems);
+  recordExportStats(server, dyn.finalPayout, res.soldItems, player.username || 'Gracz', [
+    { itemId: res.itemId, soldItems: res.soldItems, payout: dyn.finalPayout }
+  ]);
   if (typeof syncPlayerTabBalance === 'function') {
     syncPlayerTabBalance(player, server, true);
   }
@@ -579,15 +805,21 @@ function handleSellAll(player, server) {
 
   let totalPayout = 0;
   let boomHit = false;
+  const statBreakdown = [];
   for (let j = 0; j < soldLines.length; j++) {
     const locBase = Math.max(1, Math.round(soldLines[j].payout * locationMult));
     const dyn = applyDynamicMarketBonuses(server, locBase, soldLines[j].itemId, div, boom);
     totalPayout += dyn.finalPayout;
+    statBreakdown.push({
+      itemId: soldLines[j].itemId,
+      soldItems: soldLines[j].soldItems,
+      payout: dyn.finalPayout
+    });
     if (dyn.isBoom) boomHit = true;
   }
 
   giveCoinsToPlayer(player, totalPayout);
-  recordExportStats(server, totalPayout, totalItems);
+  recordExportStats(server, totalPayout, totalItems, player.username || 'Gracz', statBreakdown);
   if (typeof syncPlayerTabBalance === 'function') {
     syncPlayerTabBalance(player, server, true);
   }
@@ -1087,12 +1319,20 @@ ServerEvents.commandRegistry((event) => {
   );
 
   event.register(
-    Commands.literal('ekonomia').executes((ctx) => {
-      const player = ctx.source.player;
-      if (!player) return 0;
-      handleShowEconomyStatus(player, ctx.source.server);
-      return 1;
-    })
+    Commands.literal('ekonomia')
+      .executes((ctx) => {
+        const player = ctx.source.player;
+        if (!player) return 0;
+        handleShowEconomyStatus(player, ctx.source.server);
+        return 1;
+      })
+      .then(
+        Commands.literal('top').executes((ctx) => {
+          const player = ctx.source.player;
+          if (!player) return 0;
+          return handleShowEconomyTop(player, ctx.source.server);
+        })
+      )
   );
 
   event.register(
@@ -1566,14 +1806,20 @@ function processExportDocksTick(server, nowMs) {
 
       div = recordDiversitySales(server, ex.soldIds, now);
       dockPayout = 0;
+      var dockBreakdown = [];
       for (j = 0; j < ex.soldLines.length; j++) {
         logBase = Math.max(1, Math.round(ex.soldLines[j].payout * EXPORT_DOCK_LOGISTICS_MULTIPLIER));
         dyn = applyDynamicMarketBonuses(server, logBase, ex.soldLines[j].itemId, div, boom);
         dockPayout += dyn.finalPayout;
+        dockBreakdown.push({
+          itemId: ex.soldLines[j].itemId,
+          soldItems: ex.soldLines[j].soldItems,
+          payout: dyn.finalPayout
+        });
       }
 
       if (dockPayout <= 0) continue;
-      recordExportStats(server, dockPayout, ex.totalItems);
+      recordExportStats(server, dockPayout, ex.totalItems, '[Dok Eksportowy]', dockBreakdown);
       totalItemsSold += ex.totalItems;
 
       depRes = depositCoinsToBank(server, d.owner, d.teamId, dockPayout);

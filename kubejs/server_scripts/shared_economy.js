@@ -721,9 +721,23 @@ function sendCommandFeedback(ctx, component) {
 const MARKET_ISLAND_CENTER = { x: 152, y: 64, z: 0 };
 const MARKET_ISLAND_RADIUS = 56;
 
-function normalizeDimensionId(rawDim) {
-  if (!rawDim) return '';
-  return String(rawDim).trim().toLowerCase();
+function normalizeDimensionId(dimLike) {
+  var raw = '';
+  var rkMatch = null;
+  if (!dimLike) return '';
+  try {
+    if (typeof dimLike.location === 'function') {
+      return String(dimLike.location()).trim().toLowerCase();
+    }
+  } catch (e) {
+    // Fallback na konwersję tekstową poniżej
+  }
+  raw = String(dimLike).trim();
+  rkMatch = raw.match(/\/\s*([a-z0-9_.-]+:[a-z0-9_./-]+)\s*\]/i);
+  if (rkMatch && rkMatch[1]) {
+    return rkMatch[1].trim().toLowerCase();
+  }
+  return raw.toLowerCase();
 }
 
 function isCoordsOnMarketIsland(x, z, dimensionId) {
