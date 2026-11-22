@@ -255,6 +255,84 @@ ServerEvents.loaded((event) => {
   console.info('[HalucynacjeGTP2] Wymuszono gamerule keepInventory = true.');
 });
 
+/**
+ * Odczytuje drużynę Skyblock Builder gracza (bezpiecznie z guardem Rhino/Java).
+ * Zwraca obiekt `Team` lub `null`, gdy gracz gra na Spawn bez osobnej drużyny.
+ */
+function getSkyblockTeamForPlayer(player, server) {
+  var savedDataClass = null;
+  var overworld = null;
+  var savedData = null;
+  if (!player || !server) {
+    return null;
+  }
+  if (typeof server._getSkyblockTeamForPlayer === 'function') {
+    return server._getSkyblockTeamForPlayer(player);
+  }
+  if (typeof Java === 'undefined' || typeof Java.loadClass !== 'function') {
+    return null;
+  }
+  try {
+    savedDataClass = Java.loadClass('de.melanx.skyblockbuilder.data.SkyblockSavedData');
+    overworld = typeof server.overworld === 'function' ? server.overworld() : server.overworld;
+    if (!savedDataClass || !overworld) {
+      return null;
+    }
+    savedData = savedDataClass.get(overworld);
+    if (!savedData || typeof savedData.getTeamFromPlayer !== 'function') {
+      return null;
+    }
+    return savedData.getTeamFromPlayer(player);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Ostrzega w logu serwera i na czacie gracza, jeśli należy on do drużyny Skyblock Builder
+ * innej niż Spawn (wówczas `/kontrakt` i `/rynek_eksport` działają tylko na Wyspie-Rynku przy Spawn).
+ */
+function warnIfNonSpawnSkyblockTeam(player, server) {
+  var team = null;
+  var isSpawn = true;
+  var teamName = 'nieznana';
+  if (!player || !server) {
+    return false;
+  }
+  team = getSkyblockTeamForPlayer(player, server);
+  if (!team) {
+    return false;
+  }
+  try {
+    isSpawn = typeof team.isSpawn === 'function' ? Boolean(team.isSpawn()) : Boolean(team.spawn);
+  } catch (e) {
+    isSpawn = true;
+  }
+  if (isSpawn) {
+    return false;
+  }
+  try {
+    teamName =
+      typeof team.getName === 'function'
+        ? String(team.getName() || 'nieznana')
+        : String(team.name || 'nieznana');
+  } catch (e) {
+    teamName = 'nieznana';
+  }
+  console.warn(
+    `[HalucynacjeGTP2] Gracz ${player.username} należy do drużyny Skyblock Builder "${teamName}" (poza Spawn) — /kontrakt i /rynek_eksport działają wyłącznie na Wyspie-Rynku przy Spawn (152, 64, 0).`
+  );
+  player.tell(
+    Text.red(`[Uwaga — Wyspa] Należysz do drużyny Skyblock Builder "${teamName}" zamiast grać na Spawn (0, 64, 0). `)
+      .append(
+        Text.yellow(
+          'Kontrakty (/kontrakt) i Doki Eksportowe (/rynek_eksport) działają wyłącznie na Wyspie-Rynku (152, 64, 0) przy Spawn!'
+        )
+      )
+  );
+  return true;
+}
+
 // ----------------------------------------------------------------------------
 // 1b. Synchronizacja globalnych etapów co-op przy logowaniu gracza
 // ----------------------------------------------------------------------------
@@ -263,6 +341,7 @@ PlayerEvents.loggedIn((event) => {
     return;
   }
   syncGlobalStagesToPlayer(event.player, event.server);
+  warnIfNonSpawnSkyblockTeam(event.player, event.server);
 });
 
 // ----------------------------------------------------------------------------

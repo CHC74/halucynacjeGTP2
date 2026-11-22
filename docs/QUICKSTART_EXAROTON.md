@@ -73,7 +73,10 @@ Ten poradnik pozwala postawić gotowy serwer **HalucynacjeGTP2** (NeoForge `1.21
    - W ekwipunku dostaniesz od razu księgę **FTB Quests**, chleb, pochodnie i sadzonki.
    - Obok Ciebie stoi **skrzynia startowa anty-softlock** (wiadro lawy, 2× lód, sadzonki, jagody, trzcina cukrowa, kaktus, wodorosty, nasiona, mączka kostna, bruk) oraz gotowa bezpieczna niecka pod generator bruku.
    - `keepInventory = true` jest włączone permanentnie przez skrypt KubeJS.
-3. Jeśli gracie wspólnie jako jedna drużyna, użyjcie `/skyblock` (lub `/ftbteams party create`) do zaproszenia znajomych na wspólną wyspę.
+3. **Wspólna gra we dwóch (co-op na wyspie Spawn):**
+   - Oboje gracze grają wspólnie bezpośrednio na **Wyspie Startowej / Spawn `(0, 64, 0)`** — ochrona spawnu jest wyłączona (`spawnProtectionRadius: 0`), a **Wyspa-Rynek** stoi na sztywno w `(152, 64, 0)` (oraz Huta w `(0, 64, 152)`).
+   - Komenda `/skyblock create` jest celowo zablokowana w `config/skyblockbuilder/permissions.json5`, aby nikt nie utworzył przypadkiem osobnej wyspy ~8192 bloki od Rynku.
+   - Aby dzielić postęp **FTB Quests** i claimy **FTB Chunks**, utwórzcie drużynę FTB: `/ftbteams party create`, a następnie `/ftbteams party invite <nick_znajomego>` (drugi gracz akceptuje zaproszenie kliknięciem na czacie).
 4. *(Jednorazowo jako Operator / OP po ustawieniu sklepów na Wyspie-Rynku)* — wpisz komendę synchronizującą ceny i reguły dla NPC `Shoppers`:
    ```mcfunction
    /halucynacje_sync_shoppers
