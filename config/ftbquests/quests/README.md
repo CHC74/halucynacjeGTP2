@@ -52,4 +52,4 @@ Wszystkie ID przedmiotów z addonów zostały **zweryfikowane bezpośrednio na p
 - ✅ `create_enchantment_industry:blaze_enchanter` (`stage_3_industry.snbt`, `C300000000000402`)
 - ✅ `create_sa:brass_jetpack_chestplate` (`stage_3_industry.snbt`, `C300000000000501`)
 - ✅ `createappliedkinetics:me_proxy` (`stage_4_hightech_end.snbt`, `C400000000000303` — poprawiono z nieistniejącego `stress_generator` na prawdziwy blok `me_proxy`!)
-- `[VERIFY ON 1.21.1 BOOT]` Potwierdzić, że FTB Quests `2101.x` (`version: 13`) bez błędów wczytuje `icon: { id: "..." }`, `type: "custom"` oraz `type: "toast"`.
+- `[VERIFY ON 1.21.1 BOOT]` *(wymagany żywy klient — parsowanie SNBT na serwerze zweryfikowane w CI `server-boot`)*: Potwierdzić poprawne renderowanie księgi *FTB Quests* `2101.x` (`version: 13`) po stronie klienta (`icon: { id: "..." }`, `type: "custom"` oraz powiadomienia `type: "toast"`).
