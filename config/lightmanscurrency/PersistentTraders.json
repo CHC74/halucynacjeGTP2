@@ -1637,6 +1637,40 @@
               }
             ]
           }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:end_portal_frame",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 6
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "SALE",
+          "SellItem": {
+            "id": "minecraft:ender_eye",
+            "count": 1
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_emerald",
+                "Amount": 2
+              }
+            ]
+          }
         }
       ]
     },
