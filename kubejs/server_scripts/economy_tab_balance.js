@@ -25,40 +25,11 @@ const TAB_BALANCE_OBJECTIVE = 'halucynacje_monety';
 const TAB_BALANCE_REFRESH_TICKS = 60;
 const TAB_BALANCE_MAX_SCORE = 2147483647; // Limit 32-bit int w Minecraft Scoreboard
 
-const TAB_LC_ITEM_VALUES = {
-  // Podstawowe monety (łańcuch "main": x10 między nominałami)
-  'lightmanscurrency:coin_copper': 1,
-  'lightmanscurrency:coin_iron': 10,
-  'lightmanscurrency:coin_gold': 100,
-  'lightmanscurrency:coin_emerald': 1000,
-  'lightmanscurrency:coin_diamond': 10000,
-  'lightmanscurrency:coin_netherite': 100000,
-  // Stosy monet (coinpile = 9x moneta)
-  'lightmanscurrency:coinpile_copper': 9,
-  'lightmanscurrency:coinpile_iron': 90,
-  'lightmanscurrency:coinpile_gold': 900,
-  'lightmanscurrency:coinpile_emerald': 9000,
-  'lightmanscurrency:coinpile_diamond': 90000,
-  'lightmanscurrency:coinpile_netherite': 900000,
-  // Bloki monet (coinblock = 4 stosy = 36x moneta)
-  'lightmanscurrency:coinblock_copper': 36,
-  'lightmanscurrency:coinblock_iron': 360,
-  'lightmanscurrency:coinblock_gold': 3600,
-  'lightmanscurrency:coinblock_emerald': 36000,
-  'lightmanscurrency:coinblock_diamond': 360000,
-  'lightmanscurrency:coinblock_netherite': 3600000
-};
-
 let TAB_BALANCE_OBJECTIVE_READY = false;
 let TAB_BALANCE_TICK_COUNTER = 0;
 let TAB_BALANCE_LAST_SCORES = {};
 let TAB_LC_CLASSES = null;
 let TAB_LC_CLASSES_LOADED = false;
-
-function formatTabCoins(amount) {
-  const n = Math.max(0, Math.floor(Number(amount) || 0));
-  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-}
 
 /**
  * Ogranicza wynik do bezpiecznego zakresu 32-bitowego scoreboarda Minecrafta [0 .. 2 147 483 647].
@@ -177,7 +148,7 @@ function getInventoryCoinsCopper(player) {
   for (let i = 0; i < size; i++) {
     const stack = inv.getItem(i);
     if (!stack || (typeof stack.isEmpty === 'function' && stack.isEmpty())) continue;
-    const val = TAB_LC_ITEM_VALUES[String(stack.id)];
+    const val = LC_ALL_MONEY_ITEM_VALUES[String(stack.id)];
     if (val) {
       total += val * Number(stack.count || 0);
     }
@@ -403,12 +374,12 @@ ServerEvents.commandRegistry((event) => {
       if (!b) return 0;
 
       player.tell(Text.gold('=== Twoje Saldo Monet (Lightman\'s Currency) ==='));
-      player.tell(Text.white('• Ekwipunek (monety/stosy): ').append(Text.yellow(`${formatTabCoins(b.inventory)} monet`)));
-      player.tell(Text.white('• Wyposażony Portfel LC: ').append(Text.yellow(`${formatTabCoins(b.wallet)} monet`)));
-      player.tell(Text.white('• Bank Osobisty (ATM): ').append(Text.aqua(`${formatTabCoins(b.personalBank)} monet`)));
-      player.tell(Text.white('• Bank Drużynowy (Team): ').append(Text.aqua(`${formatTabCoins(b.teamBank)} monet`)));
+      player.tell(Text.white('• Ekwipunek (monety/stosy): ').append(Text.yellow(`${formatCoins(b.inventory)} monet`)));
+      player.tell(Text.white('• Wyposażony Portfel LC: ').append(Text.yellow(`${formatCoins(b.wallet)} monet`)));
+      player.tell(Text.white('• Bank Osobisty (ATM): ').append(Text.aqua(`${formatCoins(b.personalBank)} monet`)));
+      player.tell(Text.white('• Bank Drużynowy (Team): ').append(Text.aqua(`${formatCoins(b.teamBank)} monet`)));
       player.tell(
-        Text.green('★ Razem (wyświetlane pod TAB): ').append(Text.gold(`${formatTabCoins(b.total)} monet`))
+        Text.green('★ Razem (wyświetlane pod TAB): ').append(Text.gold(`${formatCoins(b.total)} monet`))
       );
       return 1;
     })

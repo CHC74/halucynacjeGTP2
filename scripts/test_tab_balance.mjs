@@ -16,8 +16,10 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 
+const SHARED_PATH = 'kubejs/server_scripts/shared_economy.js';
 const SCRIPT_PATH = 'kubejs/server_scripts/economy_tab_balance.js';
-const SCRIPT_SRC = fs.readFileSync(SCRIPT_PATH, 'utf8');
+const SHARED_SRC = fs.readFileSync(SHARED_PATH, 'utf8');
+const SCRIPT_SRC = SHARED_SRC + '\n;\n' + fs.readFileSync(SCRIPT_PATH, 'utf8');
 
 function assert(cond, msg) {
   if (!cond) {

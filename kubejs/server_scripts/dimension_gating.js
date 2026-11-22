@@ -17,8 +17,6 @@
 //    - Wymagania: `minecraft:the_nether` -> `stage_2` (50k), `minecraft:the_end` -> `stage_4` (250k).
 // ============================================================================
 
-const GLOBAL_STAGES_KEY = 'halucynacje_global_stages';
-const PLAYER_STAGES_KEY = 'halucynacje_stages';
 const PORTAL_MSG_COOLDOWN_KEY = 'halucynacje_portal_msg_tick';
 const PORTAL_MSG_COOLDOWN_TICKS = 40; // 2 sekundy (zapobiega spamowi na czacie w portalu)
 
@@ -422,23 +420,6 @@ if (typeof NativeEvents !== 'undefined') {
 // 4. Komenda OP `/halucynacje_sync_stages` — ręczna resynchronizacja etapów co-op
 //    i tasków FTB Quests (przeniesiona z zamkniętego PR #16 bez konfliktów).
 // ----------------------------------------------------------------------------
-function sendStageCommandFeedback(ctx, component) {
-  // W KubeJS 7.2 (`CommandSourceStackMixin.kjs$sendSuccess(Component, boolean)`)
-  // przekazanie funkcji strzałkowej `() => component` powoduje konwersję `ArrowFunction.toString()`
-  // na czacie. Przekazujemy `Component` bezpośrednio!
-  try {
-    if (ctx && ctx.source && typeof ctx.source.sendSuccess === 'function') {
-      ctx.source.sendSuccess(component, true);
-      return;
-    }
-  } catch (e) {
-    // Fallback na player.tell poniżej
-  }
-  if (ctx && ctx.source && ctx.source.player && typeof ctx.source.player.tell === 'function') {
-    ctx.source.player.tell(component);
-  }
-}
-
 ServerEvents.commandRegistry((event) => {
   const { commands: Commands } = event;
   event.register(
@@ -458,7 +439,7 @@ ServerEvents.commandRegistry((event) => {
             syncedPlayers++;
           });
         }
-        sendStageCommandFeedback(
+        sendCommandFeedback(
           ctx,
           Text.green(
             `[HalucynacjeGTP2] Zsynchronizowano etapy co-op i taski FTB Quests dla ${syncedPlayers} graczy online.`
