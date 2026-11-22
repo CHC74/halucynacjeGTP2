@@ -1272,4 +1272,71 @@ test('config/ftbquests (#52): poprawne SNBT, brak duplikatów ID i nagrody start
   assert(s0.includes('D000000000000603') && s0.includes('D000000000000604'), 'Nagroda +750c za Pierwszą Kuchnię');
 });
 
-console.log(`🎉 Wszystkie ${passed}/12 pakietów testów KubeJS ZALICZONE!`);
+// 12. Issue #51: Perki za Żetony Etapów (+FTB Chunks force-load, +2%..+10% skup, limit Doków 4..8, tytuł [Tycoon])
+test('shared_economy.js + dimension_gating.js + economy_market.js (#51): perki Etapów 1..5, idempotentne FTB Chunks i limit Doków', () => {
+  const ranCmds = [];
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { loaded: () => {}, commandRegistry: () => {}, tick: () => {} },
+    PlayerEvents: { loggedIn: () => {} },
+    ItemEvents: { rightClicked: () => {} },
+    NativeEvents: { onEvent: () => {} },
+    Date,
+    Math,
+    assert
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/dimension_gating.js', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const server = {
+    persistentData: makeCompound(),
+    players: [],
+    tell: () => {},
+    runCommandSilent: (cmd) => ranCmds.push(cmd)
+  };
+  const player = {
+    username: 'TycoonHero',
+    persistentData: makeCompound(),
+    tell: () => {}
+  };
+  server.players.push(player);
+
+  const getPerks = vm.runInContext('getStagePerks', ctx);
+  const grantStage = vm.runInContext('grantStage', ctx);
+  const getDockLim = vm.runInContext('getEffectiveExportDockLimit', ctx);
+  const applyDyn = vm.runInContext('applyDynamicMarketBonuses', ctx);
+
+  // Stage 0 baseline
+  assert(getPerks(0).extraForceChunks === 0 && getDockLim(server) === 4, 'Stage 0 -> 0 extra chunks, 4 doki');
+
+  // Stage 1..5 -> idempotentne `ftbchunks admin extra_force_load_chunks <gracz> set <extra>`
+  grantStage(player, server, 'stage_1');
+  assert(
+    ranCmds.includes('ftbchunks admin extra_force_load_chunks TycoonHero set 2'),
+    'Stage 1 ustawia +2 extra force-load chunks (set = idempotentne)'
+  );
+  grantStage(player, server, 'stage_2');
+  grantStage(player, server, 'stage_3');
+  assert(getDockLim(server) === 5, 'Stage 3 zwiększa limit Doków Eksportowych do 5');
+  grantStage(player, server, 'stage_4');
+  assert(getDockLim(server) === 6, 'Stage 4 zwiększa limit Doków Eksportowych do 6');
+  grantStage(player, server, 'stage_5');
+  assert(
+    ranCmds.includes('ftbchunks admin extra_force_load_chunks TycoonHero set 14'),
+    'Stage 5 ustawia +14 extra force-load chunks'
+  );
+  assert(getDockLim(server) === 8, 'Stage 5 zwiększa limit Doków Eksportowych do 8');
+  assert(getPerks(5).title === '[Tycoon]', 'Stage 5 daje tytuł [Tycoon]');
+
+  // Stage 5 premia handlowa (+10%) w applyDynamicMarketBonuses
+  const res = applyDyn(server, 1000, 'minecraft:bread', { uniqueCount: 0, bonusPercent: 0, multiplier: 1.0 }, null);
+  assert(res.stageBonusPercent === 10 && res.finalPayout === 1100, 'Stage 5 daje +10% premii handlowej (1000 -> 1100)');
+});
+
+console.log(`🎉 Wszystkie ${passed}/13 pakietów testów KubeJS ZALICZONE!`);

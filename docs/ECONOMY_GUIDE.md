@@ -69,6 +69,21 @@ Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](..
 
 ## 5. Komendy administratora (OP)
 
-- **`/halucynacje_sync_shoppers`** — wgrywa do moda `Shoppers` wszystkie ceny Tier 0 (`0`) oraz Tier 1–5 (`+20%`) z `prices.json` (wykonać raz po starcie świata).
-- **`/halucynacje_reload_economy`** — przeładowuje `config/halucynacje_economy/prices.json` na żywo bez restartu serwera Exaroton.
-- **`/halucynacje_sync_stages`** — wymusza pełną resynchronizację etapów co-op i tasków `FTB Quests` dla wszystkich graczy online.
+- **`/halucynacje_sync_shoppers`** — wgrywa do moda `Shoppers` wszystkie ceny Tier 0 (`0`) oraz Tier 1–5 (`+20%`) z `prices.json` (wykonać raz po starcie świata; od #62 synchronizacja wykrywa edycje automatycznie po hashu!).
+- **`/halucynacje_reload_economy`** — przeładowuje `config/halucynacje_economy/prices.json` i odświeża zarówno rynek hurtowy/sklep, jak i ceny NPC `Shoppers` na żywo bez restartu serwera Exaroton.
+- **`/halucynacje_sync_stages`** — wymusza pełną resynchronizację etapów co-op, tasków `FTB Quests` oraz bonusowych chunków `FTB Chunks` dla wszystkich graczy online.
+
+---
+
+## 6. Perki za Żetony Etapów (Stage 1–5, Issue #51)
+
+Każdy odblokowany Żeton Etapu daje drużynie realne, trwałe korzyści widoczne pod `/ekonomia`:
+
+| Etap | Dodatkowe FTB Chunks force-load | Premia handlowa Etapu (`/sprzedaj` & Doki) | Limit Doków `/rynek_eksport` | Odblokowania specjalne |
+| :--- | :---: | :---: | :---: | :--- |
+| **Stage 0** | `+0` (bazowo `20`) | `+0%` | `4` | Start Pure-Create + `1 500` monet dotacji w FTB Quests |
+| **Stage 1** (`10k`) | **`+2`** (`22`) | **`+2%`** | `4` | Zwierzęta, Soul Sand, Blaze Burner, kontrakty/Boom Tier 2 |
+| **Stage 2** (`50k`) | **`+4`** (`24`) | **`+4%`** | `4` | **Normalny Nether**, Osadnik, Waystone, Tier 2–3 |
+| **Stage 3** (`100k`) | **`+6`** (`26`) | **`+6%`** | **`5`** | Startery AE2/Mekanism, odnawialne rudy Mekanism w Create |
+| **Stage 4** (`250k`) | **`+10`** (`30`) | **`+8%`** | **`6`** | **Normalny End**, Superheated Fluorite/Uranium, Tier 4–5 |
+| **Stage 5** (`1M`) | **`+14`** (`34`) | **`+10%`** | **`8`** | Tytuł **`[Tycoon]`**, pełny endgame & `/ekonomia top` |

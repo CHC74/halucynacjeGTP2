@@ -145,6 +145,25 @@ function completeFtbQuestStageTask(player, server, stageId) {
 }
 
 /**
+ * Idempotentnie ustawia bonusowe chunki force-load w FTB Chunks 1.21.1 dla gracza
+ * zgodnie z najwyższym odblokowanym Etapem drużyny (`set` zamiast `add` = brak duplikacji).
+ */
+function syncStageChunkPerksToPlayer(player, server) {
+  var stage = 0;
+  var perks = null;
+  if (!player || !server || !player.username || typeof server.runCommandSilent !== 'function') {
+    return;
+  }
+  stage = typeof getCurrentUnlockedStage === 'function' ? getCurrentUnlockedStage(player, server) : 0;
+  perks = typeof getStagePerks === 'function' ? getStagePerks(stage) : null;
+  if (perks && perks.extraForceChunks > 0) {
+    server.runCommandSilent(
+      `ftbchunks admin extra_force_load_chunks ${player.username} set ${perks.extraForceChunks}`
+    );
+  }
+}
+
+/**
  * Synchronizuje wszystkie odblokowane globalnie etapy co-op na persistentData gracza
  * oraz uzupełnia odpowiadające taski w `FTB Quests` (np. gdy gracz dołączy później).
  */
@@ -168,6 +187,8 @@ function syncGlobalStagesToPlayer(player, server) {
   if (changed) {
     player.persistentData.put(PLAYER_STAGES_KEY, playerStages);
   }
+
+  syncStageChunkPerksToPlayer(player, server);
 }
 
 /**
@@ -194,8 +215,9 @@ function grantStage(player, server, stageId) {
     player.persistentData.put(PLAYER_STAGES_KEY, playerStages);
   }
 
-  // Zaliczenie taska w FTB Quests (w drużynie FTB Teams rozpropaguje się na cały zespół)
+  // Zaliczenie taska w FTB Quests + idempotentna aktualizacja perków FTB Chunks
   completeFtbQuestStageTask(player, server, stageId);
+  syncStageChunkPerksToPlayer(player, server);
 }
 
 /**
@@ -281,6 +303,9 @@ ItemEvents.rightClicked((event) => {
     item.shrink(1);
   }
 
+  const newStageNum = typeof getCurrentUnlockedStage === 'function' ? getCurrentUnlockedStage(player, server) : 0;
+  const unlockedPerks = typeof getStagePerks === 'function' ? getStagePerks(newStageNum) : null;
+
   server.tell(
     Text.gold('★ ')
       .append(Text.green(`${player.username}`))
@@ -288,6 +313,11 @@ ItemEvents.rightClicked((event) => {
       .append(Text.aqua(tokenDef.label))
       .append(Text.gold(' ★'))
   );
+  if (unlockedPerks && unlockedPerks.summary) {
+    server.tell(
+      Text.yellow('  ↳ Aktywne perki Etapu: ').append(Text.white(unlockedPerks.summary))
+    );
+  }
 
   // Odtwórz dźwięk awansu dla graczy na serwerze
   server.runCommandSilent(
