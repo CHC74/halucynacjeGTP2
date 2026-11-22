@@ -79,7 +79,59 @@ function test(name, fn) {
   console.log(`  ✅ ${name}`);
 }
 
+const SHARED_ECONOMY_SRC = fs.readFileSync('kubejs/server_scripts/shared_economy.js', 'utf8');
+
+function getScriptPriority(src) {
+  const m = src.match(/^\s*\/\/\s*priority:\s*(-?\d+)/m);
+  return m ? Number(m[1]) : 0;
+}
+
 console.log('🧪 Uruchamiam testy jednostkowe KubeJS...');
+
+// 0. Wspólny zakres globalny KubeJS (Issue #60) — wszystkie server_scripts w JEDNYM VM w kolejności priorytetów!
+test('shared_economy.js: wszystkie server_scripts ładują się w JEDNYM kontekście VM bez kolizji nazw globalnych', () => {
+  const dir = 'kubejs/server_scripts';
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.js'))
+    .map((f) => {
+      const fullPath = `${dir}/${f}`;
+      const src = fs.readFileSync(fullPath, 'utf8');
+      return { name: f, fullPath, src, priority: getScriptPriority(src) };
+    })
+    .sort((a, b) => b.priority - a.priority || a.name.localeCompare(b.name));
+
+  assert(files[0] && files[0].name === 'shared_economy.js', 'shared_economy.js musi mieć najwyższy priorytet');
+  assert(files[0].priority >= 100, 'shared_economy.js musi mieć priority >= 100');
+
+  const sharedSandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Text: makeTextProxy(),
+    Item: makeItemFactory(),
+    Java: { loadClass: () => null },
+    ServerEvents: { loaded: () => {}, recipes: () => {}, commandRegistry: () => {}, tick: () => {} },
+    PlayerEvents: { loggedIn: () => {} },
+    ItemEvents: { rightClicked: () => {} },
+    NativeEvents: { onEvent: () => {} },
+    Date,
+    Math
+  };
+  const sharedCtx = vm.createContext(sharedSandbox);
+
+  for (const f of files) {
+    vm.runInContext(f.src, sharedCtx, { filename: f.fullPath });
+  }
+
+  // Test negatywny (kryterium akceptacji #60): dopisanie drugiego top-level `const LC_COINS` musi rzucić błąd!
+  let collisionCaught = false;
+  try {
+    vm.runInContext('const LC_COINS = [];', sharedCtx, { filename: 'collision_probe.js' });
+  } catch (err) {
+    collisionCaught = /already been declared/i.test(String(err));
+  }
+  assert(collisionCaught, 'Kolizja top-level `const LC_COINS` w drugim skrypcie musi wysypać test!');
+});
 
 // 1. dimension_gating.js
 test('dimension_gating.js: KubeJS 7.2 NativeEvents gating + normalizacja ID + FTB Quests stage_1..stage_5', () => {
@@ -104,6 +156,8 @@ test('dimension_gating.js: KubeJS 7.2 NativeEvents gating + normalizacja ID + FT
   const rawSrc = fs.readFileSync('kubejs/server_scripts/dimension_gating.js', 'utf8');
   assert(!/PlayerEvents\.changedDimension\s*\(/.test(rawSrc), 'PlayerEvents.changedDimension nie istnieje w KubeJS 7.2!');
   const src =
+    SHARED_ECONOMY_SRC +
+    '\n;\n' +
     rawSrc +
     `
     ;(() => {
@@ -327,6 +381,8 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
     0
   );
   const src =
+    SHARED_ECONOMY_SRC +
+    '\n;\n' +
     fs.readFileSync('kubejs/server_scripts/economy_anti_exploit.js', 'utf8') +
     `
     ;(() => {
@@ -419,6 +475,8 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
     __serverCmds: serverCmds
   };
   const src =
+    SHARED_ECONOMY_SRC +
+    '\n;\n' +
     fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8') +
     `
     ;(() => {
@@ -498,6 +556,8 @@ test('economy_contracts.js: losowanie kontraktów per Etap, premia +35%, realiza
     __makeCompound: makeCompound
   };
   const src =
+    SHARED_ECONOMY_SRC +
+    '\n;\n' +
     fs.readFileSync('kubejs/server_scripts/economy_contracts.js', 'utf8') +
     `
     ;(() => {
@@ -538,4 +598,4 @@ test('economy_contracts.js: losowanie kontraktów per Etap, premia +35%, realiza
   vm.runInNewContext(src, sandbox);
 });
 
-console.log(`🎉 Wszystkie ${passed}/5 pakietów testów KubeJS ZALICZONE!`);
+console.log(`🎉 Wszystkie ${passed}/6 pakietów testów KubeJS ZALICZONE!`);

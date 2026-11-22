@@ -24,83 +24,13 @@
 //   `player.inventory.getContainerSize()` / `getItem(i)`.
 // ============================================================================
 
-const MARKET_PRICES_FILE = 'config/halucynacje_economy/prices.json';
-const MARKET_GLOBAL_STAGES_KEY = 'halucynacje_global_stages';
-const MARKET_PLAYER_STAGES_KEY = 'halucynacje_stages';
 const MARKET_TEAM_LIMITS_KEY = 'halucynacje_team_buy_counts';
 const MARKET_STATS_KEY = 'halucynacje_economy_stats';
 
-const LC_COINS = [
-  { id: 'lightmanscurrency:coin_netherite', value: 100000 },
-  { id: 'lightmanscurrency:coin_diamond', value: 10000 },
-  { id: 'lightmanscurrency:coin_emerald', value: 1000 },
-  { id: 'lightmanscurrency:coin_gold', value: 100 },
-  { id: 'lightmanscurrency:coin_iron', value: 10 },
-  { id: 'lightmanscurrency:coin_copper', value: 1 }
-];
-
-const LC_COIN_VALUES = {
-  'lightmanscurrency:coin_netherite': 100000,
-  'lightmanscurrency:coin_diamond': 10000,
-  'lightmanscurrency:coin_emerald': 1000,
-  'lightmanscurrency:coin_gold': 100,
-  'lightmanscurrency:coin_iron': 10,
-  'lightmanscurrency:coin_copper': 1
-};
-
 let CACHED_MARKET = null;
 
-function formatCoins(amount) {
-  const n = Math.floor(Number(amount) || 0);
-  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-}
-
 /**
- * Rozbija kwotę w monetach bazowych (copper) na optymalne stacki monet LC (<= 64 szt.).
- */
-function splitIntoCoinStacks(amount) {
-  let remaining = Math.floor(Number(amount) || 0);
-  const stacks = [];
-  if (remaining <= 0) {
-    return stacks;
-  }
-
-  for (let i = 0; i < LC_COINS.length; i++) {
-    const coin = LC_COINS[i];
-    if (remaining >= coin.value) {
-      let count = Math.floor(remaining / coin.value);
-      remaining = remaining % coin.value;
-      while (count > 0) {
-        const chunk = Math.min(64, count);
-        stacks.push({ id: coin.id, count: chunk });
-        count -= chunk;
-      }
-    }
-  }
-  return stacks;
-}
-
-function readMarketPricesJson(filePath) {
-  var rawText = null;
-  if (typeof JsonIO !== 'undefined') {
-    if (typeof JsonIO.readString === 'function') {
-      rawText = JsonIO.readString(filePath);
-      if (rawText) {
-        return JSON.parse(String(rawText));
-      }
-    }
-    if (typeof JsonIO.read === 'function') {
-      return JsonIO.read(filePath);
-    }
-  }
-  return null;
-}
-
-/**
- * Wczytuje i indeksuje `config/halucynacje_economy/prices.json`.
- * Używa `JsonIO.readString` + `JSON.parse` oraz pojedynczych deklaracji `var` na początku
- * funkcji, aby uniknąć błędu Rhino `TypeError: redeclaration of var cfg` oraz konwersji
- * Javowej `java.util.Map` w KubeJS 7.2 (Issue #31).
+ * Wczytuje i indeksuje `config/halucynacje_economy/prices.json` (przez wspólny `readPricesJson` z `shared_economy.js`).
  */
 function getMarketCatalog(forceReload) {
   if (CACHED_MARKET && !forceReload) {
@@ -135,7 +65,7 @@ function getMarketCatalog(forceReload) {
   var entry = null;
 
   try {
-    parsedCfg = readMarketPricesJson(MARKET_PRICES_FILE);
+    parsedCfg = readPricesJson(Boolean(forceReload));
     if (parsedCfg) {
       tier0 = parsedCfg.tier_0_blocked || [];
       for (i = 0; i < tier0.length; i++) {
@@ -215,29 +145,11 @@ function getMarketCatalog(forceReload) {
       }
     }
   } catch (err) {
-    console.error(`[HalucynacjeGTP2] Błąd wczytywania ${MARKET_PRICES_FILE}: ${err}`);
+    console.error(`[HalucynacjeGTP2] Błąd wczytywania ${HALUCYNACJE_PRICES_FILE}: ${err}`);
   }
 
   CACHED_MARKET = catalog;
   return catalog;
-}
-
-function getCurrentUnlockedStage(player, server) {
-  let highest = 0;
-  for (let s = 1; s <= 5; s++) {
-    const key = `stage_${s}`;
-    let unlocked = false;
-    if (server && server.persistentData) {
-      const gs = server.persistentData.getCompound(MARKET_GLOBAL_STAGES_KEY);
-      if (gs && gs.getBoolean(key)) unlocked = true;
-    }
-    if (!unlocked && player && player.persistentData) {
-      const ps = player.persistentData.getCompound(MARKET_PLAYER_STAGES_KEY);
-      if (ps && ps.getBoolean(key)) unlocked = true;
-    }
-    if (unlocked) highest = s;
-  }
-  return highest;
 }
 
 function getInventoryCoinBalance(player) {

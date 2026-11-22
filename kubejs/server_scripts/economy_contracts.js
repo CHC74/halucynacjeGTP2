@@ -15,21 +15,10 @@
 // - `/kontrakt nowy`  — losowanie nowego kontraktu (cooldown 5 min = 300 s)
 // ============================================================================
 
-const CONTRACT_PRICES_FILE = 'config/halucynacje_economy/prices.json';
 const CONTRACT_DATA_KEY = 'halucynacje_active_contract';
 const CONTRACT_STATS_KEY = 'halucynacje_contract_stats';
-const CONTRACT_GLOBAL_STAGES_KEY = 'halucynacje_global_stages';
 const CONTRACT_BONUS_MULTIPLIER = 1.35; // +35% względem ceny hurtowej
 const CONTRACT_REROLL_COOLDOWN_MS = 300000; // 5 minut
-
-const CONTRACT_LC_COINS = [
-  { id: 'lightmanscurrency:coin_netherite', value: 100000 },
-  { id: 'lightmanscurrency:coin_diamond', value: 10000 },
-  { id: 'lightmanscurrency:coin_emerald', value: 1000 },
-  { id: 'lightmanscurrency:coin_gold', value: 100 },
-  { id: 'lightmanscurrency:coin_iron', value: 10 },
-  { id: 'lightmanscurrency:coin_copper', value: 1 }
-];
 
 // Jakie Tiery z `prices.json` oraz ile pakietów losujemy dla każdego Etapu (0..5)
 const STAGE_CONTRACT_PROFILE = {
@@ -41,74 +30,26 @@ const STAGE_CONTRACT_PROFILE = {
   5: { tiers: ['tier_5_hightech_export'], minPacks: 10, maxPacks: 20 }
 };
 
-function formatContractCoins(amount) {
-  const n = Math.floor(Number(amount) || 0);
-  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-}
-
-function splitContractCoins(amount) {
-  let rem = Math.floor(Number(amount) || 0);
-  const stacks = [];
-  for (let i = 0; i < CONTRACT_LC_COINS.length && rem > 0; i++) {
-    const c = CONTRACT_LC_COINS[i];
-    if (rem >= c.value) {
-      let cnt = Math.floor(rem / c.value);
-      rem = rem % c.value;
-      while (cnt > 0) {
-        const chunk = Math.min(64, cnt);
-        stacks.push({ id: c.id, count: chunk });
-        cnt -= chunk;
-      }
-    }
-  }
-  return stacks;
-}
-
-function getContractStage(server) {
-  let highest = 0;
-  if (server && server.persistentData) {
-    const gs = server.persistentData.getCompound(CONTRACT_GLOBAL_STAGES_KEY);
-    for (let s = 1; s <= 5; s++) {
-      if (gs && gs.getBoolean(`stage_${s}`)) {
-        highest = s;
-      }
-    }
-  }
-  return highest;
-}
-
-function readContractsPricesJson(filePath) {
-  var rawText = null;
-  if (typeof JsonIO !== 'undefined') {
-    if (typeof JsonIO.readString === 'function') {
-      rawText = JsonIO.readString(filePath);
-      if (rawText) {
-        return JSON.parse(String(rawText));
-      }
-    }
-    if (typeof JsonIO.read === 'function') {
-      return JsonIO.read(filePath);
-    }
-  }
-  return null;
-}
-
 function loadContractPoolForStage(stage) {
   var profile = STAGE_CONTRACT_PROFILE[stage] || STAGE_CONTRACT_PROFILE[0];
   var pool = [];
   var parsedCfg = null;
   var t = 0;
   var i = 0;
+  var tierKey = '';
+  var tierObj = null;
+  var tierItems = null;
+  var it = null;
 
   try {
-    parsedCfg = readContractsPricesJson(CONTRACT_PRICES_FILE);
+    parsedCfg = readPricesJson(false);
     if (parsedCfg && parsedCfg.sell_tiers) {
       for (t = 0; t < profile.tiers.length; t++) {
-        var tierKey = profile.tiers[t];
-        var tierObj = parsedCfg.sell_tiers[tierKey];
-        var tierItems = (tierObj && tierObj.items) || [];
+        tierKey = profile.tiers[t];
+        tierObj = parsedCfg.sell_tiers[tierKey];
+        tierItems = (tierObj && tierObj.items) || [];
         for (i = 0; i < tierItems.length; i++) {
-          var it = tierItems[i];
+          it = tierItems[i];
           if (!it || !it.id || !(it.wholesale_gui > 0)) continue;
           pool.push({
             id: String(it.id),
@@ -127,7 +68,7 @@ function loadContractPoolForStage(stage) {
 }
 
 function rollNewContract(server, previousItemId) {
-  const stage = getContractStage(server);
+  const stage = getCurrentUnlockedStage(null, server);
   const { profile, pool } = loadContractPoolForStage(stage);
   if (pool.length === 0) {
     return null;
@@ -243,11 +184,11 @@ function handleShowContract(player, server) {
   );
   player.tell(
     Text.white('• Wypłata kontraktu: ')
-      .append(Text.gold(`${formatContractCoins(contract.payout)} monet`))
-      .append(Text.green(` (+${formatContractCoins(contract.payout - contract.baseValue)} premii względem hurtu!)`))
+      .append(Text.gold(`${formatCoins(contract.payout)} monet`))
+      .append(Text.green(` (+${formatCoins(contract.payout - contract.baseValue)} premii względem hurtu!)`))
   );
   player.tell(
-    Text.gray(`• Ukończone kontrakty drużyny: ${completed} (łącznie ${formatContractCoins(earned)} monet)`)
+    Text.gray(`• Ukończone kontrakty drużyny: ${completed} (łącznie ${formatCoins(earned)} monet)`)
   );
   player.tell(Text.gray('Komendy: /kontrakt oddaj (realizacja) | /kontrakt nowy (zmiana co 5 min)'));
   return 1;
@@ -275,7 +216,7 @@ function handleDeliverContract(player, server) {
     return 0;
   }
 
-  const coinStacks = splitContractCoins(contract.payout);
+  const coinStacks = splitIntoCoinStacks(contract.payout);
   for (let i = 0; i < coinStacks.length; i++) {
     player.give(Item.of(coinStacks[i].id, coinStacks[i].count));
   }
@@ -292,7 +233,7 @@ function handleDeliverContract(player, server) {
       Text.gold('★ [Kontrakt Ukończony] ')
         .append(Text.green(`${player.username}`))
         .append(Text.white(` zrealizował(a) dostawę ${contract.requiredCount}x ${contract.itemId} za `))
-        .append(Text.gold(`${formatContractCoins(contract.payout)} monet (+35%)`))
+        .append(Text.gold(`${formatCoins(contract.payout)} monet (+35%)`))
         .append(Text.gold(' ★'))
     );
   }
@@ -307,7 +248,7 @@ function handleDeliverContract(player, server) {
   if (next) {
     player.tell(
       Text.aqua(`[Nowy Kontrakt] Następne zlecenie: ${next.requiredCount}x ${next.itemId} za `)
-        .append(Text.gold(`${formatContractCoins(next.payout)} monet`))
+        .append(Text.gold(`${formatCoins(next.payout)} monet`))
         .append(Text.aqua('!'))
     );
   }
@@ -339,7 +280,7 @@ function handleRerollContract(player, server) {
 
   player.tell(
     Text.green(`[Kontrakt] Wylosowano nowe zlecenie: ${next.requiredCount}x ${next.itemId} za `)
-      .append(Text.gold(`${formatContractCoins(next.payout)} monet (+35%)`))
+      .append(Text.gold(`${formatCoins(next.payout)} monet (+35%)`))
       .append(Text.green('!'))
   );
   return 1;
