@@ -713,3 +713,174 @@ function sendCommandFeedback(ctx, component) {
     ctx.source.player.tell(component);
   }
 }
+
+// ----------------------------------------------------------------------------
+// Strefa Wyspy-Rynku (config/skyblockbuilder/templates.json5: offset [152, 4, 0])
+// oraz bezpośrednie wpłaty do konta bankowego Lightman's Currency (Issue #48)
+// ----------------------------------------------------------------------------
+const MARKET_ISLAND_CENTER = { x: 152, y: 64, z: 0 };
+const MARKET_ISLAND_RADIUS = 56;
+
+function normalizeDimensionId(rawDim) {
+  if (!rawDim) return '';
+  return String(rawDim).trim().toLowerCase();
+}
+
+function isCoordsOnMarketIsland(x, z, dimensionId) {
+  var dim = normalizeDimensionId(dimensionId);
+  var dx = 0;
+  var dz = 0;
+  if (dim && dim !== 'minecraft:overworld') {
+    return false;
+  }
+  if (typeof x !== 'number' || typeof z !== 'number' || isNaN(x) || isNaN(z)) {
+    return false;
+  }
+  dx = x - MARKET_ISLAND_CENTER.x;
+  dz = z - MARKET_ISLAND_CENTER.z;
+  return dx * dx + dz * dz <= MARKET_ISLAND_RADIUS * MARKET_ISLAND_RADIUS;
+}
+
+function isPlayerOnMarketIsland(player) {
+  var px = NaN;
+  var pz = NaN;
+  var dim = '';
+  if (!player) return false;
+  if (typeof player.x === 'number' && typeof player.z === 'number') {
+    px = player.x;
+    pz = player.z;
+  } else if (typeof player.blockX === 'number' && typeof player.blockZ === 'number') {
+    px = player.blockX;
+    pz = player.blockZ;
+  }
+  if (player.level && player.level.dimension != null) {
+    dim = String(player.level.dimension);
+  }
+  return isCoordsOnMarketIsland(px, pz, dim);
+}
+
+/**
+ * Wpłaca `amountCopper` monet LC bezpośrednio na konto bankowe drużyny (Team Bank)
+ * lub konto osobiste gracza (`IBankAccount.depositMoney` — zweryfikowane w
+ * `lightmanscurrency-1.21-2.3.0.6.jar`). Jeśli bank jest niedostępny (np. gracz offline
+ * bez konta drużyny), zwraca `{ deposited: false, target: 'pending' }`.
+ */
+function depositCoinsToBank(server, ownerName, preferredTeamId, amountCopper) {
+  var amt = Math.floor(Number(amountCopper) || 0);
+  var api = null;
+  var coinVal = null;
+  var teamApi = null;
+  var team = null;
+  var account = null;
+  var onlinePlayers = null;
+  var i = 0;
+  var p = null;
+  var targetPlayer = null;
+  var teams = null;
+  var len = 0;
+  var j = 0;
+  var t = null;
+  var ref = null;
+
+  if (amt <= 0) {
+    return { deposited: true, target: 'noop' };
+  }
+
+  api = getLightmansApiClasses();
+  if (!api || !api.CoinValue || typeof api.CoinValue.fromNumber !== 'function') {
+    return { deposited: false, target: 'pending' };
+  }
+
+  try {
+    coinVal = api.CoinValue.fromNumber('main', amt);
+    if (!coinVal) {
+      return { deposited: false, target: 'pending' };
+    }
+  } catch (errVal) {
+    return { deposited: false, target: 'pending' };
+  }
+
+  // 1. Preferowane konto drużynowe zapisane przy rejestracji doku eksportowego
+  try {
+    if (preferredTeamId != null && Number(preferredTeamId) >= 0 && api.TeamAPI && typeof api.TeamAPI.getApi === 'function') {
+      teamApi = api.TeamAPI.getApi();
+      if (teamApi && typeof teamApi.GetTeam === 'function') {
+        team = teamApi.GetTeam(false, Number(preferredTeamId));
+        if (team && (typeof team.hasBankAccount !== 'function' || team.hasBankAccount())) {
+          account = typeof team.getBankAccount === 'function' ? team.getBankAccount() : null;
+          if (account && typeof account.depositMoney === 'function') {
+            account.depositMoney(coinVal);
+            return { deposited: true, target: 'team_bank' };
+          }
+        }
+      }
+    }
+  } catch (errTeam) {
+    // Przejdź do wyszukania online gracza
+  }
+
+  // 2. Wyszukaj właściciela (lub dowolnego gracza online w trybie co-op), aby znaleźć Bank Drużyny / Bank Osobisty
+  try {
+    onlinePlayers = server && server.players ? server.players : null;
+    if (onlinePlayers) {
+      len = typeof onlinePlayers.size === 'function' ? onlinePlayers.size() : onlinePlayers.length || 0;
+      for (i = 0; i < len; i++) {
+        p = typeof onlinePlayers.get === 'function' ? onlinePlayers.get(i) : onlinePlayers[i];
+        if (!p) continue;
+        if (ownerName && String(p.username || '') === String(ownerName)) {
+          targetPlayer = p;
+          break;
+        }
+        if (!targetPlayer) {
+          targetPlayer = p;
+        }
+      }
+    }
+  } catch (errFind) {
+    targetPlayer = null;
+  }
+
+  if (targetPlayer) {
+    // 2a. Konto bankowe drużyny gracza
+    try {
+      if (api.TeamAPI && typeof api.TeamAPI.getApi === 'function') {
+        teamApi = api.TeamAPI.getApi();
+        teams =
+          teamApi && typeof teamApi.GetAllTeamsForPlayer === 'function'
+            ? teamApi.GetAllTeamsForPlayer(targetPlayer)
+            : null;
+        if (teams) {
+          len = typeof teams.size === 'function' ? teams.size() : teams.length || 0;
+          for (j = 0; j < len; j++) {
+            t = typeof teams.get === 'function' ? teams.get(j) : teams[j];
+            if (!t) continue;
+            if (typeof t.hasBankAccount === 'function' && !t.hasBankAccount()) continue;
+            account = typeof t.getBankAccount === 'function' ? t.getBankAccount() : null;
+            if (account && typeof account.depositMoney === 'function') {
+              account.depositMoney(coinVal);
+              return { deposited: true, target: 'team_bank' };
+            }
+          }
+        }
+      }
+    } catch (errPlayerTeam) {
+      // Przejdź do banku osobistego
+    }
+
+    // 2b. Konto osobiste gracza
+    try {
+      if (api.PlayerBankReference && typeof api.PlayerBankReference.of === 'function') {
+        ref = api.PlayerBankReference.of(targetPlayer);
+        account = ref && typeof ref.get === 'function' ? ref.get() : null;
+        if (account && typeof account.depositMoney === 'function') {
+          account.depositMoney(coinVal);
+          return { deposited: true, target: 'personal_bank' };
+        }
+      }
+    } catch (errPersonal) {
+      // Fallback na pending
+    }
+  }
+
+  return { deposited: false, target: 'pending' };
+}

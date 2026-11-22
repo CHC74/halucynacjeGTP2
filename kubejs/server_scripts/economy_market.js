@@ -232,7 +232,16 @@ const MARKET_BOOM_TICK_INTERVAL = 1200; // sprawdzanie co 60 s (lekkie dla TPS)
 const MARKET_DIVERSITY_KEY = 'halucynacje_diversity_window';
 const MARKET_DIVERSITY_WINDOW_MS = 1800000; // 30 minut
 
+// Zróżnicowanie marż i Automatyczny Dok Eksportowy na Wyspie-Rynku (Issue #48)
+const REMOTE_SELL_MULTIPLIER = 0.85; // -15% opłaty kurierskiej poza Wyspą-Rynkiem
+const EXPORT_DOCK_LOGISTICS_MULTIPLIER = 1.05; // +5% premii za zautomatyzowaną logistykę Create
+const EXPORT_DOCKS_KEY = 'halucynacje_export_docks';
+const EXPORT_PENDING_KEY = 'halucynacje_export_pending';
+const EXPORT_DOCK_MAX = 4;
+const EXPORT_DOCK_TICK_INTERVAL = 600; // skan doków co 30 s (bezpieczne dla TPS Exaroton)
+
 let MARKET_BOOM_TICK_COUNTER = 0;
+let EXPORT_DOCK_TICK_COUNTER = 0;
 
 function getBoomEligibleItems(catalog, stage) {
   var allowedTierNums = [1];
@@ -491,10 +500,14 @@ function handleSellHand(player, server) {
     return 0;
   }
 
+  const onMarket = typeof isPlayerOnMarketIsland === 'function' ? isPlayerOnMarketIsland(player) : true;
+  const locationMult = onMarket ? 1.0 : REMOTE_SELL_MULTIPLIER;
+  const locationBase = Math.max(1, Math.round(res.payout * locationMult));
+
   const now = Date.now();
   const boom = getOrRollMarketBoom(server, now);
   const div = recordDiversitySales(server, [res.itemId], now);
-  const dyn = applyDynamicMarketBonuses(server, res.payout, res.itemId, div, boom);
+  const dyn = applyDynamicMarketBonuses(server, locationBase, res.itemId, div, boom);
 
   giveCoinsToPlayer(player, dyn.finalPayout);
   recordExportStats(server, dyn.finalPayout, res.soldItems);
@@ -503,6 +516,7 @@ function handleSellHand(player, server) {
   }
 
   let bonusTags = '';
+  if (!onMarket) bonusTags += ' 📦-15% kurier poza Rynkiem';
   if (dyn.isBoom) bonusTags += ' 🔥+40% Boom';
   if (dyn.diversityPercent > 0) bonusTags += ` 🏭+${dyn.diversityPercent}% Różnorodność`;
 
@@ -513,7 +527,9 @@ function handleSellHand(player, server) {
       .append(Text.green('! '))
       .append(
         Text.gray(
-          `(Na Wyspie-Rynku w sklepach NPC zarobiłbyś ok. +${formatCoins(res.npcBonusPotential)} monet więcej!)`
+          onMarket
+            ? `(Dok Eksportowy /rynek_eksport płaci +5%, a sklepy NPC ok. +${formatCoins(res.npcBonusPotential)} monet więcej!)`
+            : `(Na Wyspie-Rynku 152,64,0 dostajesz 100%, a w Doku Eksportowym /rynek_eksport aż 105%!)`
         )
       )
   );
@@ -554,6 +570,9 @@ function handleSellAll(player, server) {
     return 0;
   }
 
+  const onMarket = typeof isPlayerOnMarketIsland === 'function' ? isPlayerOnMarketIsland(player) : true;
+  const locationMult = onMarket ? 1.0 : REMOTE_SELL_MULTIPLIER;
+
   const now = Date.now();
   const boom = getOrRollMarketBoom(server, now);
   const div = recordDiversitySales(server, soldIds, now);
@@ -561,7 +580,8 @@ function handleSellAll(player, server) {
   let totalPayout = 0;
   let boomHit = false;
   for (let j = 0; j < soldLines.length; j++) {
-    const dyn = applyDynamicMarketBonuses(server, soldLines[j].payout, soldLines[j].itemId, div, boom);
+    const locBase = Math.max(1, Math.round(soldLines[j].payout * locationMult));
+    const dyn = applyDynamicMarketBonuses(server, locBase, soldLines[j].itemId, div, boom);
     totalPayout += dyn.finalPayout;
     if (dyn.isBoom) boomHit = true;
   }
@@ -573,6 +593,7 @@ function handleSellAll(player, server) {
   }
 
   let bonusTags = '';
+  if (!onMarket) bonusTags += ' 📦-15% kurier poza Rynkiem';
   if (boomHit) bonusTags += ' 🔥+40% Boom';
   if (div.bonusPercent > 0) bonusTags += ` 🏭+${div.bonusPercent}% Różnorodność (${div.uniqueCount} tow.)`;
 
@@ -581,7 +602,13 @@ function handleSellAll(player, server) {
       .append(Text.gold(`${formatCoins(totalPayout)} monet`))
       .append(bonusTags ? Text.aqua(` (${bonusTags.trim()})`) : Text.green(''))
       .append(Text.green('! '))
-      .append(Text.gray(`(Premia na Wyspie-Rynku NPC: +${formatCoins(totalBonusPotential)} monet)`))
+      .append(
+        Text.gray(
+          onMarket
+            ? `(Dok /rynek_eksport daje +5%, a sklepy NPC +${formatCoins(totalBonusPotential)} monet!)`
+            : `(Na Wyspie-Rynku 152,64,0 dostajesz 100%, a przez pociąg + /rynek_eksport aż 105%!)`
+        )
+      )
   );
   return totalItems;
 }
@@ -1086,6 +1113,53 @@ ServerEvents.commandRegistry((event) => {
     })
   );
 
+  // Automatyczny Dok Eksportowy na Wyspie-Rynku (Issue #48 — Opcja 2)
+  event.register(
+    Commands.literal('rynek_eksport')
+      .executes((ctx) => {
+        const player = ctx.source.player;
+        if (!player) return 0;
+        return handleAddExportDock(player, ctx.source.server);
+      })
+      .then(
+        Commands.literal('dodaj').executes((ctx) => {
+          const player = ctx.source.player;
+          if (!player) return 0;
+          return handleAddExportDock(player, ctx.source.server);
+        })
+      )
+      .then(
+        Commands.literal('lista').executes((ctx) => {
+          const player = ctx.source.player;
+          if (!player) return 0;
+          return handleListExportDocks(player, ctx.source.server);
+        })
+      )
+      .then(
+        Commands.literal('odbierz').executes((ctx) => {
+          const player = ctx.source.player;
+          if (!player) return 0;
+          return handleClaimExportPending(player, ctx.source.server);
+        })
+      )
+      .then(
+        Commands.literal('usun')
+          .executes((ctx) => {
+            const player = ctx.source.player;
+            if (!player) return 0;
+            return handleRemoveExportDock(player, ctx.source.server, null);
+          })
+          .then(
+            Commands.argument('numer', Arguments.INTEGER.create(event)).executes((ctx) => {
+              const player = ctx.source.player;
+              if (!player) return 0;
+              const num = Arguments.INTEGER.getResult(ctx, 'numer');
+              return handleRemoveExportDock(player, ctx.source.server, num);
+            })
+          )
+      )
+  );
+
   // Komenda OP do przeładowania cennika z pliku JSON bez restartu serwera
   // (odświeża zarówno rynek hurtowy/sklep, jak i ceny NPC Shoppers — Issue #62)
   event.register(
@@ -1109,20 +1183,450 @@ ServerEvents.commandRegistry((event) => {
   );
 });
 
-// Lekka rotacja Boomu Rynkowego co 60 sekund (1200 ticków)
+// ----------------------------------------------------------------------------
+// Automatyczny Dok Eksportowy na Wyspie-Rynku (Issue #48)
+// Obsługuje skrzynie, beczki oraz Create Item Vault zasilane pociągiem / Frogportem.
+// Co 30 s (600 ticków) opróżnia wyłącznie przetworzone towary Tier 1–5 z premią
+// +5% logistyczną (+ Boom +40% + Różnorodność +10/15/20%) i przelewa środki
+// prosto na konto bankowe drużyny LC (lub do skarbca /rynek_eksport odbierz).
+// ----------------------------------------------------------------------------
+function readExportDocks(server) {
+  var raw = '';
+  var parsed = null;
+  if (!server || !server.persistentData) return [];
+  try {
+    raw = String(server.persistentData.getString(EXPORT_DOCKS_KEY) || '');
+    if (raw) {
+      parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (err) {
+    // Ignoruj uszkodzony wpis
+  }
+  return [];
+}
+
+function writeExportDocks(server, docks) {
+  if (!server || !server.persistentData) return;
+  try {
+    server.persistentData.putString(EXPORT_DOCKS_KEY, JSON.stringify(docks || []));
+  } catch (err) {
+    console.warn(`[HalucynacjeGTP2] Nie udało się zapisać listy doków eksportowych: ${err}`);
+  }
+}
+
+function getExportPendingCoins(server) {
+  if (!server || !server.persistentData) return 0;
+  return Math.max(0, Number(server.persistentData.getLong(EXPORT_PENDING_KEY) || 0));
+}
+
+function setExportPendingCoins(server, amount) {
+  if (!server || !server.persistentData) return;
+  server.persistentData.putLong(EXPORT_PENDING_KEY, Math.max(0, Math.floor(Number(amount) || 0)));
+}
+
+function findPlayerFirstTeamId(player) {
+  var api = null;
+  var teamApi = null;
+  var teams = null;
+  var len = 0;
+  var i = 0;
+  var t = null;
+  if (!player) return -1;
+  try {
+    api = getLightmansApiClasses();
+    if (api && api.TeamAPI && typeof api.TeamAPI.getApi === 'function') {
+      teamApi = api.TeamAPI.getApi();
+      teams =
+        teamApi && typeof teamApi.GetAllTeamsForPlayer === 'function'
+          ? teamApi.GetAllTeamsForPlayer(player)
+          : null;
+      if (teams) {
+        len = typeof teams.size === 'function' ? teams.size() : teams.length || 0;
+        for (i = 0; i < len; i++) {
+          t = typeof teams.get === 'function' ? teams.get(i) : teams[i];
+          if (!t) continue;
+          if (typeof t.hasBankAccount === 'function' && !t.hasBankAccount()) continue;
+          if (typeof t.getID === 'function') return Number(t.getID());
+        }
+      }
+    }
+  } catch (err) {
+    // Brak drużyny LC
+  }
+  return -1;
+}
+
+function resolveTargetExportContainer(player) {
+  var hit = null;
+  var blk = null;
+  var dim = '';
+  if (!player) return null;
+  try {
+    if (typeof player.rayTrace === 'function') {
+      hit = player.rayTrace(6);
+      if (hit && hit.block && hit.block.inventory) {
+        blk = hit.block;
+      }
+    }
+    if (!blk && player.level && typeof player.level.getBlock === 'function') {
+      var under = player.level.getBlock(Math.floor(player.x), Math.floor(player.y) - 1, Math.floor(player.z));
+      if (under && under.inventory) {
+        blk = under;
+      }
+    }
+    if (!blk) return null;
+    dim = player.level && player.level.dimension != null ? String(player.level.dimension) : 'minecraft:overworld';
+    return {
+      x: Math.floor(Number(blk.x != null ? blk.x : blk.pos ? blk.pos.x : 0)),
+      y: Math.floor(Number(blk.y != null ? blk.y : blk.pos ? blk.pos.y : 0)),
+      z: Math.floor(Number(blk.z != null ? blk.z : blk.pos ? blk.pos.z : 0)),
+      blockId: String(blk.id || 'container'),
+      dimension: dim
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
+function handleAddExportDock(player, server) {
+  var target = resolveTargetExportContainer(player);
+  var docks = null;
+  var i = 0;
+  var teamId = -1;
+
+  if (!target) {
+    player.tell(
+      Text.yellow(
+        '[Dok Eksportowy] Spójrz (max 6 bloków) na skrzynię, beczkę lub Create Item Vault na Wyspie-Rynku i wpisz /rynek_eksport dodaj.'
+      )
+    );
+    return 0;
+  }
+
+  if (!isCoordsOnMarketIsland(target.x, target.z, target.dimension)) {
+    player.tell(
+      Text.red(
+        `[Dok Eksportowy] Automatyczny Dok Eksportowy można zarejestrować wyłącznie na Wyspie-Rynku (${MARKET_ISLAND_CENTER.x}, ${MARKET_ISLAND_CENTER.y}, ${MARKET_ISLAND_CENTER.z}, promień ${MARKET_ISLAND_RADIUS} bloków)!`
+      )
+    );
+    return 0;
+  }
+
+  docks = readExportDocks(server);
+  for (i = 0; i < docks.length; i++) {
+    if (docks[i].x === target.x && docks[i].y === target.y && docks[i].z === target.z) {
+      player.tell(Text.yellow('[Dok Eksportowy] Ten kontener jest już zarejestrowany jako Dok Eksportowy!'));
+      return 0;
+    }
+  }
+
+  if (docks.length >= EXPORT_DOCK_MAX) {
+    player.tell(
+      Text.red(
+        `[Dok Eksportowy] Osiągnięto limit ${EXPORT_DOCK_MAX} doków eksportowych na serwer (ochrona TPS). Usuń stary dok przez /rynek_eksport usun <nr>.`
+      )
+    );
+    return 0;
+  }
+
+  teamId = findPlayerFirstTeamId(player);
+  docks.push({
+    x: target.x,
+    y: target.y,
+    z: target.z,
+    blockId: target.blockId,
+    owner: String(player.username || ''),
+    teamId: teamId
+  });
+  writeExportDocks(server, docks);
+
+  player.tell(
+    Text.green(`✅ [Dok Eksportowy #${docks.length}] Zarejestrowano ${target.blockId} na (${target.x}, ${target.y}, ${target.z})! `)
+      .append(Text.gold('Premia logistyczna: +5% (+ Boom +40% + Różnorodność)'))
+      .append(
+        Text.gray(
+          teamId >= 0
+            ? ' • Przelewy automatycznie trafią na Bank Drużyny LC co 30 s.'
+            : ' • Przelewy trafią na Twój Bank LC (lub /rynek_eksport odbierz) co 30 s.'
+        )
+      )
+  );
+  return 1;
+}
+
+function handleListExportDocks(player, server) {
+  var docks = readExportDocks(server);
+  var pending = getExportPendingCoins(server);
+  var i = 0;
+  var d = null;
+
+  player.tell(Text.gold(`=== Automatyczne Doki Eksportowe Wyspy-Rynku (${docks.length}/${EXPORT_DOCK_MAX}) ===`));
+  if (docks.length === 0) {
+    player.tell(
+      Text.gray('Brak zarejestrowanych doków. Spójrz na skrzynię/Item Vault na Wyspie-Rynku i wpisz /rynek_eksport dodaj.')
+    );
+  } else {
+    for (i = 0; i < docks.length; i++) {
+      d = docks[i];
+      player.tell(
+        Text.white(`• #${i + 1}: `)
+          .append(Text.aqua(`${d.blockId}`))
+          .append(Text.white(` (${d.x}, ${d.y}, ${d.z})`))
+          .append(Text.gray(` | właściciel: ${d.owner || '?'}${d.teamId >= 0 ? ` (Team #${d.teamId})` : ''}`))
+      );
+    }
+  }
+  if (pending > 0) {
+    player.tell(
+      Text.yellow(`💰 Nieodebrane środki z doków: `)
+        .append(Text.gold(`${formatCoins(pending)} monet`))
+        .append(Text.gray(' — wpisz /rynek_eksport odbierz'))
+    );
+  }
+  return 1;
+}
+
+function handleRemoveExportDock(player, server, indexArg) {
+  var docks = readExportDocks(server);
+  var target = null;
+  var removeIdx = -1;
+  var i = 0;
+  var removed = null;
+
+  if (docks.length === 0) {
+    player.tell(Text.yellow('[Dok Eksportowy] Brak zarejestrowanych doków do usunięcia.'));
+    return 0;
+  }
+
+  if (indexArg != null) {
+    removeIdx = Math.floor(Number(indexArg)) - 1;
+    if (removeIdx < 0 || removeIdx >= docks.length) {
+      player.tell(Text.red(`[Dok Eksportowy] Niepoprawny numer doku (1..${docks.length}). Sprawdź /rynek_eksport lista.`));
+      return 0;
+    }
+  } else {
+    target = resolveTargetExportContainer(player);
+    if (target) {
+      for (i = 0; i < docks.length; i++) {
+        if (docks[i].x === target.x && docks[i].y === target.y && docks[i].z === target.z) {
+          removeIdx = i;
+          break;
+        }
+      }
+    }
+    if (removeIdx === -1) {
+      player.tell(Text.yellow('[Dok Eksportowy] Spójrz na zarejestrowany dok albo podaj numer: /rynek_eksport usun <nr>.'));
+      return 0;
+    }
+  }
+
+  removed = docks.splice(removeIdx, 1)[0];
+  writeExportDocks(server, docks);
+  player.tell(
+    Text.green(`[Dok Eksportowy] Usunięto dok (${removed.x}, ${removed.y}, ${removed.z}). Pozostało: ${docks.length}/${EXPORT_DOCK_MAX}.`)
+  );
+  return 1;
+}
+
+function handleClaimExportPending(player, server) {
+  var pending = getExportPendingCoins(server);
+  if (pending <= 0) {
+    player.tell(Text.gray('[Dok Eksportowy] Brak nieodebranych monet (wszystkie wpływy trafiły bezpośrednio na Bank LC).'));
+    return 0;
+  }
+  setExportPendingCoins(server, 0);
+  giveCoinsToPlayer(player, pending);
+  if (typeof syncPlayerTabBalance === 'function') {
+    syncPlayerTabBalance(player, server, true);
+  }
+  player.tell(
+    Text.green('[Dok Eksportowy] Odebrano zaległe wpływy z automatycznego eksportu: ')
+      .append(Text.gold(`${formatCoins(pending)} monet`))
+      .append(Text.green('!'))
+  );
+  return 1;
+}
+
+function extractExportFromInventory(inv, catalog) {
+  var soldLines = [];
+  var soldIds = [];
+  var totalItems = 0;
+  var size = 0;
+  var useItemHandler = false;
+  var s = 0;
+  var stack = null;
+  var itemId = '';
+  var entry = null;
+  var have = 0;
+  var packs = 0;
+  var toRemove = 0;
+  var extracted = null;
+
+  if (!inv) {
+    return { soldLines: soldLines, soldIds: soldIds, totalItems: 0 };
+  }
+
+  if (typeof inv.getSlots === 'function' && typeof inv.getStackInSlot === 'function' && typeof inv.extractItem === 'function') {
+    useItemHandler = true;
+    size = Number(inv.getSlots() || 0);
+  } else if (typeof inv.getContainerSize === 'function' && typeof inv.getItem === 'function') {
+    size = Number(inv.getContainerSize() || 0);
+  } else if (typeof inv.slots === 'number' && typeof inv.getStackInSlot === 'function') {
+    useItemHandler = typeof inv.extractItem === 'function';
+    size = inv.slots;
+  }
+
+  for (s = 0; s < size; s++) {
+    stack = useItemHandler ? inv.getStackInSlot(s) : inv.getItem(s);
+    if (!stack || (typeof stack.isEmpty === 'function' && stack.isEmpty())) continue;
+    itemId = String(stack.id || '');
+    if (!itemId || catalog.tier0[itemId]) continue;
+    entry = catalog.sellById[itemId];
+    if (!entry) continue;
+
+    have = Number(stack.count || 0);
+    packs = Math.floor(have / entry.packSize);
+    if (packs <= 0) continue;
+
+    toRemove = packs * entry.packSize;
+    if (useItemHandler) {
+      extracted = inv.extractItem(s, toRemove, false);
+      toRemove = extracted && !extracted.isEmpty() ? Number(extracted.count || 0) : 0;
+      packs = Math.floor(toRemove / entry.packSize);
+      if (packs <= 0) continue;
+    } else {
+      stack.shrink(toRemove);
+      if (typeof inv.setChanged === 'function') {
+        inv.setChanged();
+      }
+    }
+
+    soldLines.push({
+      itemId: itemId,
+      soldItems: packs * entry.packSize,
+      payout: packs * entry.wholesale
+    });
+    soldIds.push(itemId);
+    totalItems += packs * entry.packSize;
+  }
+
+  return { soldLines: soldLines, soldIds: soldIds, totalItems: totalItems };
+}
+
+function processExportDocksTick(server, nowMs) {
+  var docks = readExportDocks(server);
+  var now = nowMs != null ? Number(nowMs) : Date.now();
+  var overworld = null;
+  var catalog = null;
+  var boom = null;
+  var totalDeposited = 0;
+  var totalPendingAdded = 0;
+  var totalItemsSold = 0;
+  var i = 0;
+  var d = null;
+  var blk = null;
+  var ex = null;
+  var div = null;
+  var j = 0;
+  var dockPayout = 0;
+  var logBase = 0;
+  var dyn = null;
+  var depRes = null;
+
+  if (!server || docks.length === 0) {
+    return { itemsSold: 0, deposited: 0, pendingAdded: 0 };
+  }
+
+  try {
+    overworld = typeof server.overworld === 'function' ? server.overworld() : server.level || null;
+  } catch (errOw) {
+    return { itemsSold: 0, deposited: 0, pendingAdded: 0 };
+  }
+  if (!overworld || typeof overworld.getBlock !== 'function') {
+    return { itemsSold: 0, deposited: 0, pendingAdded: 0 };
+  }
+
+  catalog = getMarketCatalog(false);
+  boom = getOrRollMarketBoom(server, now);
+
+  for (i = 0; i < docks.length; i++) {
+    d = docks[i];
+    if (!d || !isCoordsOnMarketIsland(Number(d.x), Number(d.z), 'minecraft:overworld')) continue;
+    try {
+      // Nie wymuszaj ładowania niezaładowanych chunków (ochrona TPS Exaroton)
+      if (typeof overworld.isLoaded === 'function' && !overworld.isLoaded(d.x, d.y, d.z)) {
+        continue;
+      }
+      blk = overworld.getBlock(d.x, d.y, d.z);
+      if (!blk || !blk.inventory) continue;
+
+      ex = extractExportFromInventory(blk.inventory, catalog);
+      if (ex.totalItems <= 0) continue;
+
+      div = recordDiversitySales(server, ex.soldIds, now);
+      dockPayout = 0;
+      for (j = 0; j < ex.soldLines.length; j++) {
+        logBase = Math.max(1, Math.round(ex.soldLines[j].payout * EXPORT_DOCK_LOGISTICS_MULTIPLIER));
+        dyn = applyDynamicMarketBonuses(server, logBase, ex.soldLines[j].itemId, div, boom);
+        dockPayout += dyn.finalPayout;
+      }
+
+      if (dockPayout <= 0) continue;
+      recordExportStats(server, dockPayout, ex.totalItems);
+      totalItemsSold += ex.totalItems;
+
+      depRes = depositCoinsToBank(server, d.owner, d.teamId, dockPayout);
+      if (depRes && depRes.deposited) {
+        totalDeposited += dockPayout;
+      } else {
+        setExportPendingCoins(server, getExportPendingCoins(server) + dockPayout);
+        totalPendingAdded += dockPayout;
+      }
+    } catch (errDock) {
+      // Pojedynczy błędny dok nie przerywa reszty
+    }
+  }
+
+  if (totalDeposited > 0 && typeof syncAllPlayersTabBalance === 'function') {
+    try {
+      syncAllPlayersTabBalance(server);
+    } catch (errTab) {
+      // Ignoruj
+    }
+  }
+
+  return {
+    itemsSold: totalItemsSold,
+    deposited: totalDeposited,
+    pendingAdded: totalPendingAdded
+  };
+}
+
+// Lekka rotacja Boomu Rynkowego (60 s) + skan Automatycznych Doków Eksportowych (30 s)
 if (typeof ServerEvents !== 'undefined' && typeof ServerEvents.tick === 'function') {
   ServerEvents.tick((event) => {
+    var srv = event && event.server ? event.server : null;
+    if (!srv) return;
+
     MARKET_BOOM_TICK_COUNTER++;
-    if (MARKET_BOOM_TICK_COUNTER < MARKET_BOOM_TICK_INTERVAL) {
-      return;
-    }
-    MARKET_BOOM_TICK_COUNTER = 0;
-    try {
-      if (event && event.server) {
-        getOrRollMarketBoom(event.server, Date.now());
+    if (MARKET_BOOM_TICK_COUNTER >= MARKET_BOOM_TICK_INTERVAL) {
+      MARKET_BOOM_TICK_COUNTER = 0;
+      try {
+        getOrRollMarketBoom(srv, Date.now());
+      } catch (errBoom) {
+        // Nie przerywaj pętli serwera
       }
-    } catch (err) {
-      // Nie przerywaj pętli serwera przy ewentualnym błędzie rotacji giełdy
+    }
+
+    EXPORT_DOCK_TICK_COUNTER++;
+    if (EXPORT_DOCK_TICK_COUNTER >= EXPORT_DOCK_TICK_INTERVAL) {
+      EXPORT_DOCK_TICK_COUNTER = 0;
+      try {
+        processExportDocksTick(srv, Date.now());
+      } catch (errExport) {
+        // Nie przerywaj pętli serwera
+      }
     }
   });
 }
