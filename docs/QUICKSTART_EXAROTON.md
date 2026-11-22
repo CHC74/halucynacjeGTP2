@@ -4,8 +4,8 @@ Ten poradnik pozwala postawić gotowy serwer **HalucynacjeGTP2** (NeoForge `1.21
 
 > **Skąd pobrać gotowe paczki?**
 > Przejdź do zakładki **[Releases](https://github.com/CHC74/halucynacjeGTP2/releases)** w repozytorium `CHC74/halucynacjeGTP2` i pobierz pliki z najnowszego wydania (np. `v1.0.1-playtest`):
-> - **`halucynacjeGTP2-curseforge.zip`** ⭐ *(Główna paczka dla graczy — **CurseForge App**)* — natywny pakiet CurseForge (**65/65 modów**: 15 pobieranych natywnie z CurseForge + 50 zweryfikowanych JAR-ów Modrinth w `overrides/mods/` + `config/` + 3 wyspy `.nbt` + `kubejs/`).
-> - **`halucynacjeGTP2-server-exaroton.zip`** — gotowy pakiet serwerowy pod Exaroton (**55/55 modów `.jar`** ze zweryfikowanymi sumami kontrolnymi, odfiltrowane 10 modów klienckich + `config/` + 3 wyspy `.nbt` + `kubejs/` + `server.properties`).
+> - **`halucynacjeGTP2-curseforge.zip`** ⭐ *(Główna paczka dla graczy — **CurseForge App**)* — natywny pakiet CurseForge (**65/65 modów**: 15 pobieranych natywnie z CurseForge + 50 zweryfikowanych JAR-ów Modrinth w `overrides/mods/` + `config/` + `defaultconfigs/` + 3 wyspy `.nbt` + `kubejs/`).
+> - **`halucynacjeGTP2-server-exaroton.zip`** — gotowy pakiet serwerowy pod Exaroton (**55/55 modów `.jar`** ze zweryfikowanymi sumami kontrolnymi, odfiltrowane 10 modów klienckich + `config/` + `defaultconfigs/` + 3 wyspy `.nbt` + `kubejs/` + `server.properties`).
 > - **`halucynacjeGTP2.mrpack`** *(Opcja B — Prism Launcher / Modrinth App)* — ten sam zestaw 65 modów + `overrides/` w formacie Modrinth.
 >
 > **Dlaczego NeoForge zamiast starego Forge?** Od Minecrafta `1.21.1` **Create 6**, AE2, Mekanism, Farmer's Delight, Skyblock Builder, KubeJS, FTB i Lightman's Currency wspierają wyłącznie **NeoForge** (oficjalnego następcę Forge). **CurseForge App** instaluje NeoForge `21.1.267` automatycznie podczas importu `halucynacjeGTP2-curseforge.zip`!
@@ -50,11 +50,13 @@ Ten poradnik pozwala postawić gotowy serwer **HalucynacjeGTP2** (NeoForge `1.21
    - **View Distance:** `8`, **Simulation Distance:** `6`.
 4. Rozpakuj na swoim komputerze pobrane archiwum **`halucynacjeGTP2-server-exaroton.zip`**. W środku znajdziesz:
    - `mods/` — komplet **55/55 plików `.jar`** (10 modów czysto klienckich jak *Sodium*, *EntityCulling*, *Xaero's* jest już odfiltrowanych!).
-   - `config/` — wszystkie konfiguracje (w tym zweryfikowany *Skyblock Builder* 1.21.1 z 3 gotowymi binarnymi wyspami `.nbt`, *FTB Quests*, *FTB Chunks*, *Carry On*, `prices.json`, *Shoppers*).
+   - `config/` — wszystkie konfiguracje (w tym zweryfikowany *Skyblock Builder* 1.21.1 z 3 gotowymi binarnymi wyspami `.nbt`, *FTB Quests*, *FTB Chunks* `ftbchunks-world.snbt`, *FTB Essentials* `ftbessentials.snbt`, *Carry On*, `prices.json`, *Shoppers*).
+   - `defaultconfigs/` — konfiguracje per-świat NeoForge kopiowane automatycznie do `world/serverconfig/` przy tworzeniu nowego świata (m.in. `sophisticatedstorage-server.toml`).
    - `kubejs/` — skrypty Żetonów Etapów, blokad Netheru/Endu, receptur pure-Create, ekonomii i polskie tłumaczenia.
    - `server.properties` — referencyjna konfiguracja serwera.
 5. Zakładka **Files** na Exaroton:
-   - Prześlij (upload) foldery **`mods/`**, **`config/`** oraz **`kubejs/`** do głównego katalogu serwera (możesz przeciągnąć spakowane podfoldery lub wgrać je przez menedżer plików Exaroton).
+   - Prześlij (upload) foldery **`mods/`**, **`config/`**, **`defaultconfigs/`** oraz **`kubejs/`** do głównego katalogu serwera (możesz przeciągnąć spakowane podfoldery lub wgrać je przez menedżer plików Exaroton).
+   - *(Wskazówka przy aktualizacji **już istniejącego** świata przez `halucynacjeGTP2-server-patch.zip`)*: NeoForge kopiuje `defaultconfigs/` automatycznie wyłącznie przy generacji **nowego** świata — na działającym świecie skopiuj ręcznie pliki z `defaultconfigs/` (np. `sophisticatedstorage-server.toml`) bezpośrednio do `world/serverconfig/`, aby zmiany zadziałały natychmiast po restarcie!
 6. Zakładka **Worlds** → kliknij **Generate** (nowy świat):
    - W polu **Worldtype** wpisz dokładnie:
      ```text

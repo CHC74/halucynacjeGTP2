@@ -54,14 +54,22 @@ jobs:
       - name: 3c. Weryfikacja graficznego sklepu GUI Lightman's Currency (PersistentTraders.json)
         run: node scripts/generate_persistent_traders.mjs --check
 
-      - name: 4. Walidacja plików JSON i TOML w config/, packwiz/ oraz kubejs/assets/
+      - name: 4. Walidacja plików JSON i TOML w config/, defaultconfigs/, packwiz/ oraz kubejs/assets/
         run: |
           python3 - <<'PY'
           import glob, json, tomllib
-          for p in glob.glob("config/**/*.json", recursive=True) + glob.glob("kubejs/assets/**/*.json", recursive=True):
+          for p in (
+              glob.glob("config/**/*.json", recursive=True)
+              + glob.glob("defaultconfigs/**/*.json", recursive=True)
+              + glob.glob("kubejs/assets/**/*.json", recursive=True)
+          ):
               with open(p, encoding="utf-8") as f:
                   json.load(f)
-          for p in glob.glob("config/**/*.toml", recursive=True) + glob.glob("packwiz/**/*.toml", recursive=True):
+          for p in (
+              glob.glob("config/**/*.toml", recursive=True)
+              + glob.glob("defaultconfigs/**/*.toml", recursive=True)
+              + glob.glob("packwiz/**/*.toml", recursive=True)
+          ):
               with open(p, "rb") as f:
                   tomllib.load(f)
           print("✅ Wszystkie pliki JSON i TOML poprawne składniowo.")
@@ -82,7 +90,7 @@ jobs:
           packwiz refresh --build
           packwiz mr export -o ../dist/halucynacjeGTP2.mrpack
 
-      - name: 8. Dołączenie overrides/ (config/ + 3 wyspy .nbt + kubejs/) i weryfikacja .mrpack
+      - name: 8. Dołączenie overrides/ (config/ + defaultconfigs/ + 3 wyspy .nbt + kubejs/) i weryfikacja .mrpack
         run: node scripts/bundle_mrpack_overrides.mjs dist/halucynacjeGTP2.mrpack
 
       - name: 9. Walidacja budżetu modów, paczki CurseForge App i listy serwerowej Exaroton (dry-run na PR)
@@ -95,7 +103,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: node scripts/export_curseforge_pack.mjs
 
-      - name: 9c. Pełny eksport gotowej paczki serwerowej Exaroton (55/55 JAR + config + kubejs + server.properties)
+      - name: 9c. Pełny eksport gotowej paczki serwerowej Exaroton (55/55 JAR + config + defaultconfigs + kubejs + server.properties)
         if: github.event_name != 'pull_request'
         run: node scripts/export_server_pack.mjs
 

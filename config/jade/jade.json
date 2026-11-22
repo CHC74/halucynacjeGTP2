@@ -1,0 +1,13 @@
+{
+  "general": {
+    "displayTooltip": true,
+    "displayBlocks": true,
+    "displayEntities": true,
+    "displayMode": "TOGGLE",
+    "fluidMode": "ANY",
+    "itemModNameTooltip": true,
+    "bossBarOverlapMode": "PUSH_DOWN",
+    "hideFromTabList": true,
+    "hideFromGUIs": false
+  }
+}

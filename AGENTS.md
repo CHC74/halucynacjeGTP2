@@ -74,13 +74,14 @@ Przed każdym `git push` autor PR ma obowiązek uruchomić i zaraportować:
 3. Przy zmianach wysp `.nbt`, modów lub konfiguracji — dodatkowo: `python3 scripts/generate_island_nbt.py --verify`, walidację `.json`/`.toml` oraz `node scripts/export_curseforge_pack.mjs --dry-run` i `node scripts/export_server_pack.mjs --dry-run`.
 4. Przegląd `git status` i `git diff --stat` (brak plików tymczasowych, logów ani sekretów).
 
-### Obowiązkowy test rozruchu serwera (`server-boot`, #59)
+### Obowiązkowy test rozruchu serwera (`server-boot`, #59 + #80)
 Przed oznaczeniem PR jako gotowy do przeglądu (`status:needs-review` / zdjęciem statusu Draft) **musi przejść na zielono** job **`server-boot`** w `.github/workflows/ci.yml` (`scripts/server_boot_test.sh`):
-- Uruchamia prawdziwy dedykowany serwer **NeoForge `21.1.267`** (Java 21, `55/55` serwerowych JAR-ów, `level-type=skyblockbuilder:skyblock`).
+- Uruchamia prawdziwy dedykowany serwer **NeoForge `21.1.267`** (Java 21, `55/55` serwerowych JAR-ów, `level-type=skyblockbuilder:skyblock`, świeże `config/`, `defaultconfigs/` i `kubejs/`).
 - Wymusza `0` błędów w `logs/kubejs/startup.log`, `logs/kubejs/server.log` oraz wpisach KubeJS w `logs/latest.log`.
 - Wymusza brak ostrzeżeń fallbackowych i znanych regresji (`Nie udało się`, `Fallback komendowy`, `ArrowFunction(`, `Unknown event`).
 - Potwierdza wykonanie komend konsolowych `halucynacje_reload_economy`, `halucynacje_sync_shoppers`, `halucynacje_sync_stages` oraz czyste zamknięcie komendą `stop` (`exit 0`, brak `crash-reports/`).
-- Znacznik `[VERIFY ON 1.21.1 BOOT]` rezerwujemy **wyłącznie** dla punktów wymagających żywego klienta / sesji gracza / Mac M2 (interaktywne GUI, OpenGL 4.1 / Flywheel, fizyczne interakcje w świecie), a nie dla kwestii pokrywanych już przez `server-boot`.
+- Po `stop` wykonuje **audyt ścieżek i wartości konfiguracji modów (#80)**: oblewa, jeśli serwer utworzył osobny/domyślny plik dla naszych modów w innej ścieżce niż w repo, lub jeśli którakolwiek z kluczowych wartości (*FTB Chunks*, *FTB Essentials*, *Sophisticated Storage* w `world/serverconfig/`, *Shoppers*, *Carry On*, *Lightman's Currency*, *Jade*) wróciła do domyślnej wartości moda.
+- Znacznik `[VERIFIED ON NEOFORGE 21.1.267 CI]` rezerwujemy **wyłącznie** dla własności realnie sprawdzanych asercjami w `server-boot`, a `[VERIFY ON 1.21.1 BOOT]` dla zachowań wymagających żywego klienta / sesji gracza / Mac M2 (np. perki `extra_force_load_chunks` #73, interaktywne GUI, OpenGL 4.1 / Flywheel, fizyczne `Shift + PPM` *Carry On*).
 
 ### Review Checklist dla agenta partnerskiego (na każdym PR)
 Podczas przeglądu PR drugiego agenta sprawdź:
@@ -89,8 +90,8 @@ Podczas przeglądu PR drugiego agenta sprawdź:
 - [ ] Czy nie wprowadzono *Ex Deorum* / *Ex Nihilo* ani exploitu ekonomicznego (wysokie ceny za surowe bloki z Netheru/Endu)?
 - [ ] Czy liczba modów mieści się w budżecie Exaroton (~95–115 modów z bibliotekami; obecnie `65` = `55` serwer / `10` klient)?
 - [ ] Czy w `kubejs/server_scripts/` zachowano zasadę wspólnego zakresu globalnego Rhino (pomocniki wyłącznie w `shared_economy.js` #60, bez duplikatów z prefiksami) i przeszły testy `node --check`, `test_kubejs_logic.mjs` (z testem kolizji single-VM), `test_tab_balance.mjs`, `validate_economy.mjs`, `generate_persistent_traders.mjs --check` oraz `check_markdown_links.mjs`?
-- [ ] Czy przeszedł na zielono job CI **`server-boot`** (#59 — prawdziwy rozruch NeoForge `21.1.267`, `0` błędów KubeJS, brak ostrzeżeń fallbackowych, przejście komend `halucynacje_reload_economy`, `halucynacje_sync_shoppers`, `halucynacje_sync_stages`, czysty `stop`)?
-- [ ] Czy ewentualne nowe punkty `[VERIFY ON 1.21.1 BOOT]` dotyczą wyłącznie zachowań wymagających żywego klienta / Apple Silicon Mac M2?
+- [ ] Czy przeszedł na zielono job CI **`server-boot`** (#59 + #80 — prawdziwy rozruch NeoForge `21.1.267`, `0` błędów KubeJS, brak ostrzeżeń fallbackowych, przejście komend `halucynacje_reload_economy`, `halucynacje_sync_shoppers`, `halucynacje_sync_stages`, audyt ścieżek i wartości configów po `stop`, czysty `stop`)?
+- [ ] Czy znaczniki `[VERIFIED ON NEOFORGE 21.1.267 CI]` obejmują wyłącznie faktycznie asercjonowane w CI właściwości, a punkty wymagające żywego gracza / Mac M2 są rzetelnie zapisane w `docs/PLAYTEST_CHECKLIST.md`?
 - [ ] Czy dokumentacja po polsku jest aktualna, z poprawnymi angielskimi identyfikatorami modów i itemów?
 
 Po zakończeniu prac nad PR dodaj etykietę `status:needs-review` (oraz zdejmij `status:in-progress` z powiązanego Issue po merge).
@@ -181,30 +182,31 @@ halucynacjeGTP2/
 │   └── mods/                              # 65 definicji `.pw.toml` (55 serwerowych + 10 czysto klienckich)
 ├── config/
 │   ├── carryon-common.toml                # Czarna lista Carry On (Create, Mekanism, AE2, Lightman's, Shoppers, Waystones)
-│   ├── shoppers-common.toml               # Konfiguracja NPC Shoppers na Wyspie-Rynku
-│   ├── sophisticatedstorage-common.toml   # Limity zasięgu kontrolerów i magnesu pod TPS Exaroton
-│   ├── lightmanscurrency-common.txt       # Ustawienia Lightman's Currency (m.in. `canMint = false`)
-│   ├── lightmanscurrency-server.txt       # Ustawienia serwerowe Lightman's Currency
+│   ├── ftbchunks-world.snbt               # FTB Chunks 1.21.1 (100 claimów, 20 force-load, Fake Players, wyłączona minimapa)
+│   ├── ftbessentials.snbt                 # FTB Essentials 1.21.1 (`/home`, `/tpa`, `/back`, `/spawn`, wyłączone `/rtp` i cheaty)
+│   ├── shoppers-common.toml               # Konfiguracja NPC Shoppers na Wyspie-Rynku (`spawnRadius = 5.0..15.0`)
+│   ├── sophisticatedstorage-common.toml   # Wspólne ustawienia Sophisticated Storage (`dropPacked = false`)
+│   ├── lightmanscurrency-common.txt       # Ustawienia Lightman's Currency (m.in. `canMint=false`)
+│   ├── lightmanscurrency-server.txt       # Ustawienia serwerowe Lightman's Currency (`lcterminalCommand=true`)
 │   ├── lightmanscurrency/
 │   │   └── PersistentTraders.json         # 10 sklepów sieciowych `[KUP]/[SKUP]` (172 oferty zsynchronizowane z `prices.json`)
 │   ├── halucynacje_economy/
 │   │   └── prices.json                    # Źródło prawdy cennika (61 blokad Tier 0, 87 towarów Tier 1-5, 80 Buy, 5 Żetonów)
 │   ├── jade/
-│   │   └── jade-common.json               # Konfiguracja HUD Jade
-│   ├── ftbchunks/                         # `ftbchunks-common.snbt`, `ftbchunks-world.snbt` (limity chunk-loadingu i Fake Players)
-│   ├── ftbessentials/
-│   │   └── ftbessentials.snbt             # Komendy QoL (`/home`, `/tpa`, `/back`, `/spawn`, wyłączone `/rtp` i cheaty)
+│   │   └── jade.json                      # Konfiguracja HUD Jade (`WailaConfig.CODEC`)
 │   ├── ftbquests/quests/                  # Księga zadań Etapy 0-5 (`data.snbt`, `chapter_groups.snbt`, `chapters/*.snbt`, `README.md`)
 │   └── skyblockbuilder/                   # 7 plików `.json5` + `templates/` (`islands/starter_island.nbt`, `spreads/market_island.nbt`, `spreads/industrial_island.nbt`)
+├── defaultconfigs/
+│   └── sophisticatedstorage-server.toml   # Konfiguracja per-świat NeoForge kopiowana do `world/serverconfig/` (zasięg kontrolera 15, magnes 3/4, hopper)
 ├── scripts/
-│   ├── bundle_mrpack_overrides.mjs        # Dołączanie `overrides/` (config, 3 wyspy .nbt, kubejs) do `.mrpack`
+│   ├── bundle_mrpack_overrides.mjs        # Dołączanie `overrides/` (config, defaultconfigs, 3 wyspy .nbt, kubejs) do `.mrpack`
 │   ├── check_markdown_links.mjs           # Walidator względnych linków Markdown
-│   ├── export_curseforge_pack.mjs         # Eksporter natywnej paczki CurseForge App (65/65 modów)
-│   ├── export_server_pack.mjs             # Eksporter paczki serwerowej Exaroton (55/55 JAR + config + kubejs)
+│   ├── export_curseforge_pack.mjs         # Eksporter natywnej paczki CurseForge App (65/65 modów + overrides)
+│   ├── export_server_pack.mjs             # Eksporter paczki serwerowej Exaroton (55/55 JAR + config + defaultconfigs + kubejs)
 │   ├── generate_island_nbt.py             # Generator i weryfikator 3 binarnych wysp `.nbt` (`DataVersion 3955`)
 │   ├── generate_persistent_traders.mjs    # Generator i walidator (`--check`) `PersistentTraders.json` z `prices.json`
 │   ├── render_islands_3d.py               # Generator renderów 3D PNG i interaktywnego widoku HTML wysp (#35)
-│   ├── server_boot_test.sh                # Smoke test rozruchu prawdziwego serwera NeoForge 21.1.267 (#59)
+│   ├── server_boot_test.sh                # Smoke test rozruchu prawdziwego serwera NeoForge 21.1.267 + audyt configów (#59, #80)
 │   ├── test_kubejs_logic.mjs              # Testy jednostkowe KubeJS + test kolizji nazw globalnych w jednej VM Rhino (#60)
 │   ├── test_tab_balance.mjs               # Testy logiki ujednoliconego salda TAB / portfel / bank (#61)
 │   └── validate_economy.mjs               # Walidator cennika `prices.json`, progresji i 16 reguł anty-arbitrażowych

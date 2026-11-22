@@ -1,0 +1,118 @@
+# HalucynacjeGTP2 — FTB Essentials (komendy QoL dla co-op Skyblock Tycoon)
+# Rzeczywista ścieżka ładowania FTB Essentials 2101.1.10 (`FTBEssentials.init()`): `config/ftbessentials.snbt`.
+#
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Ścieżka pliku oraz aktywne wartości po load+save serwera
+# (`home.max: 5`, `back.max: 5`, włączone `tpa`/`spawn`/`warp`, wyłączone `rtp`/`jump`/`admin.fly`/
+# `admin.god`/`admin.heal`/`admin.feed`/`misc.anvil`/`misc.crafting`/`misc.enderchest`/`misc.trashcan`)
+# są asertywnie weryfikowane w `scripts/server_boot_test.sh`.
+# [VERIFY ON 1.21.1 BOOT] (żywa sesja gracza): ręczny test komend `/home`, `/back`, `/tpa`, `/spawn`
+# oraz blokady `/rtp` i komend cheatujących w grze (`docs/PLAYTEST_CHECKLIST.md`).
+
+{
+	# Komendy administracyjne / cheatujące — WYŁĄCZONE (chronią balans Skyblock Tycoon i kuchnię Farmer's Delight)
+	admin: {
+		extinguish: {
+			enabled: false
+		}
+		feed: {
+			enabled: false
+		}
+		fly: {
+			enabled: false
+		}
+		god: {
+			enabled: false
+		}
+		heal: {
+			enabled: false
+		}
+		speed: {
+			enabled: false
+		}
+	}
+
+	# Drobne komendy użytkowe i kosmetyczne (komendy przenośnych stanowisk/enderchesta WYŁĄCZONE)
+	misc: {
+		anvil: {
+			enabled: false
+		}
+		crafting: {
+			enabled: false
+		}
+		enderchest: {
+			enabled: false
+		}
+		hat: {
+			enabled: true
+		}
+		kickme: {
+			enabled: false
+		}
+		leaderboard: {
+			enabled: true
+		}
+		near: {
+			enabled: false
+		}
+		nick: {
+			enabled: true
+		}
+		rec: {
+			enabled: true
+		}
+		smithing: {
+			enabled: false
+		}
+		stonecutter: {
+			enabled: false
+		}
+		# /trashcan wyłączone — zachowujemy fizyczną logistykę utylizacji (lawa / zsyp)
+		trashcan: {
+			enabled: false
+		}
+	}
+
+	# Komendy ułatwiające poruszanie się między wyspami bez psucia balansu logistyki towarów
+	teleportation: {
+		back: {
+			cooldown: 10
+			enabled: true
+			max: 5
+			only_on_death: false
+			warmup: 0
+		}
+		home: {
+			cooldown: 5
+			enabled: true
+			max: 5
+			warmup: 0
+		}
+		# /jump wyłączone (utrzymuje wartość jetpacków Create: SA i Hypertubes)
+		jump: {
+			enabled: false
+		}
+		# /rtp WYŁĄCZONE — na Overworldzie typu Void Skyblock losowy teleport nie ma sensu
+		rtp: {
+			cooldown: 600
+			enabled: false
+			max_distance: 1000
+			min_distance: 250
+			warmup: 0
+		}
+		spawn: {
+			cooldown: 5
+			enabled: true
+			warmup: 0
+		}
+		tpa: {
+			cooldown: 5
+			enabled: true
+			warmup: 0
+		}
+		warp: {
+			cooldown: 5
+			enabled: true
+			warmup: 0
+		}
+	}
+}

@@ -7,9 +7,10 @@
  * i buduje kompletne archiwum zgodne ze standardem CurseForge App (`Create Custom Profile -> Import`):
  *   - `manifest.json`      (NeoForge `21.1.267` / MC `1.21.1` + natywne wpisy `files[]` dla modów CurseForge)
  *   - `modlist.html`       (czytelny wykaz wszystkich 65 modów z linkami do źródeł)
- *   - `overrides/mods/`    (pobrane i zweryfikowane hashami pliki `.jar` dla modów spoza CurseForge / Modrinth)
- *   - `overrides/config/`  (w tym 3 binarne wyspy `.nbt`, SkyblockBuilder, FTB Quests, ekonomia)
- *   - `overrides/kubejs/`  (skrypty progresji, Żetony Etapów, polskie tłumaczenia i tekstury)
+ *   - `overrides/mods/`           (pobrane i zweryfikowane hashami pliki `.jar` dla modów spoza CurseForge / Modrinth)
+ *   - `overrides/config/`         (w tym 3 binarne wyspy `.nbt`, SkyblockBuilder, FTB Quests/Chunks/Essentials, ekonomia)
+ *   - `overrides/defaultconfigs/` (konfiguracje per-świat NeoForge kopiowane do `world/serverconfig/`, np. Sophisticated Storage)
+ *   - `overrides/kubejs/`         (skrypty progresji, Żetony Etapów, polskie tłumaczenia i tekstury)
  *
  * Użycie:
  *   node scripts/export_curseforge_pack.mjs --dry-run   # szybka walidacja w CI (bez pobierania .jar)
@@ -36,7 +37,7 @@ const EXPECTED_MC_VERSION = '1.21.1';
 const EXPECTED_NEOFORGE_LOADER = 'neoforge-21.1.267';
 const DISPLAY_NAME = 'HalucynacjeGTP2 — Create Skyblock Tycoon';
 
-const OVERRIDE_FOLDERS = ['config', 'kubejs'];
+const OVERRIDE_FOLDERS = ['config', 'defaultconfigs', 'kubejs'];
 const IGNORED_BASENAMES = new Set(['.DS_Store', 'Thumbs.db', '.gitkeep']);
 
 const REQUIRED_OVERRIDE_ENTRIES = [
@@ -45,11 +46,17 @@ const REQUIRED_OVERRIDE_ENTRIES = [
   'overrides/kubejs/assets/kubejs/textures/item/stage_1_token.png',
   'overrides/kubejs/assets/kubejs/textures/item/stage_5_token.png',
   'overrides/config/carryon-common.toml',
+  'overrides/config/ftbchunks-world.snbt',
+  'overrides/config/ftbessentials.snbt',
   'overrides/config/ftbquests/quests/data.snbt',
+  'overrides/config/jade/jade.json',
   'overrides/config/halucynacje_economy/prices.json',
   'overrides/config/lightmanscurrency/PersistentTraders.json',
   'overrides/config/lightmanscurrency-server.txt',
   'overrides/config/lightmanscurrency-common.txt',
+  'overrides/config/shoppers-common.toml',
+  'overrides/config/sophisticatedstorage-common.toml',
+  'overrides/defaultconfigs/sophisticatedstorage-server.toml',
   'overrides/config/skyblockbuilder/dimensions.json5',
   'overrides/config/skyblockbuilder/templates.json5',
   'overrides/config/skyblockbuilder/starter_inventory.json5',

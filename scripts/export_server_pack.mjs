@@ -8,6 +8,7 @@
  * SHA-1 / SHA-256 / SHA-512) i buduje gotowe archiwum pod Exaroton:
  *   - `mods/`              (komplet 55/55 plików `.jar`)
  *   - `config/`            (w tym 3 binarne wyspy `.nbt` i zweryfikowane configi SkyblockBuilder)
+ *   - `defaultconfigs/`    (konfiguracje per-świat NeoForge kopiowane do `world/serverconfig/`, np. Sophisticated Storage)
  *   - `kubejs/`            (skrypty progresji, ekonomii, receptur pure-Create, zasoby pl_pl)
  *   - `server.properties`  (z `server.properties.template`: `skyblockbuilder\:skyblock`)
  *   - `EXAROTON_MANIFEST.json`
@@ -266,7 +267,7 @@ if (downloadedTotal !== serverMods.length) {
   throw new Error(`Oczekiwano ${serverMods.length} modów, pobrano ${downloadedTotal}!`);
 }
 
-for (const folder of ['config', 'kubejs']) {
+for (const folder of ['config', 'defaultconfigs', 'kubejs']) {
   if (fs.existsSync(folder)) {
     fs.cpSync(folder, path.join(SERVER_STAGE_DIR, folder), { recursive: true });
   }
@@ -287,6 +288,7 @@ fs.writeFileSync(
       downloaded_modrinth_jars: downloadedModrinth,
       downloaded_curseforge_jars: downloadedCurseForge,
       client_only_excluded: clientOnly.map((m) => m.slug),
+      includes_defaultconfigs: fs.existsSync('defaultconfigs'),
       includes_server_properties: true,
       server_jars: downloadedRecords.map(({ slug, filename, bytes, source, hash_verified }) => ({
         slug,
@@ -310,5 +312,5 @@ execFileSync('python3', [
 
 const zipSizeMb = (fs.statSync(zipOut).size / (1024 * 1024)).toFixed(2);
 console.log(
-  `📦 Wyeksportowano gotową paczkę serwerową Exaroton: ${path.relative(process.cwd(), zipOut)} (${zipSizeMb} MB) — ${downloadedTotal}/${serverMods.length} plików .jar (${downloadedModrinth} Modrinth + ${downloadedCurseForge} CurseForge ForgeCDN, wszystkie sumy kontrolne zweryfikowane) + config/ + kubejs/ + server.properties.`
+  `📦 Wyeksportowano gotową paczkę serwerową Exaroton: ${path.relative(process.cwd(), zipOut)} (${zipSizeMb} MB) — ${downloadedTotal}/${serverMods.length} plików .jar (${downloadedModrinth} Modrinth + ${downloadedCurseForge} CurseForge ForgeCDN, wszystkie sumy kontrolne zweryfikowane) + config/ + defaultconfigs/ + kubejs/ + server.properties.`
 );

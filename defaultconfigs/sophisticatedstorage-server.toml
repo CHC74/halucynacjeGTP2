@@ -1,0 +1,35 @@
+# HalucynacjeGTP2 — Sophisticated Storage (konfiguracja serwera / świata Exaroton)
+# Rzeczywista ścieżka ładowania (`ModConfig.Type.SERVER`, `Config$Server` z `sophisticatedstorage-1.21.1-1.6.20.2239.jar`):
+#   - NeoForge kopiuje automatycznie `defaultconfigs/sophisticatedstorage-server.toml`
+#     do `world/serverconfig/sophisticatedstorage-server.toml` przy tworzeniu nowego świata.
+#   - Na już istniejącym świecie Exaroton skopiuj ten plik do `world/serverconfig/sophisticatedstorage-server.toml`.
+#
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Automatyczne skopiowanie z `defaultconfigs/` do `world/serverconfig/`
+# oraz zachowanie wartości (`controllerRange = 15`, `magnetUpgrade.magnetRange = 3`,
+# `advancedMagnetUpgrade.magnetRange = 4`, `advancedHopperUpgrade.transferSpeedTicks = 4`)
+# są asertywnie weryfikowane w `scripts/server_boot_test.sh`.
+# [VERIFY ON 1.21.1 BOOT] (żywa sesja gracza): praktyczny test zasięgu Storage Controllera (15 bloków) i magnesu w bazie.
+
+[server]
+	# Maksymalny zasięg Storage Controllera (w blokach, zakres 4..64; chroni skanowanie hal przed lagami TPS)
+	controllerRange = 15
+	# Ochrona przed lagiem przy rozbiciu pełnej skrzyni bez taśmy (domyślnie 200)
+	tooManyItemEntityDrops = 200
+
+	[server.magnetUpgrade]
+		# Zasięg podstawowego magnesu w blokach (domyślnie 3, zakres 1..20)
+		magnetRange = 3
+
+	[server.advancedMagnetUpgrade]
+		# Złagodzony zasięg zaawansowanego magnesu pod TPS Exaroton (domyślnie 5 -> 4 bloki, zakres 1..20)
+		magnetRange = 4
+
+	[server.hopperUpgrade]
+		# Podstawowy interwał transferu ulepszenia Hopper w tickach (domyślnie 8)
+		transferSpeedTicks = 8
+		maxTransferStackSize = 1
+
+	[server.advancedHopperUpgrade]
+		# Złagodzony interwał transferu pod TPS Exaroton (domyślnie 2 -> 4 ticki)
+		transferSpeedTicks = 4
+		maxTransferStackSize = 4

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * HalucynacjeGTP2 — Dołączanie overrides/ (config/ + kubejs/) do klienckiego .mrpack
+ * HalucynacjeGTP2 — Dołączanie overrides/ (config/ + defaultconfigs/ + kubejs/) do klienckiego .mrpack
  *
  * `packwiz mr export` uruchomiony z katalogu `packwiz/` pakuje wyłącznie `modrinth.index.json`
- * (manifest modów). Ten skrypt wstrzykuje katalogi `config/` oraz `kubejs/` z głównego
- * repozytorium do `overrides/config/` i `overrides/kubejs/` wewnątrz pliku `.mrpack`,
+ * (manifest modów). Ten skrypt wstrzykuje katalogi `config/`, `defaultconfigs/` oraz `kubejs/` z głównego
+ * repozytorium do `overrides/config/`, `overrides/defaultconfigs/` i `overrides/kubejs/` wewnątrz pliku `.mrpack`,
  * a następnie weryfikuje poprawność wynikowego archiwum ZIP.
  *
  * Dzięki temu klient (Prism Launcher / Modrinth App na PC i Mac M2) po samym imporcie `.mrpack`
@@ -21,7 +21,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const mrpackPath = path.resolve(process.argv[2] || 'dist/halucynacjeGTP2.mrpack');
-const OVERRIDE_FOLDERS = ['config', 'kubejs'];
+const OVERRIDE_FOLDERS = ['config', 'defaultconfigs', 'kubejs'];
 const IGNORED_BASENAMES = new Set(['.DS_Store', 'Thumbs.db', '.gitkeep']);
 
 const REQUIRED_ENTRIES = [
@@ -31,11 +31,17 @@ const REQUIRED_ENTRIES = [
   'overrides/kubejs/assets/kubejs/textures/item/stage_1_token.png',
   'overrides/kubejs/assets/kubejs/textures/item/stage_5_token.png',
   'overrides/config/carryon-common.toml',
+  'overrides/config/ftbchunks-world.snbt',
+  'overrides/config/ftbessentials.snbt',
   'overrides/config/ftbquests/quests/data.snbt',
+  'overrides/config/jade/jade.json',
   'overrides/config/halucynacje_economy/prices.json',
   'overrides/config/lightmanscurrency/PersistentTraders.json',
   'overrides/config/lightmanscurrency-server.txt',
   'overrides/config/lightmanscurrency-common.txt',
+  'overrides/config/shoppers-common.toml',
+  'overrides/config/sophisticatedstorage-common.toml',
+  'overrides/defaultconfigs/sophisticatedstorage-server.toml',
   'overrides/config/skyblockbuilder/dimensions.json5',
   'overrides/config/skyblockbuilder/templates.json5',
   'overrides/config/skyblockbuilder/starter_inventory.json5',
@@ -165,10 +171,10 @@ try {
 
   const summary = JSON.parse(stdout);
   console.log(
-    `✅ Dołączono overrides/ do ${path.relative(process.cwd(), mrpackPath)}: ${summary.injected_files} plików z config/ i kubejs/ (łącznie ${summary.total_zip_entries} wpisów ZIP, ${summary.mod_entries} wpisów modów w modrinth.index.json).`
+    `✅ Dołączono overrides/ do ${path.relative(process.cwd(), mrpackPath)}: ${summary.injected_files} plików z config/, defaultconfigs/ i kubejs/ (łącznie ${summary.total_zip_entries} wpisów ZIP, ${summary.mod_entries} wpisów modów w modrinth.index.json).`
   );
   console.log(
-    `✅ Zweryfikowano ${summary.verified_required} kluczowych plików (MC ${summary.minecraft || '?'}, NeoForge ${summary.neoforge || '?'}, stage_tokens.js, pl_pl.json, tekstury, carryon-common.toml, FTB Quests, prices.json).`
+    `✅ Zweryfikowano ${summary.verified_required} kluczowych plików (MC ${summary.minecraft || '?'}, NeoForge ${summary.neoforge || '?'}, stage_tokens.js, pl_pl.json, tekstury, carryon-common.toml, ftbchunks-world.snbt, ftbessentials.snbt, defaultconfigs/sophisticatedstorage-server.toml, FTB Quests, prices.json).`
   );
 } catch (err) {
   console.error('❌ Błąd podczas dołączania overrides/ lub weryfikacji .mrpack:');

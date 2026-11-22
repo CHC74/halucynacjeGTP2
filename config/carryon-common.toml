@@ -3,7 +3,8 @@
 # jednocześnie BEZWZGLĘDNIE blokując podnoszenie maszyn multiblock, sieci kinetycznych,
 # kontrolerów magazynów, terminali ekonomii oraz NPC Shoppers (ochrona przed korupcją zapisów).
 #
-# [VERIFIED ON NEOFORGE 21.1.267 CI]: Plik TOML parsuje się czysto na rozruchu `server-boot`.
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Ścieżka `config/carryon-common.toml`, ustawienia (`pickupHostileMobs`,
+# `slownessInCreative`) oraz kluczowe wpisy `forbiddenTiles`/`forbiddenEntities` są asertywnie weryfikowane po rozruchu w `scripts/server_boot_test.sh`.
 # [VERIFY ON 1.21.1 BOOT] (wymagana żywa sesja gracza): Przetestować w grze `Shift + PPM`
 # pustą ręką (dozwolone skrzynie/krowy, zablokowane wildcardy `*` dla Create, Lightman's, Waystones i NPC Shoppers).
 
