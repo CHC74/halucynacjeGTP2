@@ -17,8 +17,24 @@
 
 const CONTRACT_DATA_KEY = 'halucynacje_active_contract';
 const CONTRACT_STATS_KEY = 'halucynacje_contract_stats';
-const CONTRACT_BONUS_MULTIPLIER = 1.35; // +35% względem ceny hurtowej
+const CONTRACT_BONUS_MULTIPLIER = 1.35; // +35% bazowo (rośnie z serią do +55% — Issue #50)
+const CONTRACT_STREAK_STEP = 0.05; // +5% za każdy kolejny kontrakt w serii
+const CONTRACT_STREAK_MAX_BONUS_STEPS = 4; // maks. +20% za serię (łącznie +55%)
+const CONTRACT_MILESTONE_EVERY = 5; // co 5. kontrakt z rzędu = dodatkowa premia +25%
+const CONTRACT_MILESTONE_EXTRA_RATE = 0.25;
 const CONTRACT_REROLL_COOLDOWN_MS = 300000; // 5 minut
+
+function getContractStreakMultiplier(streak) {
+  const s = Math.max(0, Math.floor(Number(streak) || 0));
+  const steps = Math.min(CONTRACT_STREAK_MAX_BONUS_STEPS, s);
+  return Math.round((CONTRACT_BONUS_MULTIPLIER + steps * CONTRACT_STREAK_STEP) * 100) / 100;
+}
+
+function getCurrentContractStreak(server) {
+  if (!server || !server.persistentData) return 0;
+  const stats = server.persistentData.getCompound(CONTRACT_STATS_KEY);
+  return Math.max(0, Number(stats ? stats.getInt('streak') || 0 : 0));
+}
 
 // Jakie Tiery z `prices.json` oraz ile pakietów losujemy dla każdego Etapu (0..5)
 const STAGE_CONTRACT_PROFILE = {
@@ -84,7 +100,10 @@ function rollNewContract(server, previousItemId) {
   const packs = profile.minPacks + Math.floor(Math.random() * span);
   const requiredCount = packs * pick.packSize;
   const baseValue = packs * pick.wholesale;
-  const payout = Math.round(baseValue * CONTRACT_BONUS_MULTIPLIER);
+  const streak = getCurrentContractStreak(server);
+  const mult = getContractStreakMultiplier(streak);
+  const payout = Math.round(baseValue * mult);
+  const bonusPercent = Math.round((mult - 1) * 100);
 
   const contract = {
     itemId: pick.id,
@@ -93,6 +112,8 @@ function rollNewContract(server, previousItemId) {
     packSize: pick.packSize,
     baseValue: baseValue,
     payout: payout,
+    bonusPercent: bonusPercent,
+    streakAtRoll: streak,
     stage: stage,
     tierKey: pick.tierKey
   };
@@ -105,6 +126,7 @@ function rollNewContract(server, previousItemId) {
     tag.putInt('packSize', contract.packSize);
     tag.putInt('baseValue', contract.baseValue);
     tag.putInt('payout', contract.payout);
+    tag.putInt('bonusPercent', contract.bonusPercent);
     tag.putInt('stage', contract.stage);
     tag.putString('tierKey', contract.tierKey);
     server.persistentData.put(CONTRACT_DATA_KEY, tag);
@@ -120,13 +142,16 @@ function getOrCreateActiveContract(server) {
     const requiredCount = tag ? Number(tag.getInt('requiredCount') || 0) : 0;
     const payout = tag ? Number(tag.getInt('payout') || 0) : 0;
     if (itemId && requiredCount > 0 && payout > 0) {
+      const baseValue = Number(tag.getInt('baseValue') || Math.round(payout / CONTRACT_BONUS_MULTIPLIER));
+      const storedBonus = Number(tag.getInt('bonusPercent') || 0);
       return {
         itemId: itemId,
         requiredCount: requiredCount,
         packs: Number(tag.getInt('packs') || requiredCount),
         packSize: Number(tag.getInt('packSize') || 1),
-        baseValue: Number(tag.getInt('baseValue') || Math.round(payout / CONTRACT_BONUS_MULTIPLIER)),
+        baseValue: baseValue,
         payout: payout,
+        bonusPercent: storedBonus > 0 ? storedBonus : Math.round((payout / Math.max(1, baseValue) - 1) * 100),
         stage: Number(tag.getInt('stage') || 0),
         tierKey: String(tag.getString('tierKey') || '')
       };
@@ -175,8 +200,10 @@ function handleShowContract(player, server) {
   const stats = server && server.persistentData ? server.persistentData.getCompound(CONTRACT_STATS_KEY) : null;
   const completed = stats ? Number(stats.getInt('completed') || 0) : 0;
   const earned = stats ? Number(stats.getLong('total_payout') || 0) : 0;
+  const streak = stats ? Number(stats.getInt('streak') || 0) : 0;
+  const bestStreak = stats ? Number(stats.getInt('best_streak') || 0) : 0;
 
-  player.tell(Text.gold('=== Aktywny Kontrakt Korporacyjny (+35% premii!) ==='));
+  player.tell(Text.gold(`=== Aktywny Kontrakt Korporacyjny (+${contract.bonusPercent}% premii!) ===`));
   player.tell(
     Text.white('• Towar: ')
       .append(Text.aqua(`${contract.requiredCount}x ${contract.itemId}`))
@@ -188,9 +215,15 @@ function handleShowContract(player, server) {
       .append(Text.green(` (+${formatCoins(contract.payout - contract.baseValue)} premii względem hurtu!)`))
   );
   player.tell(
-    Text.gray(`• Ukończone kontrakty drużyny: ${completed} (łącznie ${formatCoins(earned)} monet)`)
+    Text.gray(
+      `• Seria: ${streak} z rzędu (rekord: ${bestStreak}) | Ukończone: ${completed} (łącznie ${formatCoins(earned)} monet)`
+    )
   );
-  player.tell(Text.gray('Komendy: /kontrakt oddaj (realizacja) | /kontrakt nowy (zmiana co 5 min)'));
+  player.tell(
+    Text.gray(
+      'Komendy: /kontrakt oddaj (realizacja) | /kontrakt nowy (zmiana co 5 min — uwaga: resetuje serię!)'
+    )
+  );
   return 1;
 }
 
@@ -216,25 +249,42 @@ function handleDeliverContract(player, server) {
     return 0;
   }
 
-  const coinStacks = splitIntoCoinStacks(contract.payout);
+  const stats = server && server.persistentData ? server.persistentData.getCompound(CONTRACT_STATS_KEY) : null;
+  const newStreak = stats ? Number(stats.getInt('streak') || 0) + 1 : 1;
+  const bestStreak = stats ? Math.max(newStreak, Number(stats.getInt('best_streak') || 0)) : 1;
+
+  const isMilestone = newStreak > 0 && newStreak % CONTRACT_MILESTONE_EVERY === 0;
+  const milestoneBonus = isMilestone ? Math.round(contract.baseValue * CONTRACT_MILESTONE_EXTRA_RATE) : 0;
+  const totalPayout = contract.payout + milestoneBonus;
+
+  const coinStacks = splitIntoCoinStacks(totalPayout);
   for (let i = 0; i < coinStacks.length; i++) {
     player.give(Item.of(coinStacks[i].id, coinStacks[i].count));
   }
 
-  if (server && server.persistentData) {
-    const stats = server.persistentData.getCompound(CONTRACT_STATS_KEY);
+  if (stats && server && server.persistentData) {
     stats.putInt('completed', Number(stats.getInt('completed') || 0) + 1);
-    stats.putLong('total_payout', Number(stats.getLong('total_payout') || 0) + contract.payout);
+    stats.putInt('streak', newStreak);
+    stats.putInt('best_streak', bestStreak);
+    stats.putLong('total_payout', Number(stats.getLong('total_payout') || 0) + totalPayout);
     server.persistentData.put(CONTRACT_STATS_KEY, stats);
+  }
+
+  if (typeof syncPlayerTabBalance === 'function') {
+    syncPlayerTabBalance(player, server, true);
   }
 
   if (server && server.tell) {
     server.tell(
-      Text.gold('★ [Kontrakt Ukończony] ')
+      Text.gold(`★ [Kontrakt Ukończony — Seria #${newStreak}] `)
         .append(Text.green(`${player.username}`))
         .append(Text.white(` zrealizował(a) dostawę ${contract.requiredCount}x ${contract.itemId} za `))
-        .append(Text.gold(`${formatCoins(contract.payout)} monet (+35%)`))
-        .append(Text.gold(' ★'))
+        .append(Text.gold(`${formatCoins(totalPayout)} monet (+${contract.bonusPercent}%)`))
+        .append(
+          isMilestone
+            ? Text.aqua(` + 🏆 PREMIA SERII ${newStreak}: +${formatCoins(milestoneBonus)} monet!`)
+            : Text.gold(' ★')
+        )
     );
   }
 
@@ -247,7 +297,7 @@ function handleDeliverContract(player, server) {
   const next = rollNewContract(server, contract.itemId);
   if (next) {
     player.tell(
-      Text.aqua(`[Nowy Kontrakt] Następne zlecenie: ${next.requiredCount}x ${next.itemId} za `)
+      Text.aqua(`[Nowy Kontrakt (+${next.bonusPercent}%)] Następne zlecenie: ${next.requiredCount}x ${next.itemId} za `)
         .append(Text.gold(`${formatCoins(next.payout)} monet`))
         .append(Text.aqua('!'))
     );
@@ -257,6 +307,7 @@ function handleDeliverContract(player, server) {
 
 function handleRerollContract(player, server) {
   const now = Date.now();
+  let hadStreak = 0;
   if (server && server.persistentData) {
     const stats = server.persistentData.getCompound(CONTRACT_STATS_KEY);
     const lastReroll = Number(stats.getLong('last_reroll_ms') || 0);
@@ -267,7 +318,9 @@ function handleRerollContract(player, server) {
       );
       return 0;
     }
+    hadStreak = Number(stats.getInt('streak') || 0);
     stats.putLong('last_reroll_ms', now);
+    stats.putInt('streak', 0);
     server.persistentData.put(CONTRACT_STATS_KEY, stats);
   }
 
@@ -280,8 +333,8 @@ function handleRerollContract(player, server) {
 
   player.tell(
     Text.green(`[Kontrakt] Wylosowano nowe zlecenie: ${next.requiredCount}x ${next.itemId} za `)
-      .append(Text.gold(`${formatCoins(next.payout)} monet (+35%)`))
-      .append(Text.green('!'))
+      .append(Text.gold(`${formatCoins(next.payout)} monet (+${next.bonusPercent}%)`))
+      .append(hadStreak > 0 ? Text.yellow(` (zresetowano serię ${hadStreak} -> 0)`) : Text.green('!'))
   );
   return 1;
 }

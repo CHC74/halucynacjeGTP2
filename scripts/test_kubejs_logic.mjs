@@ -832,4 +832,117 @@ test('economy_anti_exploit.js + economy_market.js (#62): hash prices.json wykryw
   assert(customPrices.get('minecraft:bread') === 24, 'Shoppers po reload ma bread = 24');
 });
 
-console.log(`🎉 Wszystkie ${passed}/8 pakietów testów KubeJS ZALICZONE!`);
+// 8. Issue #50: Market Boom (+40%), Premia za Różnorodność (+10/15/20%) i Serie Kontraktów (+35%..+55% + kamień milowy co 5)
+test('economy_market.js + economy_contracts.js (#50): Market Boom +40%, Różnorodność fabryki i Serie Kontraktów', () => {
+  let tickHandler = null;
+  const announcements = [];
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: {
+      commandRegistry: () => {},
+      tick: (cb) => {
+        tickHandler = cb;
+      }
+    },
+    Date,
+    Math,
+    assert,
+    __makeCompound: makeCompound
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_contracts.js', 'utf8'), ctx);
+
+  const server = {
+    persistentData: makeCompound(),
+    tell: (t) => announcements.push(t.s),
+    runCommandSilent: () => {}
+  };
+
+  // A) Market Boom +40% + rotacja po 20 min + tick
+  const t0 = 1_700_000_000_000;
+  const boom1 = vm.runInContext('getOrRollMarketBoom', ctx)(server, t0);
+  assert(boom1 && boom1.itemId && boom1.boostedPrice === Math.round(boom1.basePrice * 1.4), 'Boom +40% dokładnie wyliczony');
+  const boomSame = vm.runInContext('getOrRollMarketBoom', ctx)(server, t0 + 60_000);
+  assert(boomSame.itemId === boom1.itemId, 'Boom nie zmienia się przed upływem 20 min');
+  const boom2 = vm.runInContext('getOrRollMarketBoom', ctx)(server, t0 + 1_200_001);
+  assert(boom2.itemId !== boom1.itemId, 'Po 20 min Boom losuje inny towar');
+  assert(typeof tickHandler === 'function', 'ServerEvents.tick zarejestrowany dla rotacji Boomu');
+
+  // B) Premia za Różnorodność (0% -> 10% przy 3 -> 15% przy 5 -> 20% przy 7, wygasanie po 30 min)
+  const recordDiv = vm.runInContext('recordDiversitySales', ctx);
+  const getDiv = vm.runInContext('getCurrentDiversityStatus', ctx);
+  assert(recordDiv(server, ['item:a', 'item:b'], t0).bonusPercent === 0, '2 towary -> 0%');
+  assert(recordDiv(server, ['item:c'], t0 + 1000).bonusPercent === 10, '3 towary -> +10%');
+  assert(recordDiv(server, ['item:d', 'item:e'], t0 + 2000).bonusPercent === 15, '5 towarów -> +15%');
+  assert(recordDiv(server, ['item:f', 'item:g'], t0 + 3000).bonusPercent === 20, '7 towarów -> +20%');
+  assert(getDiv(server, t0 + 1_900_000).bonusPercent === 0, 'Po >30 min okno różnorodności wygasa do 0%');
+
+  // C) Łączony mnożnik Boom +40% + Różnorodność +20% = +60%
+  const applyDyn = vm.runInContext('applyDynamicMarketBonuses', ctx);
+  const combined = applyDyn(server, 1000, boom2.itemId, { uniqueCount: 7, bonusPercent: 20, multiplier: 1.2 }, boom2);
+  assert(combined.isBoom === true && combined.finalPayout === 1600, 'Boom (+40%) + Różnorodność (+20%) = 1600 z 1000');
+
+  // D) Serie Kontraktów (+35% -> +40% -> +45% -> +50% -> +55% + kamień milowy #5 = +25% + reset przy rerollu)
+  const getMult = vm.runInContext('getContractStreakMultiplier', ctx);
+  assert(getMult(0) === 1.35, 'Seria 0 -> +35%');
+  assert(getMult(1) === 1.4, 'Seria 1 -> +40%');
+  assert(getMult(2) === 1.45, 'Seria 2 -> +45%');
+  assert(getMult(3) === 1.5, 'Seria 3 -> +50%');
+  assert(getMult(4) === 1.55, 'Seria 4 -> +55%');
+  assert(getMult(10) === 1.55, 'Seria 10 -> cap +55%');
+
+  const getContract = vm.runInContext('getOrCreateActiveContract', ctx);
+  const deliver = vm.runInContext('handleDeliverContract', ctx);
+  const reroll = vm.runInContext('handleRerollContract', ctx);
+  const getStreak = vm.runInContext('getCurrentContractStreak', ctx);
+
+  let fifthPayoutReceived = 0;
+  let fifthBaseValue = 0;
+  let fifthContractPayout = 0;
+  for (let step = 1; step <= 5; step++) {
+    const c = getContract(server);
+    const inv = [sandbox.Item.of(c.itemId, c.requiredCount)];
+    const p = {
+      username: 'StreakTester',
+      inventory: { getContainerSize: () => inv.length, getItem: (idx) => inv[idx] },
+      give: (st) => inv.push(st),
+      tell: () => {}
+    };
+    if (step === 5) {
+      fifthBaseValue = c.baseValue;
+      fifthContractPayout = c.payout;
+      assert(c.bonusPercent === 55, '5. kontrakt w serii ma już +55% premii bazowej');
+    }
+    assert(deliver(p, server) === 1, `Kontrakt #${step} ukończony`);
+    assert(getStreak(server) === step, `Seria po kontrakcie #${step} = ${step}`);
+    if (step === 5) {
+      const coinVals = {
+        'lightmanscurrency:coin_netherite': 100000,
+        'lightmanscurrency:coin_diamond': 10000,
+        'lightmanscurrency:coin_emerald': 1000,
+        'lightmanscurrency:coin_gold': 100,
+        'lightmanscurrency:coin_iron': 10,
+        'lightmanscurrency:coin_copper': 1
+      };
+      fifthPayoutReceived = inv.reduce((acc, st) => acc + (coinVals[st.id] || 0) * st.count, 0);
+    }
+  }
+  const expectedMilestone = Math.round(fifthBaseValue * 0.25);
+  assert(
+    fifthPayoutReceived === fifthContractPayout + expectedMilestone,
+    `5. kontrakt wypłaca premię serii +25% (${fifthPayoutReceived} === ${fifthContractPayout + expectedMilestone})`
+  );
+
+  // Reroll resetuje serię do 0
+  const rerollPlayer = { username: 'StreakTester', tell: () => {} };
+  assert(reroll(rerollPlayer, server) === 1, 'Reroll kontraktu udany');
+  assert(getStreak(server) === 0, 'Reroll resetuje serię kontraktów do 0');
+});
+
+console.log(`🎉 Wszystkie ${passed}/9 pakietów testów KubeJS ZALICZONE!`);
