@@ -435,7 +435,7 @@ else
 fi
 
 # 7.5 Brak błędów w logs/kubejs/startup.log i logs/kubejs/server.log
-KUBEJS_ERR_PATTERN='\[ERR[[:space:]]*\]|\[ERROR\]|/ERROR\]|Error in '\''|InternalError:|TypeError:|SyntaxError:|ReferenceError:|Exception:'
+KUBEJS_ERR_PATTERN='\[ERR[[:space:]]*\]|\[ERROR\]|/ERROR\]|Error in '\''|InternalError:|TypeError:|SyntaxError:|ReferenceError:|with [1-9][0-9]* error|with [1-9][0-9]* failed recipe'
 for klog in "${KUBEJS_STARTUP_LOG}" "${KUBEJS_SERVER_LOG}"; do
   rel_name="${klog#${BOOT_WORK_DIR}/}"
   if [ -f "${klog}" ]; then
