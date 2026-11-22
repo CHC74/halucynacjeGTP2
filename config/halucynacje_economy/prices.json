@@ -223,7 +223,7 @@
     "tier_5_hightech_export": {
       "stage_range": "4-5",
       "next_stage_target": 1000000,
-      "description": "Eksport high-tech AE2 i Mekanism (droga do 1M oraz prestiżowego Creative Motor za 2M)",
+      "description": "Eksport high-tech AE2 i Mekanism (droga do 1M oraz Wielkiego Finału Tycoona /kontrakt final)",
       "items": [
         { "id": "ae2:logic_processor", "wholesale_gui": 2400, "npc_shoppers": 2880 },
         { "id": "ae2:calculation_processor", "wholesale_gui": 2500, "npc_shoppers": 3000 },
@@ -325,17 +325,7 @@
     { "id": "mekanism:fluorite_gem", "alias": "fluorite", "category": "tech", "stage": 3, "buy_price": 3000, "note": "Starter Fluorytu dla chemii Mekanism" },
     { "id": "mekanism:ingot_uranium", "alias": "uranium", "category": "tech", "stage": 3, "buy_price": 4500, "note": "Starter Uranu pod paliwo jądrowe Mekanism" },
     { "id": "minecraft:end_portal_frame", "alias": "end_portal_frame", "category": "tech", "stage": 4, "buy_price": 6000, "team_limit": 12, "note": "Rama portalu Endu (brak twierdz w Skyblocku — limit 12 szt./drużynę)" },
-    { "id": "minecraft:ender_eye", "alias": "ender_eye", "category": "tech", "stage": 4, "buy_price": 2000, "team_limit": 12, "note": "Oko Endu do aktywacji portalu (limit 12 szt./drużynę; alternatywnie crafting: Perła Endu + proszek płomyka)" },
-
-    {
-      "id": "create:creative_motor",
-      "alias": "creative_motor",
-      "category": "prestige",
-      "stage": 5,
-      "buy_price": 2000000,
-      "team_limit": 2,
-      "note": "Prestiżowy cel endgame flex po Stage 5 (RFC #5 — limit 2 szt./drużynę)"
-    }
+    { "id": "minecraft:ender_eye", "alias": "ender_eye", "category": "tech", "stage": 4, "buy_price": 2000, "team_limit": 12, "note": "Oko Endu do aktywacji portalu (limit 12 szt./drużynę; alternatywnie crafting: Perła Endu + proszek płomyka)" }
   ],
   "anti_arbitrage_checks": [
     {

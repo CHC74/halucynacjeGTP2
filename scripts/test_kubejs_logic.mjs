@@ -533,13 +533,11 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
       // Próba zakupu Stage 1 (cow) na Stage 0 -> zablokowane
       assert(handleBuy(player, server, 'cow', 1) === 0, 'stage 1 gated on stage 0');
 
-      // Próba zakupu 3x creative_motor na Stage 5 -> zablokowane przez team_limit=2
+      // Issue #51: create:creative_motor usunięty ze sklepu — zakup musi być odrzucony
       const gs = server.persistentData.getCompound('halucynacje_global_stages');
       for (let s = 1; s <= 5; s++) gs.putBoolean('stage_' + s, true);
       inv.push(Item.of('lightmanscurrency:coin_netherite', 60));
-      assert(handleBuy(player, server, 'creative_motor', 3) === 0, 'creative_motor team_limit=2 enforced');
-      assert(handleBuy(player, server, 'creative_motor', 2) === 2, 'creative_motor buy 2 allowed');
-      assert(handleBuy(player, server, 'creative_motor', 1) === 0, 'creative_motor 3rd blocked');
+      assert(handleBuy(player, server, 'creative_motor', 1) === 0, 'creative_motor usunięty ze sklepu (#51)');
 
       // Test /sklep GUI: ścieżka główna TerminalMenuProvider.OpenMenu(player, EntityValidator.of(player))
       assert(handleOpenShopGui(player, server, null) === 1, '/sklep primary EntityValidator ok');
@@ -1426,4 +1424,99 @@ test('economy_market.js (#64): end_portal_frame i ender_eye wymagają Stage 4, m
   assert(getInventoryCoinBalance(player) === balanceAfterBuy, 'Saldo po próbach /sprzedaj nie wzrosło (0 monet wypłaty)');
 });
 
-console.log(`🎉 Wszystkie ${passed}/14 pakietów testów KubeJS ZALICZONE!`);
+// 14. Issue #51 (część 2): Usunięcie Creative Motor i survivalowy Wielki Finał Tycoona (/kontrakt final -> Trofeum + 500k)
+test('economy_contracts.js + assets (#51 cz. 2): brak Creative Motor, tekstura Trofeum 16x16 i Mega-Kontrakt /kontrakt final', () => {
+  // A) Brak create:creative_motor w prices.json i PersistentTraders.json
+  assert(
+    !prices.buy_catalog.some((x) => x.id === 'create:creative_motor'),
+    'create:creative_motor nie może występować w buy_catalog (#51)'
+  );
+  const tradersRaw = fs.readFileSync('config/lightmanscurrency/PersistentTraders.json', 'utf8');
+  assert(!tradersRaw.includes('create:creative_motor'), 'PersistentTraders.json nie może sprzedawać creative_motor (#51)');
+
+  // B) Tekstura 16x16 PNG i model kubejs:tycoon_empire_trophy
+  const trophyTex = 'kubejs/assets/kubejs/textures/item/tycoon_empire_trophy.png';
+  const trophyModel = 'kubejs/assets/kubejs/models/item/tycoon_empire_trophy.json';
+  assert(fs.existsSync(trophyTex), 'Brak tekstury tycoon_empire_trophy.png');
+  assert(fs.existsSync(trophyModel), 'Brak modelu tycoon_empire_trophy.json');
+  const png = fs.readFileSync(trophyTex);
+  assert(png.slice(0, 8).toString('hex') === '89504e470d0a1a0a', 'tycoon_empire_trophy.png musi być poprawnym PNG');
+  assert(png.readUInt32BE(16) === 16 && png.readUInt32BE(20) === 16, 'tycoon_empire_trophy.png musi mieć wymiary 16x16');
+  const modelJson = JSON.parse(fs.readFileSync(trophyModel, 'utf8'));
+  assert(modelJson.textures && modelJson.textures.layer0 === 'kubejs:item/tycoon_empire_trophy', 'Poprawny layer0 modelu trofeum');
+
+  // C) Logika Mega-Kontraktu /kontrakt final
+  const broadcasts = [];
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { commandRegistry: () => {} },
+    Date,
+    Math,
+    assert
+  };
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_contracts.js', 'utf8'), ctx);
+
+  const server = {
+    persistentData: makeCompound(),
+    tell: (t) => broadcasts.push(t.s),
+    runCommandSilent: () => {}
+  };
+  const deliverFinale = vm.runInContext('handleDeliverFinaleContract', ctx);
+  const showFinale = vm.runInContext('handleShowFinaleContract', ctx);
+  const reqs = vm.runInContext('ENDGAME_FINALE_REQUIREMENTS', ctx);
+
+  const makeFullInv = () => reqs.map((r) => sandbox.Item.of(r.id, r.count));
+  const inv = makeFullInv();
+  const player = {
+    username: 'GrandTycoon',
+    x: 152,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld' },
+    inventory: { getContainerSize: () => inv.length, getItem: (idx) => inv[idx] },
+    give: (st) => inv.push(st),
+    tell: () => {}
+  };
+
+  assert(showFinale(player, server) === 1, '/kontrakt final wyświetla status');
+  // 1) Przed Stage 5 -> zablokowane
+  assert(deliverFinale(player, server) === 0, '/kontrakt final oddaj zablokowane przed Stage 5');
+
+  // 2) Stage 5, ale poza Wyspą-Rynkiem -> zablokowane
+  const gs = server.persistentData.getCompound('halucynacje_global_stages');
+  for (let s = 1; s <= 5; s++) gs.putBoolean('stage_' + s, true);
+  player.x = 0;
+  assert(deliverFinale(player, server) === 0, '/kontrakt final oddaj zablokowane poza Wyspą-Rynkiem');
+  player.x = 152;
+
+  // 3) Brak 1 składnika -> atomowa odmowa (0 zabranych przedmiotów!)
+  inv[4].count = 3; // brakuje 1x pellet_polonium
+  assert(deliverFinale(player, server) === 0, 'Brak 1 składnika blokuje finał');
+  assert(inv[0].count === reqs[0].count, 'Atomowość: przy braku 1 składnika nic nie zostało zabrane');
+  inv[4].count = reqs[4].count;
+
+  // 4) Komplet 5 filarów na Wyspie-Rynku na Stage 5 -> sukces: Trofeum + 500 000 monet + ogłoszenie!
+  assert(deliverFinale(player, server) === 1, '/kontrakt final oddaj udany');
+  for (let k = 0; k < reqs.length; k++) {
+    assert(inv[k].count === 0, `Pobrano cały wymóg ${reqs[k].id}`);
+  }
+  assert(inv.some((st) => st.id === 'kubejs:tycoon_empire_trophy' && st.count === 1), 'Przyznano 1x kubejs:tycoon_empire_trophy');
+  const coinVals = {
+    'lightmanscurrency:coin_netherite': 100000,
+    'lightmanscurrency:coin_diamond': 10000,
+    'lightmanscurrency:coin_emerald': 1000,
+    'lightmanscurrency:coin_gold': 100,
+    'lightmanscurrency:coin_iron': 10,
+    'lightmanscurrency:coin_copper': 1
+  };
+  const coinsReceived = inv.reduce((acc, st) => acc + (coinVals[st.id] || 0) * st.count, 0);
+  assert(coinsReceived === 500000, `Wypłacono dokładnie 500 000 monet premii finałowej (jest ${coinsReceived})`);
+  assert(broadcasts.some((m) => m.includes('WIELKI FINAŁ TYCOONA')), 'Wysłano serwerowe ogłoszenie Wielkiego Finału');
+});
+
+console.log(`🎉 Wszystkie ${passed}/15 pakietów testów KubeJS ZALICZONE!`);

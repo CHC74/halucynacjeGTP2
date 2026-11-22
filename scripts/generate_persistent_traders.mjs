@@ -129,7 +129,7 @@ function generatePersistentTraders(prices) {
   const blockedIds = new Set((prices.tier_0_blocked || []).map((x) => x.id));
   const traders = [];
 
-  // 1. [KUP] 1. Żetony Etapów (Stage 1..5 + Prestiżowy Creative Motor 2M)
+  // 1. [KUP] 1. Żetony Etapów (Stage 1..5 — Issue #51: bez Creative Motor)
   const stageAndPrestigeTrades = [];
   for (const tok of prices.stage_tokens || []) {
     stageAndPrestigeTrades.push(makeTrade('SALE', tok.id, 1, tok.buy_price, tok.name));
@@ -138,17 +138,13 @@ function generatePersistentTraders(prices) {
     (item) => item.category === 'prestige' || (!item.category && item.stage >= 5)
   );
   for (const item of prestigeItems) {
-    const label =
-      item.id === 'create:creative_motor'
-        ? 'Creative Motor (Prestiż 2M — cel końcowy)'
-        : item.note || null;
-    stageAndPrestigeTrades.push(makeTrade('SALE', item.id, 1, item.buy_price, label));
+    stageAndPrestigeTrades.push(makeTrade('SALE', item.id, 1, item.buy_price, item.note || null));
   }
   traders.push(
     makeTrader(
       'halucynacje_kup_01_etapy',
       '[KUP] 1. Żetony Etapów',
-      'Stage 1-5 i Creative Motor',
+      'Stage 1-5 (10k..1M monet)',
       'lightmanscurrency:coin_diamond',
       stageAndPrestigeTrades
     )

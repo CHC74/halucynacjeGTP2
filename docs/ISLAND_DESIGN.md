@@ -128,7 +128,7 @@ Legenda: [H] = Terminal Hypertube (139,65,-3) | [W] = Pad Waystone (139,65,+3) |
   - Lekka, otwarta altana na 4 filarach (brak pełnych ścian blokujących widok i ruch NPC).
   - Zawiera **`Lightman's Currency` `Trading Terminal`** podłączony do globalnych **Creative Network Traders**:
     - skup hurtowy (stawki bazowe 100%, podczas gdy stoiska NPC `S1–S8` dają premię **+20%**),
-    - katalog **Żetonów Etapów** (`10k / 50k / 100k / 250k / 1M` monet) oraz prestiżowego `create:creative_motor` po odblokowaniu Stage 5,
+    - katalog **Żetonów Etapów** (`10k / 50k / 100k / 250k / 1M` monet) oraz odbiór **Wielkiego Finału Tycoona** (`/kontrakt final`) po odblokowaniu Stage 5,
     - sklep rzadkich nasion, sadzonek i surowców bazowych (soft gating).
 - **Stacja Kolejowa Zachodnia `(136, 65, 0)` + Hypertube + Waystone:**
   - Peron na `Y = 65` oddzielony niskim krawężnikiem/barierką od strefy NPC (`X = 140`), z otwartym przejściem dla graczy i miejscem na `Create Train Station`, `Portable Storage Interface` oraz buforowy `Item Vault`.

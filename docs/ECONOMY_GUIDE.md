@@ -43,18 +43,19 @@ Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](..
 - **`/cennik [1-5]`** — tabela skupu hurtowego i docelowej ceny NPC `+20%` dla wybranego Tieru (1–5).
 - **`/sprzedaj`** — sprzedaje stack z głównej ręki (`100%` na Wyspie-Rynku, `85%` poza nią + premie Boom/Różnorodności) i wypłaca monety *Lightman's Currency*.
 - **`/sprzedaj all`** — sprzedaje hurtem wszystkie przetworzone towary Tier 1–5 z ekwipunku jednym kliknięciem.
-- **`/sklep`** (lub PPM na bloku `Trading Terminal` na Wyspie-Rynku — zalecamy `/sklep`, bo obsługuje przycisk **„Back to Network Terminal”**) — otwiera **prawdziwe, graficzne GUI Sklepu Sieciowego** (*Lightman's Currency*) zasilane z [config/lightmanscurrency/PersistentTraders.json](../config/lightmanscurrency/PersistentTraders.json) (**10 sklepów, 170 ofert**):
-  - **`[KUP] 1. Żetony Etapów`** (`kubejs:stage_1..5_token` za `10k/50k/100k/250k/1M` + `create:creative_motor` za `2M`),
+- **`/sklep`** (lub PPM na bloku `Trading Terminal` na Wyspie-Rynku — zalecamy `/sklep`, bo obsługuje przycisk **„Back to Network Terminal”**) — otwiera **prawdziwe, graficzne GUI Sklepu Sieciowego** (*Lightman's Currency*) zasilane z [config/lightmanscurrency/PersistentTraders.json](../config/lightmanscurrency/PersistentTraders.json) (**10 sklepów, 171 ofert**):
+  - **`[KUP] 1. Żetony Etapów`** (`kubejs:stage_1..5_token` za `10k/50k/100k/250k/1M` — czysto survivalowo, bez przedmiotów kreatywnych!),
   - **`[KUP] 2. Rośliny i Sadzonki`** (30 pozycji: wszystkie 8 drzew, nasiona Vanilla i FD, grzyby, kakao, jagody),
   - **`[KUP] 3. Zwierzęta i Hodowla`** (14 pozycji: zwierzęta farmowe, pszczoły/ule, ryby, kałamarnice, osadnik S2),
   - **`[KUP] 4. Skyblock i Bloki`** (16 pozycji: grass, lód, mech, dripstone, lawa, **Soul Sand S1**, slime, budding amethyst),
-  - **`[KUP] 5. Maszyny i High-Tech`** (17 pozycji: Blaze Burner, Waystones, Terminal/ATM, AE2 Sky Stone + Budding Quartz + **4 matryce Inscriber Press**, Mekanism Osmium/Tin/Lead/Fluorite/Uranium),
+  - **`[KUP] 5. Maszyny i High-Tech`** (19 pozycji: Blaze Burner, Waystones, Terminal/ATM, AE2 Sky Stone + Budding Quartz + **4 matryce Inscriber Press**, Mekanism Osmium/Tin/Lead/Fluorite/Uranium, **Ramy i Oczy Portalu Endu S4**),
   - **`[SKUP] 1..5`** (87 przetworzonych dóbr fabrycznych Tier 1–5 z ceną bazową `100%`, zero surowców Tier 0!).
 - **`/sklep lista [0-5]`** (lub `/sklep <0-5>`) — tekstowy podgląd katalogu zakupowego z kategoriami i aliasami do szybkiego `/kup`.
 - **`/kup <alias> [ilość]`** — kupuje wybrany towar za monety z portfela, banku osobistego/drużynowego i ekwipunku (w tym `coinpile`/`coinblock`) i automatycznie wydaje resztę.
 - **`/kontrakt`** — pokazuje aktywny kontrakt fabryczny (towar, ilość, premię serii `+35%..+55%` i licznik serii).
 - **`/kontrakt oddaj`** — **na Wyspie-Rynku `(152, 64, 0)`** pobiera wymagane towary z ekwipunku, wypłaca premię serii (plus `+25%` co 5. kontrakt!) i automatycznie losuje nowe zlecenie dla Waszego Etapu.
 - **`/kontrakt nowy`** — losuje inny kontrakt na aktualnym Etapie (cooldown `5 minut`; uwaga: resetuje aktualną serię do `0`).
+- **`/kontrakt final`** / **`/kontrakt final oddaj`** — **Wielki Finał Tycoona (Stage 5)**: wielomodowy Mega-Kontrakt łączący wszystkie 5 filarów paczki (`64x Hamburger`, `64x Ruby Chocolate`, `32x Precision Mechanism`, `4x AE2 256k Component`, `4x Mekanism Polonium Pellet`) na Wyspie-Rynku -> nagradza **`kubejs:tycoon_empire_trophy`** + `500 000` monet!
 
 ---
 
