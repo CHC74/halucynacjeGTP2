@@ -5,6 +5,16 @@
 // ============================================================================
 {
   forceSkyblockCheck: false,
+  // 2-osobowy co-op gra wspólnie na wyspie Spawn (0, 64, 0), obok której stoją
+  // Wyspa-Rynek (152, 64, 0) i Huta (0, 64, 152). Blokujemy tworzenie osobnych drużyn
+  // (/skyblock create), żeby żaden gracz nie przeniósł się ~8192 bloki od Rynku (#78).
+  // Operatorzy (OP >= minimumPermissionLevelToBypass) zachowują awaryjny dostęp.
+  permissions: [
+    "teleport_to_spawn",
+    "teleport_to_visiting_island",
+    "teleport_home",
+    "teleport_across_dimensions"
+  ],
   minimumPermissionLevelToBypass: 2,
   minimumPermissionLevelToBypassLimitations: 3,
   minimumPermissionLevelToExecuteCommands: 4,

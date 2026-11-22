@@ -1519,4 +1519,91 @@ test('economy_contracts.js + assets (#51 cz. 2): brak Creative Motor, tekstura T
   assert(broadcasts.some((m) => m.includes('WIELKI FINAŁ TYCOONA')), 'Wysłano serwerowe ogłoszenie Wielkiego Finału');
 });
 
-console.log(`🎉 Wszystkie ${passed}/15 pakietów testów KubeJS ZALICZONE!`);
+// 15. Issue #78: Co-op na wyspie Spawn — blokada /skyblock create i ostrzeżenie przy logowaniu w drużynie spoza Spawn
+test('dimension_gating.js + permissions.json5 (#78): blokada team_create i ostrzeżenie dla drużyny spoza Spawn', () => {
+  // A) permissions.json5 definiuje jawną listę permissions bez team_create i z teleport_to_spawn
+  const permsRaw = fs.readFileSync('config/skyblockbuilder/permissions.json5', 'utf8');
+  const permsNoComments = permsRaw.replace(/\/\/[^\n]*/g, '');
+  const listMatch = permsNoComments.match(/\bpermissions\s*:\s*\[([^\]]*)\]/);
+  assert(listMatch !== null, 'permissions.json5 musi jawnie definiować listę permissions');
+  const permsList = listMatch[1];
+  assert(!/team_create/i.test(permsList), 'permissions.json5 nie może zawierać team_create (#78)');
+  assert(!/team_handle_invites/i.test(permsList), 'permissions.json5 nie może zawierać team_handle_invites (#78)');
+  assert(/teleport_to_spawn/i.test(permsList), 'permissions.json5 musi zachować teleport_to_spawn');
+
+  // B) warnIfNonSpawnSkyblockTeam + PlayerEvents.loggedIn
+  let loggedInHandler = null;
+  const warnings = [];
+  const sandbox = {
+    console: { info: () => {}, warn: (m) => warnings.push(String(m)), error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { loaded: () => {}, commandRegistry: () => {} },
+    PlayerEvents: {
+      loggedIn: (cb) => {
+        loggedInHandler = cb;
+      }
+    },
+    ItemEvents: { rightClicked: () => {} },
+    NativeEvents: { onEvent: () => {} },
+    assert
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/dimension_gating.js', 'utf8'), ctx);
+  assert(typeof loggedInHandler === 'function', 'PlayerEvents.loggedIn zarejestrowany');
+
+  const makeMockPlayer = (name) => {
+    const msgs = [];
+    return {
+      username: name,
+      persistentData: makeCompound(),
+      tell: (t) => msgs.push(t.s),
+      _msgs: msgs
+    };
+  };
+
+  // 1) Brak drużyny Skyblock Builder (domyślny gracz na Spawn) -> zero ostrzeżeń
+  const pNoTeam = makeMockPlayer('CoopAlpha');
+  const srvNoTeam = {
+    persistentData: makeCompound(),
+    runCommandSilent: () => {},
+    _getSkyblockTeamForPlayer: () => null
+  };
+  loggedInHandler({ player: pNoTeam, server: srvNoTeam });
+  assert(warnings.length === 0 && pNoTeam._msgs.length === 0, 'Gracz bez drużyny (na Spawn) nie dostaje ostrzeżenia');
+
+  // 2) Drużyna Spawn (isSpawn() === true) -> zero ostrzeżeń
+  const pSpawn = makeMockPlayer('CoopBeta');
+  const srvSpawn = {
+    persistentData: makeCompound(),
+    runCommandSilent: () => {},
+    _getSkyblockTeamForPlayer: () => ({ isSpawn: () => true, getName: () => 'Spawn' })
+  };
+  loggedInHandler({ player: pSpawn, server: srvSpawn });
+  assert(warnings.length === 0 && pSpawn._msgs.length === 0, 'Gracz w drużynie Spawn nie dostaje ostrzeżenia');
+
+  // 3) Drużyna inna niż Spawn (isSpawn() === false) -> ostrzeżenie w logu i na czacie!
+  const pOther = makeMockPlayer('LostPlayer');
+  const srvOther = {
+    persistentData: makeCompound(),
+    runCommandSilent: () => {},
+    _getSkyblockTeamForPlayer: () => ({ isSpawn: () => false, getName: () => 'DalekaWyspa' })
+  };
+  loggedInHandler({ player: pOther, server: srvOther });
+  assert(warnings.length === 1, 'Log serwera otrzymuje ostrzeżenie dla drużyny spoza Spawn');
+  assert(
+    warnings[0].includes('DalekaWyspa') && warnings[0].includes('/kontrakt') && warnings[0].includes('/rynek_eksport'),
+    'Log serwera wskazuje nazwę drużyny oraz brak działania /kontrakt i /rynek_eksport'
+  );
+  assert(pOther._msgs.length === 1, 'Gracz otrzymuje ostrzeżenie na czacie przy logowaniu');
+  assert(
+    pOther._msgs[0].includes('DalekaWyspa') && pOther._msgs[0].includes('(152, 64, 0)'),
+    'Komunikat na czacie wskazuje nazwę drużyny i koordynaty Wyspy-Rynku (152, 64, 0)'
+  );
+});
+
+console.log(`🎉 Wszystkie ${passed}/16 pakietów testów KubeJS ZALICZONE!`);
+
