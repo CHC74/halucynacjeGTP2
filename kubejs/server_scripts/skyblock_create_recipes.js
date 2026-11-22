@@ -220,4 +220,112 @@ ServerEvents.recipes((event) => {
       ]
     })
     .id('halucynacje:create/milling/skyblock_veridium_early');
+
+  // --------------------------------------------------------------------------
+  // 9. Odnawialne łańcuchy surowych rud Mekanism w Pure-Create Skyblock (Stage 3–4, Issue #49)
+  //    Produkcja surowych rud (`mekanism:raw_*`) zamiast gotowych sztabek pozwala
+  //    graczom wpiąć Create prosto w 3x–5x mnożniki rud Mekanism (Enrichment /
+  //    Purification / Chemical Injection / Dissolution), łącząc oba mody w jedną
+  //    pętlę fabryczną! Wszystkie ID zweryfikowane w `Mekanism-1.21.1-10.7.19.85.jar`.
+  // --------------------------------------------------------------------------
+
+  // 9a. Raw Tin (Stage 3 — Heated Mixing z Veridium + Clay + Zinc + Lava)
+  event
+    .custom({
+      type: 'create:mixing',
+      heat_requirement: 'heated',
+      ingredients: [
+        { item: 'create:veridium' },
+        { item: 'create:veridium' },
+        { item: 'minecraft:clay_ball' },
+        { item: 'minecraft:clay_ball' },
+        { item: 'create:zinc_nugget' },
+        { type: 'neoforge:single', fluid: 'minecraft:lava', amount: 250 }
+      ],
+      results: [
+        { id: 'mekanism:raw_tin', count: 1 },
+        { id: 'mekanism:raw_tin', count: 1, chance: 0.25 }
+      ]
+    })
+    .id('halucynacje:create/mixing/skyblock_mekanism_raw_tin');
+
+  // 9b. Raw Lead (Stage 3 — Heated Mixing z Basalt + Crimsite + Flint + Lava)
+  event
+    .custom({
+      type: 'create:mixing',
+      heat_requirement: 'heated',
+      ingredients: [
+        { item: 'minecraft:basalt' },
+        { item: 'minecraft:basalt' },
+        { item: 'create:crimsite' },
+        { item: 'create:crimsite' },
+        { item: 'minecraft:flint' },
+        { type: 'neoforge:single', fluid: 'minecraft:lava', amount: 250 }
+      ],
+      results: [
+        { id: 'mekanism:raw_lead', count: 1 },
+        { id: 'mekanism:raw_lead', count: 1, chance: 0.25 }
+      ]
+    })
+    .id('halucynacje:create/mixing/skyblock_mekanism_raw_lead');
+
+  // 9c. Raw Osmium (Stage 3 — Heated Mixing z Asurine + Crimsite + Quartz + Lava)
+  event
+    .custom({
+      type: 'create:mixing',
+      heat_requirement: 'heated',
+      ingredients: [
+        { item: 'create:asurine' },
+        { item: 'create:asurine' },
+        { item: 'create:crimsite' },
+        { item: 'minecraft:quartz' },
+        { item: 'minecraft:quartz' },
+        { type: 'neoforge:single', fluid: 'minecraft:lava', amount: 250 }
+      ],
+      results: [
+        { id: 'mekanism:raw_osmium', count: 1 },
+        { id: 'mekanism:raw_osmium', count: 1, chance: 0.25 }
+      ]
+    })
+    .id('halucynacje:create/mixing/skyblock_mekanism_raw_osmium');
+
+  // 9d. Fluorite Gem (Stage 4 — Superheated Mixing z Quartz + Glowstone + Clay + Lava)
+  event
+    .custom({
+      type: 'create:mixing',
+      heat_requirement: 'superheated',
+      ingredients: [
+        { item: 'minecraft:quartz' },
+        { item: 'minecraft:quartz' },
+        { item: 'minecraft:glowstone_dust' },
+        { item: 'minecraft:glowstone_dust' },
+        { item: 'minecraft:clay_ball' },
+        { item: 'minecraft:clay_ball' },
+        { type: 'neoforge:single', fluid: 'minecraft:lava', amount: 250 }
+      ],
+      results: [
+        { id: 'mekanism:fluorite_gem', count: 2 },
+        { id: 'mekanism:fluorite_gem', count: 1, chance: 0.5 }
+      ]
+    })
+    .id('halucynacje:create/mixing/skyblock_mekanism_fluorite');
+
+  // 9e. Raw Uranium (Stage 4 — Superheated Mixing z End Stone + Raw Osmium + Fluorite + Lava)
+  event
+    .custom({
+      type: 'create:mixing',
+      heat_requirement: 'superheated',
+      ingredients: [
+        { item: 'minecraft:end_stone' },
+        { item: 'minecraft:end_stone' },
+        { item: 'mekanism:raw_osmium' },
+        { item: 'mekanism:fluorite_gem' },
+        { type: 'neoforge:single', fluid: 'minecraft:lava', amount: 250 }
+      ],
+      results: [
+        { id: 'mekanism:raw_uranium', count: 1 },
+        { id: 'mekanism:raw_uranium', count: 1, chance: 0.35 }
+      ]
+    })
+    .id('halucynacje:create/mixing/skyblock_mekanism_raw_uranium');
 });

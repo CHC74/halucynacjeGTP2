@@ -251,6 +251,24 @@ test('skyblock_create_recipes.js: Create 6.0.10 neoforge:single & Mechanical Ext
     assert(ex.blockIngredients?.first?.blocks && ex.blockIngredients?.second?.blocks, 'Brak blockIngredients w Mechanical Extruder');
     assert(ex.catalyst?.blocks, 'Brak catalyst.blocks w Mechanical Extruder');
   }
+
+  // Issue #49: 5 odnawialnych łańcuchów Mekanism (Stage 3–4) + blokada raw_* w Tier 0
+  const mekTargets = [
+    { id: 'mekanism:raw_tin', heat: 'heated' },
+    { id: 'mekanism:raw_lead', heat: 'heated' },
+    { id: 'mekanism:raw_osmium', heat: 'heated' },
+    { id: 'mekanism:fluorite_gem', heat: 'superheated' },
+    { id: 'mekanism:raw_uranium', heat: 'superheated' }
+  ];
+  for (const mt of mekTargets) {
+    const rec = customRecipes.find((r) => (r.results || []).some((res) => res.id === mt.id));
+    assert(rec, `Brak receptury Pure-Create dla ${mt.id} (#49)`);
+    assert(rec.heat_requirement === mt.heat, `Receptura ${mt.id} musi mieć heat_requirement=${mt.heat}`);
+    assert(
+      prices.tier_0_blocked.some((b) => b.id === mt.id && b.wholesale_gui === 0 && b.npc_shoppers === 0),
+      `${mt.id} musi być zablokowany w tier_0_blocked (0 monet)`
+    );
+  }
 });
 
 // 3. economy_anti_exploit.js

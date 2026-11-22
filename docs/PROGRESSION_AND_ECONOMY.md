@@ -74,6 +74,8 @@ Wszystkie kluczowe surowce potrzebne od Stage 0 do Stage 3 można zautomatyzowa�
 | **Kelp (Wodorosty)** | 1) Zakup pierwszej sztuki w sklepie (Stage 0/1) <br> 2) Automatyczna farma wodna Create Mechanical Harvester | Stage 0–1 | Kluczowy do pasów transmisyjnych (*Mechanical Belt*) i suszenia na paliwo |
 | **Blaze Burner** | 1) Pusty Blaze Burner (Iron Sheets + wczesny Netherrack z KubeJS Mixing) + napełnienie w sklepie Stage 1 (ograniczona liczba startowa) <br> 2) Po odblokowaniu Netheru (Stage 2) — klasyczne łapanie Blaze'ów ze spawnera | Stage 1–2 | Zapewnia miękkie wejście w Brass Age na Stage 1 i wielką nagrodę przy odblokowaniu Netheru |
 | **Lawa (Paliwo)** | 1) Stage 0–1: Dripstone + Cauldron (zakup Pointed Dripstone w sklepie) lub podgrzewany Mixing Cobblestone -> Lava <br> 2) Stage 2+: **Pociągi-cysterny z Netheru** (nieskończone źródło lawy) | Stage 0–2 | Pociąg z lawą z Netheru to jedna z najfajniejszych pętli w Create |
+| **Mekanism: Raw Tin / Raw Lead / Raw Osmium** | **Heated Mixing** w Create (`Veridium + Clay + Zinc + Lava` -> `raw_tin`; `Basalt + Crimsite + Flint + Lava` -> `raw_lead`; `Asurine + Crimsite + Quartz + Lava` -> `raw_osmium`) -> **3x–5x mnożniki rud Mekanism** | Stage 3 | Odnawialne surowce z `skyblock_create_recipes.js` (Issue #49); wszystkie `raw_*` zablokowane w Tier 0 (`0` monet) |
+| **Mekanism: Fluorite & Raw Uranium** | **Superheated Mixing** (Blaze Cake!): `Quartz + Glowstone + Clay + Lava` -> `fluorite_gem`; `End Stone + Raw Osmium + Fluorite + Lava` -> `raw_uranium` | Stage 4 | Łączy End, Create Superheated i reaktory/antymaterię Mekanism w jedną odnawialną fabrykę |
 
 ---
 
