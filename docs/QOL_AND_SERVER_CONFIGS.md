@@ -71,7 +71,7 @@ Dlatego czarna lista (`blacklist.forbiddenTiles` / `forbiddenEntities` / `forbid
 ## 4. Jade & Sophisticated Storage — czytelny HUD i zdrowe pakiety NBT
 
 - [`config/jade/jade.json`](../config/jade/jade.json) *(schemat `WailaConfig.CODEC` Jade `15.10.6`)* — czytelny HUD w trybie `TOGGLE`, wyświetlający płyny (`fluidMode: "ANY"`), nazwę moda (`itemModNameTooltip: true`), przesuwający się pod pasek bossa (`bossBarOverlapMode: "PUSH_DOWN"`) i automatycznie ukrywający się przy liście graczy `Tab` (`hideFromTabList: true`).
-- [`defaultconfigs/sophisticatedstorage-server.toml`](../defaultconfigs/sophisticatedstorage-server.toml) *(kopiowany automatycznie przez NeoForge do `world/serverconfig/sophisticatedstorage-server.toml` przy tworzeniu świata; na istniejącym świecie należy skopiować ręcznie do `world/serverconfig/`)* — ograniczony zasięg Storage Controllera `server.controllerRange = 15`, zasięg magnesów (`magnetUpgrade.magnetRange = 3`, `advancedMagnetUpgrade.magnetRange = 4`) oraz złagodzony interwał `advancedHopperUpgrade.transferSpeedTicks = 4` pod TPS Exaroton.
+- [`config/sophisticatedstorage-server.toml`](../config/sophisticatedstorage-server.toml) *(rzeczywista ścieżka `ModConfig.Type.SERVER` w NeoForge `21.1.267`; `world/serverconfig/` to wyłącznie opcjonalny override per-świat)* — ograniczony zasięg Storage Controllera `server.controllerRange = 15`, zasięg magnesów (`magnetUpgrade.magnetRange = 3`, `advancedMagnetUpgrade.magnetRange = 4`) oraz złagodzony interwał `advancedHopperUpgrade.transferSpeedTicks = 4` pod TPS Exaroton.
 - [`config/sophisticatedstorage-common.toml`](../config/sophisticatedstorage-common.toml) — `common.dropPacked = false` (zachowuje użycie Packing Tape przy rozbijaniu pełnych skrzyń).
 
 ---
@@ -80,7 +80,7 @@ Dlatego czarna lista (`blacklist.forbiddenTiles` / `forbiddenEntities` / `forbid
 
 Job CI **`server-boot`** (`scripts/server_boot_test.sh`, #59 + #80) uruchamia prawdziwy serwer **NeoForge `21.1.267`** i **po czystym `stop` asertywnie weryfikuje**:
 - brak nieoczekiwanych / zduplikowanych plików konfiguracyjnych naszych modów w `config/` i `world/serverconfig/` (gwarancja, że żaden plik nie został po cichu zignorowany),
-- aktywne wartości zapisane na dysk przez serwer dla: `config/ftbchunks-world.snbt`, `config/ftbessentials.snbt`, `defaultconfigs/sophisticatedstorage-server.toml` → `world/serverconfig/sophisticatedstorage-server.toml`, `config/sophisticatedstorage-common.toml`, `config/shoppers-common.toml`, `config/carryon-common.toml`, `config/lightmanscurrency-common.txt`, `config/lightmanscurrency-server.txt` oraz `config/jade/jade.json`.
+- aktywne wartości zapisane na dysk przez serwer dla: `config/ftbchunks-world.snbt`, `config/ftbessentials.snbt`, `config/sophisticatedstorage-server.toml`, `config/sophisticatedstorage-common.toml`, `config/shoppers-common.toml`, `config/carryon-common.toml`, `config/lightmanscurrency-common.txt`, `config/lightmanscurrency-server.txt` oraz `config/jade/jade.json`.
 
 Poniższe punkty wymagają **żywej sesji gracza / klienta Mac M2** (`[VERIFY ON 1.21.1 BOOT]`, szczegóły w [docs/PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md)):
 1. **Perki chunków za Etapy (`ftbchunks admin extra_force_load_chunks <gracz> set <N>`, #73) oraz Create Deployer:** po odblokowaniu Etapu 1–5 przez zalogowanego gracza potwierdzić wzrost limitu force-load powyżej bazowych `20` oraz swobodną pracę Deployera na zclaimowanym chunku.

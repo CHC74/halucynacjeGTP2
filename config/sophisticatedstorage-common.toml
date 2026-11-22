@@ -1,7 +1,7 @@
 # HalucynacjeGTP2 — Sophisticated Storage (konfiguracja wspólna, ModConfig.Type.COMMON)
 # Uwaga: W Sophisticated Storage 1.21.1 (`Config$Common`) ten plik zawiera wyłącznie `dropPacked`.
 # Limity zasięgu Storage Controllera, magnesu i hoppera znajdują się w konfiguracji serwerowej:
-# `defaultconfigs/sophisticatedstorage-server.toml` -> `world/serverconfig/sophisticatedstorage-server.toml`.
+# `config/sophisticatedstorage-server.toml` (NeoForge 1.21.1).
 #
 # [VERIFIED ON NEOFORGE 21.1.267 CI]: Ścieżka pliku i wartość `common.dropPacked = false`
 # są asertywnie weryfikowane po rozruchu serwera w `scripts/server_boot_test.sh`.

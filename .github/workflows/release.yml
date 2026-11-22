@@ -127,10 +127,10 @@ jobs:
                   "overrides/config/ftbchunks-world.snbt",
                   "overrides/config/ftbessentials.snbt",
                   "overrides/config/ftbquests/quests/data.snbt",
-                  "overrides/defaultconfigs/sophisticatedstorage-server.toml",
+                  "overrides/config/sophisticatedstorage-server.toml",
               ]:
                   assert req in names, f"Brak wymaganego pliku w CurseForge zip: {req}"
-              print(f"✅ Zweryfikowano CurseForge ZIP: {cf_entries} CF manifest + {len(embedded_jars)} overrides/mods JAR = {cf_total}/65 modów + 3 wyspy .nbt + config + defaultconfigs + kubejs.")
+              print(f"✅ Zweryfikowano CurseForge ZIP: {cf_entries} CF manifest + {len(embedded_jars)} overrides/mods JAR = {cf_total}/65 modów + 3 wyspy .nbt + config + kubejs.")
 
           # 2. Weryfikacja serwerowego Exaroton ZIP
           srv_zip = "dist/halucynacjeGTP2-server-exaroton.zip"
@@ -153,15 +153,15 @@ jobs:
                   "config/skyblockbuilder/templates/spreads/industrial_island.nbt",
                   "config/ftbchunks-world.snbt",
                   "config/ftbessentials.snbt",
+                  "config/sophisticatedstorage-server.toml",
                   "config/halucynacje_economy/prices.json",
-                  "defaultconfigs/sophisticatedstorage-server.toml",
                   "kubejs/startup_scripts/stage_tokens.js",
                   "kubejs/server_scripts/dimension_gating.js",
                   "kubejs/server_scripts/economy_market.js",
                   "kubejs/server_scripts/economy_contracts.js"
               ]:
                   assert req in names, f"Brak wymaganego pliku w server zip: {req}"
-              print(f"✅ Zweryfikowano serwerowy ZIP: {len(jars)}/{expected} JAR ({manifest['downloaded_modrinth_jars']} Modrinth + {manifest['downloaded_curseforge_jars']} CurseForge ForgeCDN) + 3 wyspy .nbt + defaultconfigs + server.properties.")
+              print(f"✅ Zweryfikowano serwerowy ZIP: {len(jars)}/{expected} JAR ({manifest['downloaded_modrinth_jars']} Modrinth + {manifest['downloaded_curseforge_jars']} CurseForge ForgeCDN) + 3 wyspy .nbt + config + server.properties.")
               with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
                   out.write(f"cf_manifest_mods={cf_entries}\n")
                   out.write(f"cf_embedded_jars={len(embedded_jars)}\n")

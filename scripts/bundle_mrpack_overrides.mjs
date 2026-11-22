@@ -21,7 +21,12 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const mrpackPath = path.resolve(process.argv[2] || 'dist/halucynacjeGTP2.mrpack');
-const OVERRIDE_FOLDERS = ['config', 'defaultconfigs', 'kubejs'];
+const REQUIRED_OVERRIDE_FOLDERS = ['config', 'kubejs'];
+const OPTIONAL_OVERRIDE_FOLDERS = ['defaultconfigs'];
+const OVERRIDE_FOLDERS = [
+  ...REQUIRED_OVERRIDE_FOLDERS,
+  ...OPTIONAL_OVERRIDE_FOLDERS.filter((f) => fs.existsSync(path.resolve(f)))
+];
 const IGNORED_BASENAMES = new Set(['.DS_Store', 'Thumbs.db', '.gitkeep']);
 
 const REQUIRED_ENTRIES = [
@@ -41,7 +46,7 @@ const REQUIRED_ENTRIES = [
   'overrides/config/lightmanscurrency-common.txt',
   'overrides/config/shoppers-common.toml',
   'overrides/config/sophisticatedstorage-common.toml',
-  'overrides/defaultconfigs/sophisticatedstorage-server.toml',
+  'overrides/config/sophisticatedstorage-server.toml',
   'overrides/config/skyblockbuilder/dimensions.json5',
   'overrides/config/skyblockbuilder/templates.json5',
   'overrides/config/skyblockbuilder/starter_inventory.json5',
@@ -55,7 +60,7 @@ if (!fs.existsSync(mrpackPath)) {
   process.exit(1);
 }
 
-for (const folder of OVERRIDE_FOLDERS) {
+for (const folder of REQUIRED_OVERRIDE_FOLDERS) {
   if (!fs.existsSync(path.resolve(folder))) {
     console.error(`❌ Brak wymaganego katalogu źródłowego: ${folder}/`);
     process.exit(1);
@@ -171,10 +176,10 @@ try {
 
   const summary = JSON.parse(stdout);
   console.log(
-    `✅ Dołączono overrides/ do ${path.relative(process.cwd(), mrpackPath)}: ${summary.injected_files} plików z config/, defaultconfigs/ i kubejs/ (łącznie ${summary.total_zip_entries} wpisów ZIP, ${summary.mod_entries} wpisów modów w modrinth.index.json).`
+    `✅ Dołączono overrides/ do ${path.relative(process.cwd(), mrpackPath)}: ${summary.injected_files} plików z ${OVERRIDE_FOLDERS.map((f) => `${f}/`).join(', ')} (łącznie ${summary.total_zip_entries} wpisów ZIP, ${summary.mod_entries} wpisów modów w modrinth.index.json).`
   );
   console.log(
-    `✅ Zweryfikowano ${summary.verified_required} kluczowych plików (MC ${summary.minecraft || '?'}, NeoForge ${summary.neoforge || '?'}, stage_tokens.js, pl_pl.json, tekstury, carryon-common.toml, ftbchunks-world.snbt, ftbessentials.snbt, defaultconfigs/sophisticatedstorage-server.toml, FTB Quests, prices.json).`
+    `✅ Zweryfikowano ${summary.verified_required} kluczowych plików (MC ${summary.minecraft || '?'}, NeoForge ${summary.neoforge || '?'}, stage_tokens.js, pl_pl.json, tekstury, carryon-common.toml, ftbchunks-world.snbt, ftbessentials.snbt, sophisticatedstorage-server.toml, FTB Quests, prices.json).`
   );
 } catch (err) {
   console.error('❌ Błąd podczas dołączania overrides/ lub weryfikacji .mrpack:');

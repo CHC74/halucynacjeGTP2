@@ -37,7 +37,12 @@ const EXPECTED_MC_VERSION = '1.21.1';
 const EXPECTED_NEOFORGE_LOADER = 'neoforge-21.1.267';
 const DISPLAY_NAME = 'HalucynacjeGTP2 — Create Skyblock Tycoon';
 
-const OVERRIDE_FOLDERS = ['config', 'defaultconfigs', 'kubejs'];
+const REQUIRED_OVERRIDE_FOLDERS = ['config', 'kubejs'];
+const OPTIONAL_OVERRIDE_FOLDERS = ['defaultconfigs'];
+const OVERRIDE_FOLDERS = [
+  ...REQUIRED_OVERRIDE_FOLDERS,
+  ...OPTIONAL_OVERRIDE_FOLDERS.filter((f) => fs.existsSync(path.resolve(f)))
+];
 const IGNORED_BASENAMES = new Set(['.DS_Store', 'Thumbs.db', '.gitkeep']);
 
 const REQUIRED_OVERRIDE_ENTRIES = [
@@ -56,7 +61,7 @@ const REQUIRED_OVERRIDE_ENTRIES = [
   'overrides/config/lightmanscurrency-common.txt',
   'overrides/config/shoppers-common.toml',
   'overrides/config/sophisticatedstorage-common.toml',
-  'overrides/defaultconfigs/sophisticatedstorage-server.toml',
+  'overrides/config/sophisticatedstorage-server.toml',
   'overrides/config/skyblockbuilder/dimensions.json5',
   'overrides/config/skyblockbuilder/templates.json5',
   'overrides/config/skyblockbuilder/starter_inventory.json5',
@@ -278,7 +283,7 @@ if (!packMeta.author) {
   errors.push('Brak pola `author` w `packwiz/pack.toml`.');
 }
 
-for (const folder of OVERRIDE_FOLDERS) {
+for (const folder of REQUIRED_OVERRIDE_FOLDERS) {
   if (!fs.existsSync(path.resolve(folder))) {
     errors.push(`Brak wymaganego katalogu źródłowego: ${folder}/`);
   }

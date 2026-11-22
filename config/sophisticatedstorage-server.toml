@@ -1,13 +1,11 @@
 # HalucynacjeGTP2 — Sophisticated Storage (konfiguracja serwera / świata Exaroton)
-# Rzeczywista ścieżka ładowania (`ModConfig.Type.SERVER`, `Config$Server` z `sophisticatedstorage-1.21.1-1.6.20.2239.jar`):
-#   - NeoForge kopiuje automatycznie `defaultconfigs/sophisticatedstorage-server.toml`
-#     do `world/serverconfig/sophisticatedstorage-server.toml` przy tworzeniu nowego świata.
-#   - Na już istniejącym świecie Exaroton skopiuj ten plik do `world/serverconfig/sophisticatedstorage-server.toml`.
+# Rzeczywista ścieżka ładowania na NeoForge 21.1.267 (`ModConfig.Type.SERVER`, `Config$Server`):
+#   - NeoForge 1.21.1 ładuje pliki serwerowe bezpośrednio z `config/sophisticatedstorage-server.toml`
+#     (`world/serverconfig/sophisticatedstorage-server.toml` to wyłącznie opcjonalny override per-świat).
 #
-# [VERIFIED ON NEOFORGE 21.1.267 CI]: Automatyczne skopiowanie z `defaultconfigs/` do `world/serverconfig/`
-# oraz zachowanie wartości (`controllerRange = 15`, `magnetUpgrade.magnetRange = 3`,
-# `advancedMagnetUpgrade.magnetRange = 4`, `advancedHopperUpgrade.transferSpeedTicks = 4`)
-# są asertywnie weryfikowane w `scripts/server_boot_test.sh`.
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Ścieżka `config/sophisticatedstorage-server.toml` oraz zachowane
+# wartości (`controllerRange = 15`, `magnetUpgrade.magnetRange = 3`, `advancedMagnetUpgrade.magnetRange = 4`,
+# `advancedHopperUpgrade.transferSpeedTicks = 4`) są asertywnie weryfikowane po `stop` w `scripts/server_boot_test.sh`.
 # [VERIFY ON 1.21.1 BOOT] (żywa sesja gracza): praktyczny test zasięgu Storage Controllera (15 bloków) i magnesu w bazie.
 
 [server]

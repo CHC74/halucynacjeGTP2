@@ -28,7 +28,7 @@
 #      - wykrywanie nowo wygenerowanych / zduplikowanych plików konfiguracyjnych
 #        w `config/`, `defaultconfigs/` i `world/serverconfig/`,
 #      - asercje aktywnych wartości zapisanych przez serwer dla: FTB Chunks,
-#        FTB Essentials, Sophisticated Storage (`defaultconfigs/` -> `world/serverconfig/`),
+#        FTB Essentials, Sophisticated Storage (`config/sophisticatedstorage-server.toml`),
 #        Shoppers, Carry On, Lightman's Currency oraz Jade.
 # ============================================================================
 
@@ -812,10 +812,14 @@ def is_managed_path(rel_path):
 # Dozwolone automatycznie tworzone pliki poboczne dla zarządzanych modów
 def is_allowed_new_config_file(rel_path):
     low = rel_path.lower()
-    # Jade na dedykowanym serwerze tworzy pusty plik override'ów pluginów
-    if low == "jade/server-plugin-overrides.json":
+    # NeoForge ModConfigSpec.correct() tworzy kopie zapasowe `*-N.toml.bak` przy uzupełnianiu
+    # komentarzy lub opcjonalnych kluczy (Check B poniżej weryfikuje, że żadna nasza wartość nie została zresetowana!)
+    if re.search(r"-\d+\.toml\.bak$", low):
         return True
-    # Lightman's Currency może generować pliki danych/dystrybucji w podkatalogu lightmanscurrency/,
+    # Jade na dedykowanym serwerze tworzy pliki pomocnicze pluginów
+    if low in ("jade/server-plugin-overrides.json", "jade/sort-order.json"):
+        return True
+    # Lightman's Currency generuje pliki danych w podkatalogu lightmanscurrency/ (MasterCoinList.json, SeasonalEvents.json),
     # ale NIE może tworzyć nowych plików głównych lightmanscurrency-*.txt / .toml!
     if low.startswith("lightmanscurrency/") and not low.endswith((".txt", ".toml")):
         return True
@@ -834,19 +838,29 @@ if unexpected_new_cfg:
 else:
     ok("Brak nieoczekiwanych/zduplikowanych plików naszych modów w config/ (żaden nasz config nie został zignorowany).")
 
-# W world/serverconfig/ oczekujemy sophisticatedstorage-server.toml z defaultconfigs/,
-# ale NIE dopuszczamy zduplikowanych plików innych zarządzanych modów (np. ftbchunks-world.snbt)
-ALLOWED_SERVERCONFIG_MANAGED = {"sophisticatedstorage-server.toml"}
-unexpected_srv_cfg = [
-    f for f in srv_cfg_files if is_managed_path(f) and f.lower() not in ALLOWED_SERVERCONFIG_MANAGED
-]
+# W world/serverconfig/ NeoForge 1.21.1 dopuszcza wyłącznie opcjonalne nadpisania per-świat.
+# FTB Essentials automatycznie zapisuje tam 2-liniowy komentarz informacyjny `# File has moved!` —
+# sprawdzamy, że nie zawiera on ŻADNYCH danych SNBT i że żaden inny nasz mod nie ma tam pliku!
+unexpected_srv_cfg = []
+for f in srv_cfg_files:
+    if not is_managed_path(f):
+        continue
+    if f.lower() == "ftbessentials.snbt":
+        full_p = os.path.join(srv_cfg_dir, f)
+        with open(full_p, encoding="utf-8", errors="replace") as sf:
+            non_comment = [ln.strip() for ln in sf if ln.strip() and not ln.strip().startswith("#")]
+        if non_comment:
+            unexpected_srv_cfg.append(f"{f} (zawiera dane zamiast samego komunikatu przekierowania!)")
+    else:
+        unexpected_srv_cfg.append(f)
+
 if unexpected_srv_cfg:
     fail(
         "Wykryto nieoczekiwane pliki naszych modów w world/serverconfig/ (ryzyko nadpisania/cienia config/): "
         + ", ".join(f"world/serverconfig/{f}" for f in unexpected_srv_cfg)
     )
 else:
-    ok("Brak konfliktujących plików naszych modów w world/serverconfig/.")
+    ok("Brak konfliktujących plików naszych modów w world/serverconfig/ (ftbessentials.snbt to wyłącznie 2-liniowa notatka przekierowania).")
 
 # Zakaz martwych legacy ścieżek w config/
 for legacy_rel in (
@@ -924,11 +938,11 @@ else:
     if len(errors) == before_err:
         ok("FTB Essentials (`config/ftbessentials.snbt`): wszystkie 34 sprawdzane ustawienia (home max=5, tpa/spawn/back/warp ON, rtp/jump/admin/przenośne stoły OFF) załadowane i zachowane.")
 
-# 3. Sophisticated Storage (`world/serverconfig/sophisticatedstorage-server.toml` + `config/sophisticatedstorage-common.toml`)
-ss_srv_path = os.path.join(srv_cfg_dir, "sophisticatedstorage-server.toml")
+# 3. Sophisticated Storage (`config/sophisticatedstorage-server.toml` + `config/sophisticatedstorage-common.toml`)
+ss_srv_path = os.path.join(cfg_dir, "sophisticatedstorage-server.toml")
 ss_com_path = os.path.join(cfg_dir, "sophisticatedstorage-common.toml")
 if not os.path.isfile(ss_srv_path):
-    fail("NeoForge NIE skopiował defaultconfigs/sophisticatedstorage-server.toml do world/serverconfig/sophisticatedstorage-server.toml!")
+    fail("Brak pliku config/sophisticatedstorage-server.toml po rozruchu serwera!")
 else:
     before_err = len(errors)
     with open(ss_srv_path, "rb") as f:
@@ -946,7 +960,7 @@ else:
     else:
         fail("Brak config/sophisticatedstorage-common.toml po rozruchu!")
     if len(errors) == before_err:
-        ok("Sophisticated Storage (`defaultconfigs/` -> `world/serverconfig/sophisticatedstorage-server.toml` + `common.toml`): controllerRange=15, advancedMagnetRange=4, advancedHopperTicks=4, dropPacked=false zweryfikowane.")
+        ok("Sophisticated Storage (`config/sophisticatedstorage-server.toml` + `common.toml`): controllerRange=15, advancedMagnetRange=4, advancedHopperTicks=4, dropPacked=false zweryfikowane.")
 
 # 4. Shoppers (`config/shoppers-common.toml`)
 shoppers_path = os.path.join(cfg_dir, "shoppers-common.toml")
@@ -965,8 +979,12 @@ else:
     expect_eq("Shoppers", sh, "simulatorChance", 0.35)
     expect_eq("Shoppers", sh, "auctionBidChance", 0.15)
     expect_eq("Shoppers", sh, "atmSpawnChance", 0.25)
+    expect_eq("Shoppers", sh, "peasant.spawnWeight", 35)
+    expect_eq("Shoppers", sh, "citizen.spawnWeight", 35)
+    expect_eq("Shoppers", sh, "merchant.spawnWeight", 20)
+    expect_eq("Shoppers", sh, "tycoon.spawnWeight", 10)
     if len(errors) == before_err:
-        ok("Shoppers (`config/shoppers-common.toml`): spawnRadius=5.0..15.0, maxShoppers=10, overpriceMultiplier=1.25, simulator=600/0.35 załadowane i zachowane.")
+        ok("Shoppers (`config/shoppers-common.toml`): spawnRadius=5.0..15.0, maxShoppers=10, overpriceMultiplier=1.25, simulator=600/0.35 i 4 klasy NPC załadowane i zachowane.")
 
 # 5. Carry On (`config/carryon-common.toml`)
 carryon_path = os.path.join(cfg_dir, "carryon-common.toml")

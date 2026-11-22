@@ -80,7 +80,7 @@ Przed oznaczeniem PR jako gotowy do przeglądu (`status:needs-review` / zdjęcie
 - Wymusza `0` błędów w `logs/kubejs/startup.log`, `logs/kubejs/server.log` oraz wpisach KubeJS w `logs/latest.log`.
 - Wymusza brak ostrzeżeń fallbackowych i znanych regresji (`Nie udało się`, `Fallback komendowy`, `ArrowFunction(`, `Unknown event`).
 - Potwierdza wykonanie komend konsolowych `halucynacje_reload_economy`, `halucynacje_sync_shoppers`, `halucynacje_sync_stages` oraz czyste zamknięcie komendą `stop` (`exit 0`, brak `crash-reports/`).
-- Po `stop` wykonuje **audyt ścieżek i wartości konfiguracji modów (#80)**: oblewa, jeśli serwer utworzył osobny/domyślny plik dla naszych modów w innej ścieżce niż w repo, lub jeśli którakolwiek z kluczowych wartości (*FTB Chunks*, *FTB Essentials*, *Sophisticated Storage* w `world/serverconfig/`, *Shoppers*, *Carry On*, *Lightman's Currency*, *Jade*) wróciła do domyślnej wartości moda.
+- Po `stop` wykonuje **audyt ścieżek i wartości konfiguracji modów (#80)**: oblewa, jeśli serwer utworzył osobny/domyślny plik dla naszych modów w innej ścieżce niż w repo, lub jeśli którakolwiek z kluczowych wartości (*FTB Chunks*, *FTB Essentials*, *Sophisticated Storage* `config/sophisticatedstorage-server.toml`, *Shoppers*, *Carry On*, *Lightman's Currency*, *Jade*) wróciła do domyślnej wartości moda.
 - Znacznik `[VERIFIED ON NEOFORGE 21.1.267 CI]` rezerwujemy **wyłącznie** dla własności realnie sprawdzanych asercjami w `server-boot`, a `[VERIFY ON 1.21.1 BOOT]` dla zachowań wymagających żywego klienta / sesji gracza / Mac M2 (np. perki `extra_force_load_chunks` #73, interaktywne GUI, OpenGL 4.1 / Flywheel, fizyczne `Shift + PPM` *Carry On*).
 
 ### Review Checklist dla agenta partnerskiego (na każdym PR)
@@ -186,6 +186,7 @@ halucynacjeGTP2/
 │   ├── ftbessentials.snbt                 # FTB Essentials 1.21.1 (`/home`, `/tpa`, `/back`, `/spawn`, wyłączone `/rtp` i cheaty)
 │   ├── shoppers-common.toml               # Konfiguracja NPC Shoppers na Wyspie-Rynku (`spawnRadius = 5.0..15.0`)
 │   ├── sophisticatedstorage-common.toml   # Wspólne ustawienia Sophisticated Storage (`dropPacked = false`)
+│   ├── sophisticatedstorage-server.toml   # Serwerowe limity Sophisticated Storage NeoForge 1.21.1 (zasięg kontrolera 15, magnes 3/4, hopper)
 │   ├── lightmanscurrency-common.txt       # Ustawienia Lightman's Currency (m.in. `canMint=false`)
 │   ├── lightmanscurrency-server.txt       # Ustawienia serwerowe Lightman's Currency (`lcterminalCommand=true`)
 │   ├── lightmanscurrency/
@@ -196,13 +197,11 @@ halucynacjeGTP2/
 │   │   └── jade.json                      # Konfiguracja HUD Jade (`WailaConfig.CODEC`)
 │   ├── ftbquests/quests/                  # Księga zadań Etapy 0-5 (`data.snbt`, `chapter_groups.snbt`, `chapters/*.snbt`, `README.md`)
 │   └── skyblockbuilder/                   # 7 plików `.json5` + `templates/` (`islands/starter_island.nbt`, `spreads/market_island.nbt`, `spreads/industrial_island.nbt`)
-├── defaultconfigs/
-│   └── sophisticatedstorage-server.toml   # Konfiguracja per-świat NeoForge kopiowana do `world/serverconfig/` (zasięg kontrolera 15, magnes 3/4, hopper)
 ├── scripts/
-│   ├── bundle_mrpack_overrides.mjs        # Dołączanie `overrides/` (config, defaultconfigs, 3 wyspy .nbt, kubejs) do `.mrpack`
+│   ├── bundle_mrpack_overrides.mjs        # Dołączanie `overrides/` (config, 3 wyspy .nbt, kubejs + opcjonalne defaultconfigs) do `.mrpack`
 │   ├── check_markdown_links.mjs           # Walidator względnych linków Markdown
 │   ├── export_curseforge_pack.mjs         # Eksporter natywnej paczki CurseForge App (65/65 modów + overrides)
-│   ├── export_server_pack.mjs             # Eksporter paczki serwerowej Exaroton (55/55 JAR + config + defaultconfigs + kubejs)
+│   ├── export_server_pack.mjs             # Eksporter paczki serwerowej Exaroton (55/55 JAR + config + kubejs)
 │   ├── generate_island_nbt.py             # Generator i weryfikator 3 binarnych wysp `.nbt` (`DataVersion 3955`)
 │   ├── generate_persistent_traders.mjs    # Generator i walidator (`--check`) `PersistentTraders.json` z `prices.json`
 │   ├── render_islands_3d.py               # Generator renderów 3D PNG i interaktywnego widoku HTML wysp (#35)
