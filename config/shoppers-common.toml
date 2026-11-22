@@ -6,22 +6,24 @@
 # - Wielka Wyspa-Rynek ma wymiary 45x35 (promień placu ~17-22 bloków od (152, 64, 0),
 #   otoczona balustradą ochronną i wyposażona w 3 gotowe bankomaty `lightmanscurrency:atm`).
 #   Domyślny promień spawnu 24-40 wyrzucałby NPC w pustkę Skyblocka!
-#   Ustawiamy `spawnRadiusMin = 4` oraz `spawnRadiusMax = 15`, aby klienci
-#   zawsze pojawiali się bezpiecznie na płaskiej płycie placu `Y = 64` wzdłuż wszystkich 8 butików.
+#   Ustawiamy `spawnRadiusMin = 5.0` (minimum dopuszczalne przez `ShoppersConfig`) oraz `spawnRadiusMax = 15.0`,
+#   aby klienci zawsze pojawiali się bezpiecznie na płaskiej płycie placu `Y = 64` wzdłuż wszystkich 8 butików.
 # - Limit `maxShoppers = 10` chroni 20 TPS na Exaroton 6-8 GB RAM (RFC #5).
 # - `overpriceMultiplier = 1.25` blokuje wystawianie śmieci po zawyżonych cenach.
 # - `VirtualShoppingSimulator` (`simulatorTickRate = 600`, `simulatorChance = 0.35`)
 #   utrzymuje pasywny ruch handlowy na Wyspie-Rynku nawet gdy gracze budują
 #   fabryki na Wyspie Startowej 150 bloków dalej!
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Ścieżka pliku i aktywne wartości po load+save serwera
+# są asertywnie weryfikowane w `scripts/server_boot_test.sh`.
 # =============================================================================
 
 # Częstotliwość prób spawnu NPC (w tickach: 200 = co 10 s, oszczędza CPU serwera)
 spawnRate = 200
 # Maksymalna liczba aktywnych NPC wokół jednego hubu handlowego (RFC #5: 8-12)
 maxShoppers = 10
-# Bezpieczny promień spawnu mieszczący się wewnątrz Wielkiej Wyspy-Rynku 45x35 (Y = 64)
-spawnRadiusMin = 4
-spawnRadiusMax = 15
+# Bezpieczny promień spawnu mieszczący się wewnątrz Wielkiej Wyspy-Rynku 45x35 (Y = 64; zakres ShoppersConfig: min 5.0)
+spawnRadiusMin = 5.0
+spawnRadiusMax = 15.0
 # Maksymalny akceptowany narzut ceny względem Fair Value (powyżej +25% NPC odmawia zakupu)
 overpriceMultiplier = 1.25
 # Symulator w tle dla niezaładowanych/odległych sklepów (co 30 s, 35% szansy transakcji)

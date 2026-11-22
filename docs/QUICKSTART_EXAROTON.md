@@ -50,11 +50,12 @@ Ten poradnik pozwala postawić gotowy serwer **HalucynacjeGTP2** (NeoForge `1.21
    - **View Distance:** `8`, **Simulation Distance:** `6`.
 4. Rozpakuj na swoim komputerze pobrane archiwum **`halucynacjeGTP2-server-exaroton.zip`**. W środku znajdziesz:
    - `mods/` — komplet **55/55 plików `.jar`** (10 modów czysto klienckich jak *Sodium*, *EntityCulling*, *Xaero's* jest już odfiltrowanych!).
-   - `config/` — wszystkie konfiguracje (w tym zweryfikowany *Skyblock Builder* 1.21.1 z 3 gotowymi binarnymi wyspami `.nbt`, *FTB Quests*, *FTB Chunks*, *Carry On*, `prices.json`, *Shoppers*).
+   - `config/` — wszystkie konfiguracje (w tym zweryfikowany *Skyblock Builder* 1.21.1 z 3 gotowymi binarnymi wyspami `.nbt`, *FTB Quests*, *FTB Chunks* `ftbchunks-world.snbt`, *FTB Essentials* `ftbessentials.snbt`, *Sophisticated Storage* `sophisticatedstorage-server.toml`, *Carry On*, `prices.json`, *Shoppers*).
    - `kubejs/` — skrypty Żetonów Etapów, blokad Netheru/Endu, receptur pure-Create, ekonomii i polskie tłumaczenia.
    - `server.properties` — referencyjna konfiguracja serwera.
 5. Zakładka **Files** na Exaroton:
    - Prześlij (upload) foldery **`mods/`**, **`config/`** oraz **`kubejs/`** do głównego katalogu serwera (możesz przeciągnąć spakowane podfoldery lub wgrać je przez menedżer plików Exaroton).
+   - *(Uwaga dla NeoForge `1.21.1`)*: wszystkie konfiguracje serwerowe (`ftbchunks-world.snbt`, `ftbessentials.snbt`, `sophisticatedstorage-server.toml`, `lightmanscurrency-server.txt`) ładowane są bezpośrednio z `config/` — dzięki temu aktualizacja paczką `halucynacjeGTP2-server-patch.zip` działa natychmiast również na już istniejącym świecie (o ile administrator nie utworzył ręcznego override'u w `world/serverconfig/`)!
 6. Zakładka **Worlds** → kliknij **Generate** (nowy świat):
    - W polu **Worldtype** wpisz dokładnie:
      ```text

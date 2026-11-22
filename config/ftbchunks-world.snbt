@@ -1,0 +1,51 @@
+# HalucynacjeGTP2 — FTB Chunks (konfiguracja świata / serwera Exaroton 6-8 GB RAM)
+# Rzeczywista ścieżka ładowania FTB Library 2101.1.40 (`ConfigManager`): `config/ftbchunks-world.snbt`
+# (synchronizowana automatycznie do klientów; `world/serverconfig/ftbchunks-world.snbt` to wyłącznie opcjonalny override per-świat).
+#
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Ścieżka pliku oraz aktywne wartości po load+save serwera
+# (`max_claimed_chunks: 100`, `max_force_loaded_chunks: 20`, `fake_players: "allow"`,
+# `def_fake_players: true`, `force_disable_minimap: true`) są asertywnie weryfikowane w `scripts/server_boot_test.sh`.
+# [VERIFY ON 1.21.1 BOOT] (żywa sesja gracza / Mac M2): perki chunków za Etapy (`ftbchunks admin extra_force_load_chunks`, #73),
+# praca Create Deployera na zclaimowanym chunku oraz brak podwójnej minimapy na kliencie (`docs/PLAYTEST_CHECKLIST.md`).
+
+{
+	# Domyślny tryb sojuszników drużyny FTB Teams (dozwolone wartości: default, forced_all, forced_none)
+	ally_mode: "default"
+	claiming: {
+		claim_dimension_blacklist: [ ]
+		claim_dimension_whitelist: [ ]
+		hard_team_claim_limit: 0
+		# 100 chunków wystarcza z zapasem na Wyspę Startową, Wyspę-Rynek, Hutę Południową,
+		# wiadukty kolejowe oraz przyczółki w Netherze/Endzie (domyślnie mod ma 500).
+		max_claimed_chunks: 100
+		max_idle_days_before_unclaim: 0.0d
+		party_limit_mode: "largest"
+	}
+	disable_protection: false
+	fake_players: {
+		# KRYTYCZNE DLA CREATE 6: zezwala Deployerom, Drillom, Harvesterom i rurkom (Fake Players)
+		# na normalną pracę wewnątrz zclaimowanych chunków drużyny (domyślnie mod ma "check").
+		fake_players: "allow"
+		max_prevented_log_age: 7
+	}
+	# Wymusza wyłączenie dublowanej minimapy FTB Chunks po stronie wszystkich klientów — paczka używa
+	# Xaero's Minimap & World Map (oszczędza VRAM/OpenGL 4.1 na Mac M2; ekran claimowania chunków nadal działa!).
+	force_disable_minimap: true
+	force_loading: {
+		# "default" = bez FTB Ranks chunki force-loaded działają wyłącznie, gdy przynajmniej 1 gracz drużyny jest online
+		# (chroni CPU/TPS Exaroton przy pustym serwerze).
+		force_load_mode: "default"
+		hard_team_force_limit: 0
+		# Bazowy limit 20 force-loaded chunks na drużynę (pod Exaroton 6-8 GB RAM; skalowany perkami Etapów #73; domyślnie 25).
+		max_force_loaded_chunks: 20
+		max_idle_days_before_unforce: 0.0d
+	}
+	piston_protection: true
+	protect_unknown_explosions: true
+	require_game_stage: false
+	team_prop_defaults: {
+		# Domyślne właściwości nowych drużyn FTB Teams — wspierają Fake Players Create od pierwszej sekundy
+		def_fake_players: true
+		def_fake_player_ids: true
+	}
+}
