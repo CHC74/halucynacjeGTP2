@@ -42,10 +42,14 @@ jobs:
 
       - name: Ustalenie tagu wydania
         id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
-            PRERELEASE="${{ inputs.prerelease }}"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG="$INPUT_TAG"
+            PRERELEASE="$INPUT_PRERELEASE"
           else
             TAG="${GITHUB_REF_NAME}"
             if [[ "$TAG" == *-* ]]; then
@@ -71,13 +75,15 @@ jobs:
 
       - name: 2. Instalacja packwiz
         run: |
-          go install github.com/packwiz/packwiz@latest
+          go install github.com/packwiz/packwiz@170b22d785959dda5876b54b7f16e1b807a57fb6
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: 3. Budowa natywnej paczki klienckiej CurseForge App (halucynacjeGTP2-curseforge.zip)
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
           mkdir -p dist
-          node scripts/export_curseforge_pack.mjs --version "${{ steps.meta.outputs.tag }}"
+          node scripts/export_curseforge_pack.mjs --version "$TAG"
 
       - name: 4. Budowa alternatywnego klienckiego halucynacjeGTP2.mrpack (+ overrides z config/, 3 wyspami .nbt i kubejs/)
         run: |
@@ -162,8 +168,9 @@ jobs:
 
       - name: 6b. Budowa lekkiego patcha serwerowego (halucynacjeGTP2-server-patch.zip — tylko zmienione pliki od poprzedniego wydania)
         id: build_patch
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
-          TAG="${{ steps.meta.outputs.tag }}"
           python3 - "$TAG" <<'PY'
           import os, subprocess, sys, zipfile
 
@@ -220,10 +227,10 @@ jobs:
       - name: 8. Publikacja GitHub Release z paczką kliencką (CurseForge + .mrpack), serwerową i lekkim patchem
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          PRERELEASE: ${{ steps.meta.outputs.prerelease }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          TAG="${{ steps.meta.outputs.tag }}"
-          PRERELEASE="${{ steps.meta.outputs.prerelease }}"
-
           python3 - <<'PY' > /tmp/release_notes.md
           import textwrap
           notes = """\
@@ -248,7 +255,7 @@ jobs:
           PY
 
           # Zapisz tag na aktualny commit (jeśli odpalone ręcznie przez workflow_dispatch)
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -f "$TAG"

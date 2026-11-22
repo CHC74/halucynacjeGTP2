@@ -72,7 +72,7 @@ jobs:
 
       - name: 6. Instalacja packwiz i odświeżenie indeksu
         run: |
-          go install github.com/packwiz/packwiz@latest
+          go install github.com/packwiz/packwiz@170b22d785959dda5876b54b7f16e1b807a57fb6
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: 7. Weryfikacja packwiz + eksport klienckiego .mrpack
@@ -121,3 +121,49 @@ jobs:
           name: halucynacjeGTP2-server-exaroton
           path: dist/halucynacjeGTP2-server-exaroton.zip
           if-no-files-found: error
+
+  server-boot:
+    name: Smoke test rozruchu serwera NeoForge 1.21.1 (KubeJS + Shoppers + Skyblock)
+    needs: validate-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repozytorium
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java 21 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache instalatora NeoForge i 55 serwerowych JAR-ów
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/halucynacje-server-boot
+          key: neoforge-boot-${{ runner.os }}-${{ hashFiles('packwiz/pack.toml', 'packwiz/index.toml') }}
+          restore-keys: |
+            neoforge-boot-${{ runner.os }}-
+
+      - name: Rozruch serwera NeoForge 21.1.267 i weryfikacja logów KubeJS
+        env:
+          LOG_EXPORT_DIR: server-boot-logs
+          BOOT_TIMEOUT_SECONDS: '600'
+          STOP_TIMEOUT_SECONDS: '90'
+          SERVER_XMX: '4G'
+        run: bash scripts/server_boot_test.sh
+
+      - name: Publikacja logów serwera przy porażce (server-boot-logs)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-boot-logs
+          path: server-boot-logs/
+          if-no-files-found: warn
+          retention-days: 7

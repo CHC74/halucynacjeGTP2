@@ -38,9 +38,10 @@ Powiązane poradniki:
   - [ ] Wgraj rozpakowane katalogi `mods/` (55 modów serwerowych), `config/` oraz `kubejs/`.
   - [ ] Ustaw w **Options**: `allow-flight = ON`, `view-distance = 8`, `simulation-distance = 6`, oraz w **Worlds → Generate** wpisz Worldtype: **`skyblockbuilder:skyblock`**.
 - [ ] Wykonaj pierwszy start serwera i sprawdź `logs/latest.log`:
+  - *(Automatycznie weryfikowane na każdym PR przez job CI `server-boot` / `bash scripts/server_boot_test.sh` — poniższe punkty potwierdzają ten sam stan na produkcji Exaroton):*
   - [ ] Brak krytycznych błędów ładowania modów (`ERROR`, `ClassNotFoundException`, `MixinApplyError`).
-  - [ ] **ZERO błędów KubeJS** (brak `Unknown event 'PlayerEvents.changedDimension'` oraz brak `redeclaration of var cfg`!).
-  - [ ] Potwierdzony wpis w logach: `[HalucynacjeGTP2] Wymuszono gamerule keepInventory = true.` oraz oba natywne eventy gatingu (`EntityTravelToDimensionEvent` + `PlayerEvent$PlayerChangedDimensionEvent`).
+  - [ ] **ZERO błędów KubeJS** (brak `Unknown event`, brak Rhino `redeclaration`, brak `ArrowFunction(`, brak ostrzeżeń o fallbackach `Nie udało się` / `Fallback komendowy`).
+  - [ ] Potwierdzony wpis w logach: `[HalucynacjeGTP2] Wymuszono gamerule keepInventory = true.`, oba natywne eventy gatingu (`EntityTravelToDimensionEvent` + `PlayerEvent$PlayerChangedDimensionEvent`) oraz poprawne wykonanie komend `halucynacje_reload_economy`, `halucynacje_sync_shoppers` i `halucynacje_sync_stages`.
   - [ ] Obaj gracze (Windows PC + Mac M2) dołączają bez błędu synchronizacji rejestru.
 
 ---
@@ -110,17 +111,19 @@ Wszystkie 3 pliki `.nbt` są już wygenerowane przez `scripts/generate_island_nb
 
 ## 6. Zbiorcza lista punktów `[VERIFY ON 1.21.1 BOOT]`
 
-| Obszar | Plik w repozytorium | Status weryfikacji JAR / Playtest | Status |
+> **Automatyzacja CI (`server-boot`):** Job **`server-boot`** w `.github/workflows/ci.yml` (skrypt `scripts/server_boot_test.sh`) uruchamia na każdym PR i pushu na `main` prawdziwy dedykowany serwer **NeoForge `21.1.267`** (Java 21, 55/55 JAR-ów, `level-type=skyblockbuilder:skyblock`), wywołuje przez stdin `halucynacje_reload_economy`, `halucynacje_sync_shoppers`, `halucynacje_sync_stages`, `stop` i wymusza **0 błędów KubeJS** oraz **0 ostrzeżeń o fallbackach** (`Nie udało się`, `Fallback komendowy`, `ArrowFunction(`, `Unknown event`). Poniższa tabela rozdziela obszary pokryte automatycznie przez CI od testów wymagających żywego klienta PC / Mac M2.
+
+| Obszar | Plik w repozytorium | Pokrycie: CI `server-boot` vs Playtest klienta | Status |
 | :--- | :--- | :--- | :---: |
-| **Packwiz / CurseForge / `.mrpack`** | `scripts/export_curseforge_pack.mjs`, `scripts/bundle_mrpack_overrides.mjs`, `scripts/export_server_pack.mjs` | Zweryfikowano 65/65 modów klienckich (15 CF + 50 Modrinth) i 55/55 serwerowych; automatyczny build w CI & Release. | [x] |
-| **Skyblock Builder & 3 Wyspy `.nbt`** | `config/skyblockbuilder/*.json5`, `scripts/generate_island_nbt.py` | Schemat 1:1 ze źródłem `SkyblockBuilder-21.1.37` (`Origin.CENTER`), 3 binarne `.nbt` (`DataVersion 3955`) + audyt 54/54 bloków modowanych i 17/17 szyldów. | [x] |
-| **Create 6.0.10 & Extruder 2.2.2** | `kubejs/server_scripts/skyblock_create_recipes.js` | Zweryfikowano format `neoforge:single` oraz `blockIngredients` na prawdziwych JAR-ach 1.21.1 + testy w `test_kubejs_logic.mjs`. | [x] |
-| **KubeJS 7.2 Gating Wymiarów** | `kubejs/server_scripts/dimension_gating.js` | Usunięto nieistniejący `PlayerEvents.changedDimension`; użyto zweryfikowanych `EntityTravelToDimensionEvent` + `PlayerEvent$PlayerChangedDimensionEvent`. | [x] |
-| **KubeJS Rhino JSON Loader** | `kubejs/server_scripts/economy_*.js` | Zastąpiono `const cfg = JsonIO.read(...)` przez bezpieczne w Rhino `JSON.parse(String(JsonIO.readString(...)))` (fix `redeclaration of var cfg`). | [x] |
-| **Shoppers AI & Promień Spawnu** | `config/shoppers-common.toml` | Zweryfikowano klucze w `ShoppersConfig.class`; `maxShoppers = 10`, `spawnRadiusMin = 4`, `spawnRadiusMax = 15` pod nową Wyspę-Rynek `45×35`. | [x] |
-| **Lightman's Currency GUI & Config** | `config/lightmanscurrency/PersistentTraders.json`, `config/lightmanscurrency-*.txt` | Zweryfikować na żywym starcie `v1.0.2-playtest` działanie `/sklep`, `/lcterminal` i brak `Coin Mint` w craftingu. | [ ] |
-| **Stan Konta pod TAB** | `kubejs/server_scripts/economy_tab_balance.js` | Potwierdzić na żywo odświeżanie salda (ekwipunek + portfel + bank) pod klawiszem TAB. | [ ] |
-| **Live Playtest Exaroton + Mac M2** | Cała paczka `v1.0.2-playtest` | Potwierdzić `0` błędów KubeJS w `latest.log`, poprawne generowanie 3 wysp oraz stabilne `60+ FPS` na Mac M2 i `20 TPS` na Exaroton. | [ ] |
+| **Packwiz / CurseForge / `.mrpack`** | `scripts/export_curseforge_pack.mjs`, `scripts/bundle_mrpack_overrides.mjs`, `scripts/export_server_pack.mjs` | **CI (`validate-and-build`):** 65/65 modów klienckich (15 CF + 50 Modrinth), 55/55 serwerowych z weryfikacją hashy, przypięta wersja `packwiz`. | [x] |
+| **Rozruch serwera NeoForge 1.21.1 & Skyblock Builder** | `scripts/server_boot_test.sh`, `config/skyblockbuilder/*.json5`, `server.properties.template` | **CI (`server-boot`):** pełny start prawdziwego serwera NeoForge `21.1.267` ze światem `skyblockbuilder:skyblock` do `Done (` i czysty `stop` (`exit 0`), 0 crash-reports. | [x] |
+| **Ładowanie skryptów KubeJS 7.2 & Rhino scoping** | `kubejs/startup_scripts/*.js`, `kubejs/server_scripts/*.js` | **CI (`server-boot` + `test_kubejs_logic.mjs`):** pełny load na prawdziwym Rhino 1.21.1, 0 linii `ERROR`/`[ERR]` w `logs/kubejs/startup.log` i `server.log`, brak `redeclaration`, brak `Unknown event`, brak `ArrowFunction(`. | [x] |
+| **Create 6.0.10 & Extruder 2.2.2 (receptury)** | `kubejs/server_scripts/skyblock_create_recipes.js` | **CI (`server-boot` + `test_kubejs_logic.mjs`):** format `neoforge:single` i `blockIngredients` załadowane bez błędów na żywym serwerze NeoForge 1.21.1. | [x] |
+| **Gating Wymiarów, `keepInventory` & `/halucynacje_sync_stages`** | `kubejs/server_scripts/dimension_gating.js` | **CI (`server-boot`):** potwierdzona rejestracja `EntityTravelToDimensionEvent` + `PlayerEvent$PlayerChangedDimensionEvent` (0 fallbacków), `keepInventory = true`, wykonanie `halucynacje_sync_stages`. **Playtest:** fizyczne wejście w portal Nether/End i co-op FTB Quests. | [x] |
+| **ShoppersWorldData API & `/halucynacje_reload_economy` / `_sync_shoppers`** | `kubejs/server_scripts/economy_anti_exploit.js`, `kubejs/server_scripts/economy_market.js`, `config/shoppers-common.toml` | **CI (`server-boot`):** oba polecenia wykonane z konsoli z potwierdzeniem ścieżki Java API (`ShoppersWorldData`, Tier 0 = 0 + ceny NPC, 0 ostrzeżeń `Fallback komendowy`). **Playtest:** wizualne zakupy u NPC na Wyspie-Rynku. | [x] |
+| **Lightman's Currency GUI (`/sklep`, `/lcterminal`, PersistentTraders)** | `config/lightmanscurrency/PersistentTraders.json`, `config/lightmanscurrency-*.txt` | **CI (`server-boot`):** brak błędów ładowania klas `TerminalMenuProvider` i `PersistentTraders.json`. **Playtest (wymagany klient):** otwarcie GUI `/sklep` i `/lcterminal`, kliknięcie zakupu, brak `Coin Mint` w JEI. | [ ] |
+| **Stan Konta pod TAB (klient)** | `kubejs/server_scripts/economy_tab_balance.js` | **CI (`server-boot`):** brak błędów inicjalizacji scoreboarda TAB po stronie serwera. **Playtest (wymagany klient):** widoczność i odświeżanie salda (EQ + portfel + bank) po przytrzymaniu TAB. | [ ] |
+| **Live Playtest Exaroton + Apple Silicon Mac M2** | Cała paczka + 3 wyspy `.nbt` | **Playtest (wymagany człowiek + Mac M2):** wizualna inspekcja 3 wysp `.nbt`, stabilne `60+ FPS` na Mac M2 (OpenGL 4.1 / Flywheel + Sodium + Create 6 / Hypertubes) i `20 TPS` na Exaroton. | [ ] |
 
 ---
 
