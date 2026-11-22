@@ -219,6 +219,247 @@ function sellSingleStack(stack, catalog) {
   };
 }
 
+// ----------------------------------------------------------------------------
+// Dynamiczny Rynek (Issue #50):
+// 1) Rotujący Boom Rynkowy (+40% co 20 minut na 1 towar dopasowany do Etapu).
+// 2) Premia za Różnorodność Fabryk (+10% / +15% / +20% za 3 / 5 / 7+ różnych
+//    towarów sprzedanych przez drużynę w oknie ostatnich 30 minut).
+// ----------------------------------------------------------------------------
+const MARKET_BOOM_KEY = 'halucynacje_market_boom';
+const MARKET_BOOM_MULTIPLIER = 1.4; // +40%
+const MARKET_BOOM_DURATION_MS = 1200000; // 20 minut
+const MARKET_BOOM_TICK_INTERVAL = 1200; // sprawdzanie co 60 s (lekkie dla TPS)
+const MARKET_DIVERSITY_KEY = 'halucynacje_diversity_window';
+const MARKET_DIVERSITY_WINDOW_MS = 1800000; // 30 minut
+
+let MARKET_BOOM_TICK_COUNTER = 0;
+
+function getBoomEligibleItems(catalog, stage) {
+  var allowedTierNums = [1];
+  var pool = [];
+  var i = 0;
+  var t = null;
+  var j = 0;
+
+  if (stage <= 0) allowedTierNums = [1];
+  else if (stage === 1) allowedTierNums = [1, 2];
+  else if (stage === 2) allowedTierNums = [2, 3];
+  else if (stage === 3) allowedTierNums = [3, 4];
+  else allowedTierNums = [4, 5];
+
+  for (i = 0; i < catalog.tiersList.length; i++) {
+    t = catalog.tiersList[i];
+    if (allowedTierNums.indexOf(t.tierNum) === -1) continue;
+    for (j = 0; j < t.items.length; j++) {
+      pool.push(t.items[j]);
+    }
+  }
+  return pool;
+}
+
+function rollMarketBoom(server, previousItemId, nowMs) {
+  var now = nowMs != null ? Number(nowMs) : Date.now();
+  var catalog = getMarketCatalog(false);
+  var stage = getCurrentUnlockedStage(null, server);
+  var pool = getBoomEligibleItems(catalog, stage);
+  var filtered = null;
+  var pick = null;
+  var boom = null;
+  var tag = null;
+  var boostedPrice = 0;
+
+  if (pool.length === 0) {
+    return null;
+  }
+
+  filtered =
+    pool.length > 1 && previousItemId
+      ? pool.filter(function (x) {
+          return x.id !== previousItemId;
+        })
+      : pool;
+  pick = filtered[Math.floor(Math.random() * filtered.length)];
+  boostedPrice = Math.round(pick.wholesale * MARKET_BOOM_MULTIPLIER);
+
+  boom = {
+    itemId: pick.id,
+    tierKey: pick.tierKey,
+    basePrice: pick.wholesale,
+    boostedPrice: boostedPrice,
+    packSize: pick.packSize,
+    expiresAtMs: now + MARKET_BOOM_DURATION_MS
+  };
+
+  if (server && server.persistentData) {
+    tag = server.persistentData.getCompound(MARKET_BOOM_KEY);
+    tag.putString('itemId', boom.itemId);
+    tag.putString('tierKey', boom.tierKey);
+    tag.putInt('basePrice', boom.basePrice);
+    tag.putInt('boostedPrice', boom.boostedPrice);
+    tag.putInt('packSize', boom.packSize);
+    tag.putLong('expiresAtMs', boom.expiresAtMs);
+    server.persistentData.put(MARKET_BOOM_KEY, tag);
+  }
+
+  if (server && typeof server.tell === 'function') {
+    server.tell(
+      Text.gold('🔥 [BOOM RYNKOWY +40%] ')
+        .append(Text.white('Przez 20 min gorący towar na giełdzie: '))
+        .append(Text.aqua(`${boom.itemId}${boom.packSize > 1 ? ` (x${boom.packSize})` : ''}`))
+        .append(Text.white(' — '))
+        .append(Text.gold(`${formatCoins(boom.boostedPrice)} monet`))
+        .append(Text.gray(` (zamiast ${formatCoins(boom.basePrice)}). Wpisz /boom`))
+    );
+  }
+
+  return boom;
+}
+
+function getOrRollMarketBoom(server, nowMs) {
+  var now = nowMs != null ? Number(nowMs) : Date.now();
+  var tag = null;
+  var itemId = '';
+  var expiresAtMs = 0;
+
+  if (server && server.persistentData) {
+    tag = server.persistentData.getCompound(MARKET_BOOM_KEY);
+    itemId = tag ? String(tag.getString('itemId') || '') : '';
+    expiresAtMs = tag ? Number(tag.getLong('expiresAtMs') || 0) : 0;
+    if (itemId && expiresAtMs > now) {
+      return {
+        itemId: itemId,
+        tierKey: String(tag.getString('tierKey') || ''),
+        basePrice: Number(tag.getInt('basePrice') || 0),
+        boostedPrice: Number(tag.getInt('boostedPrice') || 0),
+        packSize: Number(tag.getInt('packSize') || 1),
+        expiresAtMs: expiresAtMs
+      };
+    }
+  }
+
+  return rollMarketBoom(server, itemId || null, now);
+}
+
+function readDiversityMap(server, nowMs) {
+  var now = nowMs != null ? Number(nowMs) : Date.now();
+  var result = {};
+  var raw = '';
+  var parsed = null;
+  var keys = null;
+  var i = 0;
+  var k = '';
+  var ts = 0;
+
+  if (!server || !server.persistentData) {
+    return result;
+  }
+
+  try {
+    raw = String(server.persistentData.getString(MARKET_DIVERSITY_KEY) || '');
+    if (raw) {
+      parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        keys = Object.keys(parsed);
+        for (i = 0; i < keys.length; i++) {
+          k = keys[i];
+          ts = Number(parsed[k] || 0);
+          if (ts > 0 && now - ts <= MARKET_DIVERSITY_WINDOW_MS) {
+            result[k] = ts;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    // Uszkodzony JSON nie blokuje sprzedaży
+  }
+
+  return result;
+}
+
+function getDiversityBonusForCount(uniqueCount) {
+  if (uniqueCount >= 7) return { uniqueCount: uniqueCount, bonusPercent: 20, multiplier: 1.2 };
+  if (uniqueCount >= 5) return { uniqueCount: uniqueCount, bonusPercent: 15, multiplier: 1.15 };
+  if (uniqueCount >= 3) return { uniqueCount: uniqueCount, bonusPercent: 10, multiplier: 1.1 };
+  return { uniqueCount: uniqueCount, bonusPercent: 0, multiplier: 1.0 };
+}
+
+function getCurrentDiversityStatus(server, nowMs) {
+  const map = readDiversityMap(server, nowMs);
+  return getDiversityBonusForCount(Object.keys(map).length);
+}
+
+function recordDiversitySales(server, itemIds, nowMs) {
+  var now = nowMs != null ? Number(nowMs) : Date.now();
+  var map = readDiversityMap(server, now);
+  var i = 0;
+
+  for (i = 0; i < itemIds.length; i++) {
+    if (itemIds[i]) {
+      map[String(itemIds[i])] = now;
+    }
+  }
+
+  if (server && server.persistentData) {
+    try {
+      server.persistentData.putString(MARKET_DIVERSITY_KEY, JSON.stringify(map));
+    } catch (err) {
+      // Ignoruj ewentualny błąd zapisu
+    }
+  }
+
+  return getDiversityBonusForCount(Object.keys(map).length);
+}
+
+function applyDynamicMarketBonuses(server, basePayout, itemId, diversityStatus, boom) {
+  var isBoom = Boolean(boom && boom.itemId === itemId);
+  var totalMult = 1.0;
+  var finalPayout = basePayout;
+
+  if (isBoom) {
+    totalMult += MARKET_BOOM_MULTIPLIER - 1.0; // +0.40
+  }
+  if (diversityStatus && diversityStatus.bonusPercent > 0) {
+    totalMult += diversityStatus.bonusPercent / 100.0; // +0.10 / +0.15 / +0.20
+  }
+
+  finalPayout = Math.round(basePayout * totalMult);
+  return {
+    finalPayout: finalPayout,
+    bonusCoins: Math.max(0, finalPayout - basePayout),
+    isBoom: isBoom,
+    diversityPercent: diversityStatus ? diversityStatus.bonusPercent : 0,
+    diversityCount: diversityStatus ? diversityStatus.uniqueCount : 0
+  };
+}
+
+function handleShowMarketBoom(player, server) {
+  const now = Date.now();
+  const boom = getOrRollMarketBoom(server, now);
+  const div = getCurrentDiversityStatus(server, now);
+
+  player.tell(Text.gold('=== Giełda Dynamiczna HalucynacjeGTP2 ==='));
+  if (boom) {
+    const minsLeft = Math.max(1, Math.ceil((boom.expiresAtMs - now) / 60000));
+    player.tell(
+      Text.white('• 🔥 Boom Rynkowy (+40%): ')
+        .append(Text.aqua(`${boom.itemId}${boom.packSize > 1 ? ` (x${boom.packSize})` : ''}`))
+        .append(Text.white(' — '))
+        .append(Text.gold(`${formatCoins(boom.boostedPrice)} monet`))
+        .append(Text.gray(` (zamiast ${formatCoins(boom.basePrice)}, zostało ~${minsLeft} min)`))
+    );
+  }
+  player.tell(
+    Text.white('• 🏭 Premia za Różnorodność Fabryk (ostatnie 30 min): ')
+      .append(
+        div.bonusPercent > 0
+          ? Text.green(`+${div.bonusPercent}% (${div.uniqueCount} różnych towarów)`)
+          : Text.gray(`0% (${div.uniqueCount}/3 towarów do +10%)`)
+      )
+      .append(Text.gray(' | progi: 3 -> +10%, 5 -> +15%, 7+ -> +20%'))
+  );
+  return 1;
+}
+
 function handleSellHand(player, server) {
   const catalog = getMarketCatalog(false);
   const hand = player.mainHandItem;
@@ -250,12 +491,25 @@ function handleSellHand(player, server) {
     return 0;
   }
 
-  giveCoinsToPlayer(player, res.payout);
-  recordExportStats(server, res.payout, res.soldItems);
+  const now = Date.now();
+  const boom = getOrRollMarketBoom(server, now);
+  const div = recordDiversitySales(server, [res.itemId], now);
+  const dyn = applyDynamicMarketBonuses(server, res.payout, res.itemId, div, boom);
+
+  giveCoinsToPlayer(player, dyn.finalPayout);
+  recordExportStats(server, dyn.finalPayout, res.soldItems);
+  if (typeof syncPlayerTabBalance === 'function') {
+    syncPlayerTabBalance(player, server, true);
+  }
+
+  let bonusTags = '';
+  if (dyn.isBoom) bonusTags += ' 🔥+40% Boom';
+  if (dyn.diversityPercent > 0) bonusTags += ` 🏭+${dyn.diversityPercent}% Różnorodność`;
 
   player.tell(
     Text.green(`[Rynek Hurtowy] Sprzedano ${res.soldItems}x ${res.itemId} za `)
-      .append(Text.gold(`${formatCoins(res.payout)} monet`))
+      .append(Text.gold(`${formatCoins(dyn.finalPayout)} monet`))
+      .append(bonusTags ? Text.aqua(` (${bonusTags.trim()})`) : Text.green(''))
       .append(Text.green('! '))
       .append(
         Text.gray(
@@ -271,7 +525,8 @@ function handleSellAll(player, server) {
   const inv = player.inventory;
   const size = typeof inv.getContainerSize === 'function' ? inv.getContainerSize() : 36;
 
-  let totalPayout = 0;
+  const soldLines = [];
+  const soldIds = [];
   let totalItems = 0;
   let totalBonusPotential = 0;
   let blockedSkipped = 0;
@@ -281,7 +536,8 @@ function handleSellAll(player, server) {
     if (!stack || stack.isEmpty()) continue;
     const res = sellSingleStack(stack, catalog);
     if (res.status === 'sold') {
-      totalPayout += res.payout;
+      soldLines.push(res);
+      soldIds.push(res.itemId);
       totalItems += res.soldItems;
       totalBonusPotential += res.npcBonusPotential;
     } else if (res.status === 'blocked') {
@@ -289,7 +545,7 @@ function handleSellAll(player, server) {
     }
   }
 
-  if (totalPayout <= 0) {
+  if (soldLines.length === 0) {
     player.tell(
       Text.yellow(
         `[Rynek Hurtowy] Brak przetworzonych towarów Tier 1–5 do sprzedaży w ekwipunku${blockedSkipped > 0 ? ' (surowce Tier 0 zostały pominięte)' : ''}. Sprawdź /cennik 1.`
@@ -298,12 +554,32 @@ function handleSellAll(player, server) {
     return 0;
   }
 
+  const now = Date.now();
+  const boom = getOrRollMarketBoom(server, now);
+  const div = recordDiversitySales(server, soldIds, now);
+
+  let totalPayout = 0;
+  let boomHit = false;
+  for (let j = 0; j < soldLines.length; j++) {
+    const dyn = applyDynamicMarketBonuses(server, soldLines[j].payout, soldLines[j].itemId, div, boom);
+    totalPayout += dyn.finalPayout;
+    if (dyn.isBoom) boomHit = true;
+  }
+
   giveCoinsToPlayer(player, totalPayout);
   recordExportStats(server, totalPayout, totalItems);
+  if (typeof syncPlayerTabBalance === 'function') {
+    syncPlayerTabBalance(player, server, true);
+  }
+
+  let bonusTags = '';
+  if (boomHit) bonusTags += ' 🔥+40% Boom';
+  if (div.bonusPercent > 0) bonusTags += ` 🏭+${div.bonusPercent}% Różnorodność (${div.uniqueCount} tow.)`;
 
   player.tell(
     Text.green(`[Rynek Hurtowy] Wyeksportowano łącznie ${totalItems} szt. towarów za `)
       .append(Text.gold(`${formatCoins(totalPayout)} monet`))
+      .append(bonusTags ? Text.aqua(` (${bonusTags.trim()})`) : Text.green(''))
       .append(Text.green('! '))
       .append(Text.gray(`(Premia na Wyspie-Rynku NPC: +${formatCoins(totalBonusPotential)} monet)`))
   );
@@ -607,6 +883,9 @@ function handleShowEconomyStatus(player, server) {
   const stats = server && server.persistentData ? server.persistentData.getCompound(MARKET_STATS_KEY) : null;
   const totalEarned = stats ? Number(stats.getLong('total_earned') || 0) : 0;
   const totalItems = stats ? Number(stats.getLong('total_items_sold') || 0) : 0;
+  const now = Date.now();
+  const boom = getOrRollMarketBoom(server, now);
+  const diversity = getCurrentDiversityStatus(server, now);
 
   const nextToken = catalog.stageTokens[currentStage] || null;
   player.tell(Text.gold('=== Panel Ekonomii HalucynacjeGTP2 (Tycoon) ==='));
@@ -625,6 +904,24 @@ function handleShowEconomyStatus(player, server) {
       .append(Text.green(`${formatCoins(totalEarned)} monet`))
       .append(Text.gray(` (${formatCoins(totalItems)} szt. towarów)`))
   );
+  if (boom) {
+    const minsLeft = Math.max(1, Math.ceil((boom.expiresAtMs - now) / 60000));
+    player.tell(
+      Text.white(`• Boom Rynkowy (+40%): `)
+        .append(Text.aqua(boom.itemId))
+        .append(Text.gold(` (${formatCoins(boom.boostedPrice)} monet)`))
+        .append(Text.gray(` • zostało ~${minsLeft} min`))
+    );
+  }
+  player.tell(
+    Text.white(`• Różnorodność fabryki (30 min): `)
+      .append(
+        diversity.bonusPercent > 0
+          ? Text.green(`+${diversity.bonusPercent}%`)
+          : Text.gray('0% (sprzedaj 3/5/7 różnych towarów)')
+      )
+      .append(Text.gray(` (${diversity.uniqueCount} towarów)`))
+  );
   if (nextToken) {
     const missing = Math.max(0, nextToken.buyPrice - cash);
     player.tell(
@@ -641,7 +938,7 @@ function handleShowEconomyStatus(player, server) {
   }
   player.tell(
     Text.gray(
-      'Komendy: /sklep (GUI) | /sklep lista [0-5] | /saldo | /sprzedaj [all] | /kup <alias> [ilość] | /cennik [1-5]'
+      'Komendy: /sklep (GUI) | /boom | /kontrakt | /saldo | /sprzedaj [all] | /kup <alias> [ilość] | /cennik [1-5]'
     )
   );
 }
@@ -771,6 +1068,24 @@ ServerEvents.commandRegistry((event) => {
     })
   );
 
+  event.register(
+    Commands.literal('boom').executes((ctx) => {
+      const player = ctx.source.player;
+      if (!player) return 0;
+      handleShowMarketBoom(player, ctx.source.server);
+      return 1;
+    })
+  );
+
+  event.register(
+    Commands.literal('gielda').executes((ctx) => {
+      const player = ctx.source.player;
+      if (!player) return 0;
+      handleShowMarketBoom(player, ctx.source.server);
+      return 1;
+    })
+  );
+
   // Komenda OP do przeładowania cennika z pliku JSON bez restartu serwera
   // (odświeża zarówno rynek hurtowy/sklep, jak i ceny NPC Shoppers — Issue #62)
   event.register(
@@ -793,6 +1108,24 @@ ServerEvents.commandRegistry((event) => {
       })
   );
 });
+
+// Lekka rotacja Boomu Rynkowego co 60 sekund (1200 ticków)
+if (typeof ServerEvents !== 'undefined' && typeof ServerEvents.tick === 'function') {
+  ServerEvents.tick((event) => {
+    MARKET_BOOM_TICK_COUNTER++;
+    if (MARKET_BOOM_TICK_COUNTER < MARKET_BOOM_TICK_INTERVAL) {
+      return;
+    }
+    MARKET_BOOM_TICK_COUNTER = 0;
+    try {
+      if (event && event.server) {
+        getOrRollMarketBoom(event.server, Date.now());
+      }
+    } catch (err) {
+      // Nie przerywaj pętli serwera przy ewentualnym błędzie rotacji giełdy
+    }
+  });
+}
 
 function handleReloadEconomy(server) {
   var cat = null;
