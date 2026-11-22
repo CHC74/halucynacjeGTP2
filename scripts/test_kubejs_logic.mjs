@@ -598,4 +598,145 @@ test('economy_contracts.js: losowanie kontraktów per Etap, premia +35%, realiza
   vm.runInNewContext(src, sandbox);
 });
 
-console.log(`🎉 Wszystkie ${passed}/6 pakietów testów KubeJS ZALICZONE!`);
+// 6. Issue #61: Jednolite saldo (TAB == /ekonomia == /kup) i atomowe pobieranie (portfel, bank, coinpile, coinblock)
+test('shared_economy.js + economy_market.js (#61): portfel, coinblock, mieszanka źródeł z resztą i atomowy brak strat przy braku środków', () => {
+  const makeMoneyVal = (copper) => ({
+    isEmpty: () => copper <= 0,
+    isFree: () => false,
+    getChain: () => 'main',
+    getUniqueName: () => 'lightmanscurrency:coins;main',
+    getCoreValue: () => copper
+  });
+
+  const makeMockHandler = (initialCopper) => {
+    let balance = initialCopper;
+    return {
+      getBalance: () => balance,
+      setBalance: (v) => {
+        balance = v;
+      },
+      getStoredMoney: () => ({ allValues: () => (balance > 0 ? [makeMoneyVal(balance)] : []) }),
+      extractMoney: (reqVal, simulate) => {
+        const want = reqVal.getCoreValue();
+        const taken = Math.min(balance, want);
+        if (!simulate) {
+          balance -= taken;
+        }
+        return makeMoneyVal(want - taken);
+      }
+    };
+  };
+
+  const walletState = makeMockHandler(0);
+  const personalBankState = makeMockHandler(0);
+  const teamBankState = makeMockHandler(0);
+
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    Java: {
+      loadClass: (cls) => {
+        if (cls.endsWith('.MoneyAPI')) {
+          return { getApi: () => ({ GetPlayersMoneyHandler: () => walletState }) };
+        }
+        if (cls.endsWith('.CoinValue')) {
+          return { fromNumber: (_chain, amt) => makeMoneyVal(Number(amt)) };
+        }
+        if (cls.endsWith('.PlayerBankReference')) {
+          return { of: () => ({ get: () => ({ getMoneyStorage: () => personalBankState }) }) };
+        }
+        if (cls.endsWith('.TeamAPI')) {
+          return {
+            getApi: () => ({
+              GetAllTeamsForPlayer: () => [
+                {
+                  getID: () => 7,
+                  hasBankAccount: () => true,
+                  canAccessBankAccount: () => true,
+                  getBankAccount: () => ({ getMoneyStorage: () => teamBankState })
+                }
+              ]
+            })
+          };
+        }
+        return null;
+      }
+    },
+    ServerEvents: { commandRegistry: () => {} },
+    assert,
+    __makeCompound: makeCompound,
+    __wallet: walletState,
+    __personalBank: personalBankState,
+    __teamBank: teamBankState
+  };
+
+  const src =
+    SHARED_ECONOMY_SRC +
+    '\n;\n' +
+    fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8') +
+    `
+    ;(() => {
+      const server = { persistentData: __makeCompound(), runCommandSilent: () => {} };
+      const gs = server.persistentData.getCompound('halucynacje_global_stages');
+      gs.putBoolean('stage_1', true);
+
+      // Przypadek A: TYLKO portfel LC (0 w ekwipunku, 1000 w portfelu) -> zakup kelp (250)
+      let inv = [];
+      let msgs = [];
+      const player = {
+        username: 'WalletOnly',
+        persistentData: __makeCompound(),
+        inventory: { getContainerSize: () => inv.length, getItem: (i) => inv[i] },
+        give: (st) => inv.push(st),
+        tell: (t) => msgs.push(t.s)
+      };
+      __wallet.setBalance(1000);
+      __personalBank.setBalance(0);
+      __teamBank.setBalance(0);
+
+      assert(computePlayerBalanceBreakdown(player).total === 1000, 'TAB/shared widzi 1000 z portfela');
+      handleShowEconomyStatus(player, server);
+      assert(msgs.some((m) => m.includes('1 000 monet')), '/ekonomia pokazuje dokładnie 1 000 monet (jak TAB)');
+      assert(handleBuy(player, server, 'kelp', 1) === 1, '/kup z samego portfela udany');
+      assert(__wallet.getBalance() === 750, 'Z portfela pobrano dokładnie 250 -> zostało 750');
+      assert(computePlayerBalanceBreakdown(player).total === 750, 'Saldo po zakupie = 750');
+
+      // Przypadek B: TYLKO coinblock_emerald w ekwipunku (dokładny przykład z Issue #61: 6x 36 000 = 216 000 -> /kup stage_2 za 50 000)
+      inv = [Item.of('lightmanscurrency:coinblock_emerald', 6)];
+      __wallet.setBalance(0);
+      __personalBank.setBalance(0);
+      __teamBank.setBalance(0);
+      assert(computePlayerBalanceBreakdown(player).total === 216000, '6x coinblock_emerald = 216 000');
+      assert(handleBuy(player, server, 'stage_2', 1) === 1, '/kup stage_2 z coinblock_emerald udany');
+      assert(computePlayerBalanceBreakdown(player).total === 166000, 'Po zakupie za 50 000 z 216 000 zostaje dokładnie 166 000 (z resztą)');
+
+      // Przypadek C: Mieszanka źródeł (portfel 300 + bank osobisty 500 + bank drużyny 400 + coinpile_gold 900 w EQ = 2 100) -> zakup 1 500 (lava_bucket)
+      inv = [Item.of('lightmanscurrency:coinpile_gold', 1)];
+      __wallet.setBalance(300);
+      __personalBank.setBalance(500);
+      __teamBank.setBalance(400);
+      assert(computePlayerBalanceBreakdown(player).total === 2100, 'Mieszanka = 2 100');
+      assert(handleBuy(player, server, 'lava_bucket', 1) === 1, '/kup z mieszanki źródeł udany');
+      assert(__wallet.getBalance() === 0, 'Portfel wyczyszczony jako 1.');
+      assert(__personalBank.getBalance() === 0, 'Bank osobisty wyczyszczony jako 2.');
+      assert(__teamBank.getBalance() === 0, 'Bank drużyny wyczyszczony jako 3.');
+      assert(getInventoryCoinsCopper(player) === 600, 'Z coinpile_gold (900) pobrano brakujące 300 i wydano dokładnie 600 reszty');
+      assert(computePlayerBalanceBreakdown(player).total === 600, 'Łączne saldo po mieszanym zakupie = 600');
+
+      // Przypadek D: Za mało pieniędzy (portfel 300 + bank 500 + EQ 400 = 1 200 < 1 500) -> ZERO pobranych monet!
+      inv = [Item.of('lightmanscurrency:coin_gold', 4)];
+      __wallet.setBalance(300);
+      __personalBank.setBalance(500);
+      __teamBank.setBalance(0);
+      assert(handleBuy(player, server, 'lava_bucket', 1) === 0, '/kup przy braku środków odrzucone');
+      assert(__wallet.getBalance() === 300, 'Portfel nietknięty po nieudanym zakupie');
+      assert(__personalBank.getBalance() === 500, 'Bank nietknięty po nieudanym zakupie');
+      assert(getInventoryCoinsCopper(player) === 400, 'Ekwipunek nietknięty po nieudanym zakupie');
+    })();
+    `;
+  vm.runInNewContext(src, sandbox);
+});
+
+console.log(`🎉 Wszystkie ${passed}/7 pakietów testów KubeJS ZALICZONE!`);

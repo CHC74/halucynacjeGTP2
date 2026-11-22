@@ -153,62 +153,11 @@ function getMarketCatalog(forceReload) {
 }
 
 function getInventoryCoinBalance(player) {
-  if (!player || !player.inventory) return 0;
-  const inv = player.inventory;
-  const size = typeof inv.getContainerSize === 'function' ? inv.getContainerSize() : 36;
-  let total = 0;
-  for (let i = 0; i < size; i++) {
-    const stack = inv.getItem(i);
-    if (!stack || stack.isEmpty()) continue;
-    const val = LC_COIN_VALUES[String(stack.id)];
-    if (val) {
-      total += val * stack.count;
-    }
-  }
-  return total;
+  return getInventoryCoinsCopper(player);
 }
 
-function giveCoinsToPlayer(player, amount) {
-  const stacks = splitIntoCoinStacks(amount);
-  for (let i = 0; i < stacks.length; i++) {
-    player.give(Item.of(stacks[i].id, stacks[i].count));
-  }
-}
-
-/**
- * Pobiera dokładnie `cost` monet LC z ekwipunku gracza i automatycznie wydaje resztę.
- * Zwraca true po sukcesie lub false, gdy gracz ma za mało monet w ekwipunku.
- */
 function chargePlayerCoins(player, cost) {
-  const balance = getInventoryCoinBalance(player);
-  if (balance < cost) {
-    return false;
-  }
-
-  const inv = player.inventory;
-  const size = typeof inv.getContainerSize === 'function' ? inv.getContainerSize() : 36;
-  let collected = 0;
-
-  // Zbieramy monety od najmniejszych nominałów, aż uzbieramy >= cost
-  const ascCoins = LC_COINS.slice().reverse();
-  for (let c = 0; c < ascCoins.length && collected < cost; c++) {
-    const coinId = ascCoins[c].id;
-    const coinVal = ascCoins[c].value;
-    for (let i = 0; i < size && collected < cost; i++) {
-      const stack = inv.getItem(i);
-      if (!stack || stack.isEmpty() || String(stack.id) !== coinId) continue;
-      const needed = Math.ceil((cost - collected) / coinVal);
-      const take = Math.min(stack.count, needed);
-      stack.shrink(take);
-      collected += take * coinVal;
-    }
-  }
-
-  const change = collected - cost;
-  if (change > 0) {
-    giveCoinsToPlayer(player, change);
-  }
-  return true;
+  return chargePlayerMoney(player, cost);
 }
 
 function recordExportStats(server, earnedCoins, itemsCount) {
@@ -399,24 +348,28 @@ function handleBuy(player, server, rawKey, rawQty) {
   }
 
   const totalCost = entry.buyPrice * qty;
-  const balance = getInventoryCoinBalance(player);
+  const breakdown = computePlayerBalanceBreakdown(player);
+  const balance = breakdown.total;
   if (balance < totalCost) {
     player.tell(
       Text.red(
-        `[Sklep] Za mało monet w ekwipunku! Koszt: ${formatCoins(totalCost)} monet, masz: ${formatCoins(balance)} monet. `
-      ).append(Text.gray('(Wypłać monety z bankomatu ATM lub portfela Lightman\'s Currency do ekwipunku.)'))
+        `[Sklep] Za mało monet! Koszt: ${formatCoins(totalCost)} monet, łączne saldo (EQ + portfel + bank): ${formatCoins(balance)} monet.`
+      )
     );
     return 0;
   }
 
-  if (!chargePlayerCoins(player, totalCost)) {
-    player.tell(Text.red('[Sklep] Błąd pobierania monet z ekwipunku — transakcja anulowana.'));
+  if (!chargePlayerMoney(player, totalCost)) {
+    player.tell(Text.red('[Sklep] Błąd pobierania monet — transakcja anulowana (nie pobrano żadnych monet).'));
     return 0;
   }
 
   player.give(Item.of(entry.id, qty));
   if (entry.teamLimit > 0) {
     addTeamBuyCount(server, entry.id, qty);
+  }
+  if (typeof syncPlayerTabBalance === 'function') {
+    syncPlayerTabBalance(player, server, true);
   }
 
   player.tell(
@@ -649,7 +602,8 @@ function handleShowPrices(player, requestedTier) {
 function handleShowEconomyStatus(player, server) {
   const catalog = getMarketCatalog(false);
   const currentStage = getCurrentUnlockedStage(player, server);
-  const cash = getInventoryCoinBalance(player);
+  const breakdown = computePlayerBalanceBreakdown(player);
+  const cash = breakdown.total;
   const stats = server && server.persistentData ? server.persistentData.getCompound(MARKET_STATS_KEY) : null;
   const totalEarned = stats ? Number(stats.getLong('total_earned') || 0) : 0;
   const totalItems = stats ? Number(stats.getLong('total_items_sold') || 0) : 0;
@@ -657,7 +611,15 @@ function handleShowEconomyStatus(player, server) {
   const nextToken = catalog.stageTokens[currentStage] || null;
   player.tell(Text.gold('=== Panel Ekonomii HalucynacjeGTP2 (Tycoon) ==='));
   player.tell(Text.white(`• Aktualny Etap drużyny: `).append(Text.aqua(`Stage ${currentStage} / 5`)));
-  player.tell(Text.white(`• Gotówka LC w ekwipunku: `).append(Text.gold(`${formatCoins(cash)} monet`)));
+  player.tell(
+    Text.white(`• Łączne saldo LC (TAB / /kup): `)
+      .append(Text.gold(`${formatCoins(cash)} monet`))
+      .append(
+        Text.gray(
+          ` (EQ: ${formatCoins(breakdown.inventory)} | Portfel: ${formatCoins(breakdown.wallet)} | Bank: ${formatCoins(breakdown.personalBank + breakdown.teamBank)})`
+        )
+      )
+  );
   player.tell(
     Text.white(`• Eksport hurtowy drużyny: `)
       .append(Text.green(`${formatCoins(totalEarned)} monet`))
@@ -670,7 +632,7 @@ function handleShowEconomyStatus(player, server) {
         .append(Text.aqua(`${nextToken.note}`))
         .append(Text.white(` — koszt `))
         .append(Text.gold(`${formatCoins(nextToken.buyPrice)} monet`))
-        .append(Text.gray(` (komenda: /kup ${nextToken.alias}, w kieszeni brakuje ${formatCoins(missing)})`))
+        .append(Text.gray(` (komenda: /kup ${nextToken.alias}, brakuje ${formatCoins(missing)})`))
     );
   } else {
     player.tell(
@@ -679,7 +641,7 @@ function handleShowEconomyStatus(player, server) {
   }
   player.tell(
     Text.gray(
-      'Komendy: /sklep (GUI) | /sklep lista [0-5] | /lcterminal | /sprzedaj [all] | /kup <alias> [ilość] | /cennik [1-5]'
+      'Komendy: /sklep (GUI) | /sklep lista [0-5] | /saldo | /sprzedaj [all] | /kup <alias> [ilość] | /cennik [1-5]'
     )
   );
 }
