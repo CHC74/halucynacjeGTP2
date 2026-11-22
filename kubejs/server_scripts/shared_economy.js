@@ -698,20 +698,105 @@ function getCurrentUnlockedStage(player, server) {
 }
 
 // ----------------------------------------------------------------------------
+// Centralna konfiguracja premii rynkowych (Issue #79) — wspólne źródło prawdy
+// z `config/halucynacje_economy/prices.json` i `scripts/validate_economy.mjs`.
+// ----------------------------------------------------------------------------
+const DEFAULT_MARKET_BONUSES = {
+  remote_sell_multiplier: 0.85,
+  remote_allows_dynamic_bonuses: false,
+  export_dock_bonus_percent: 5,
+  market_boom_bonus_percent: 30,
+  diversity_min_item_value: 250,
+  diversity_tiers: [
+    { min_items: 3, bonus_percent: 5 },
+    { min_items: 5, bonus_percent: 10 },
+    { min_items: 7, bonus_percent: 15 }
+  ],
+  stage_trade_bonus_percents: [0, 2, 4, 6, 8, 10],
+  max_non_boom_bonus_percent: 25,
+  max_combined_bonus_percent: 45
+};
+
+function getMarketBonusesConfig(forceReload) {
+  var parsed = readPricesJson(Boolean(forceReload));
+  var raw = parsed && parsed.market_bonuses ? parsed.market_bonuses : null;
+  var tiers = null;
+  var stageBonuses = null;
+  if (!raw || typeof raw !== 'object') {
+    return DEFAULT_MARKET_BONUSES;
+  }
+  tiers =
+    Array.isArray(raw.diversity_tiers) && raw.diversity_tiers.length > 0
+      ? raw.diversity_tiers
+      : DEFAULT_MARKET_BONUSES.diversity_tiers;
+  stageBonuses =
+    Array.isArray(raw.stage_trade_bonus_percents) && raw.stage_trade_bonus_percents.length >= 6
+      ? raw.stage_trade_bonus_percents
+      : DEFAULT_MARKET_BONUSES.stage_trade_bonus_percents;
+  return {
+    remote_sell_multiplier:
+      typeof raw.remote_sell_multiplier === 'number'
+        ? raw.remote_sell_multiplier
+        : DEFAULT_MARKET_BONUSES.remote_sell_multiplier,
+    remote_allows_dynamic_bonuses:
+      typeof raw.remote_allows_dynamic_bonuses === 'boolean'
+        ? raw.remote_allows_dynamic_bonuses
+        : DEFAULT_MARKET_BONUSES.remote_allows_dynamic_bonuses,
+    export_dock_bonus_percent:
+      typeof raw.export_dock_bonus_percent === 'number'
+        ? raw.export_dock_bonus_percent
+        : DEFAULT_MARKET_BONUSES.export_dock_bonus_percent,
+    market_boom_bonus_percent:
+      typeof raw.market_boom_bonus_percent === 'number'
+        ? raw.market_boom_bonus_percent
+        : DEFAULT_MARKET_BONUSES.market_boom_bonus_percent,
+    diversity_min_item_value:
+      typeof raw.diversity_min_item_value === 'number'
+        ? raw.diversity_min_item_value
+        : DEFAULT_MARKET_BONUSES.diversity_min_item_value,
+    diversity_tiers: tiers,
+    stage_trade_bonus_percents: stageBonuses,
+    max_non_boom_bonus_percent:
+      typeof raw.max_non_boom_bonus_percent === 'number'
+        ? raw.max_non_boom_bonus_percent
+        : DEFAULT_MARKET_BONUSES.max_non_boom_bonus_percent,
+    max_combined_bonus_percent:
+      typeof raw.max_combined_bonus_percent === 'number'
+        ? raw.max_combined_bonus_percent
+        : DEFAULT_MARKET_BONUSES.max_combined_bonus_percent
+  };
+}
+
+// ----------------------------------------------------------------------------
 // Perki za Żetony Etapów (Issue #51) — realne nagrody dla każdego Etapu 1..5
 // ----------------------------------------------------------------------------
 const STAGE_PERKS = {
   0: { stage: 0, extraForceChunks: 0, tradeBonusPercent: 0, maxExportDocks: 4, title: '', summary: 'Start Skyblocka (20 chunków force-load, 4 Doki Eksportowe)' },
-  1: { stage: 1, extraForceChunks: 2, tradeBonusPercent: 2, maxExportDocks: 4, title: '', summary: '+2 chunki force-load, +2% premii handlowej, kontrakty/Boom Tier 2' },
-  2: { stage: 2, extraForceChunks: 4, tradeBonusPercent: 4, maxExportDocks: 4, title: '', summary: 'Normalny Nether, +4 chunki force-load, +4% premii handlowej, Tier 2–3' },
-  3: { stage: 3, extraForceChunks: 6, tradeBonusPercent: 6, maxExportDocks: 5, title: '', summary: '+6 chunków force-load, +6% premii handlowej, 5 Doków Eksportowych, rudy Mekanism' },
-  4: { stage: 4, extraForceChunks: 10, tradeBonusPercent: 8, maxExportDocks: 6, title: '', summary: 'Normalny End, +10 chunków force-load, +8% premii handlowej, 6 Doków Eksportowych' },
-  5: { stage: 5, extraForceChunks: 14, tradeBonusPercent: 10, maxExportDocks: 8, title: '[Tycoon]', summary: 'Tytuł [Tycoon], +14 chunków force-load, +10% premii handlowej, 8 Doków Eksportowych' }
+  1: { stage: 1, extraForceChunks: 2, tradeBonusPercent: 2, maxExportDocks: 4, title: '', summary: '+2 chunki force-load, +2% premii handlowej na Rynku, kontrakty/Boom Tier 2' },
+  2: { stage: 2, extraForceChunks: 4, tradeBonusPercent: 4, maxExportDocks: 4, title: '', summary: 'Normalny Nether, +4 chunki force-load, +4% premii handlowej na Rynku, Tier 2–3' },
+  3: { stage: 3, extraForceChunks: 6, tradeBonusPercent: 6, maxExportDocks: 5, title: '', summary: '+6 chunków force-load, +6% premii handlowej na Rynku, 5 Doków Eksportowych, rudy Mekanism' },
+  4: { stage: 4, extraForceChunks: 10, tradeBonusPercent: 8, maxExportDocks: 6, title: '', summary: 'Normalny End, +10 chunków force-load, +8% premii handlowej na Rynku, 6 Doków Eksportowych' },
+  5: { stage: 5, extraForceChunks: 14, tradeBonusPercent: 10, maxExportDocks: 8, title: '[Tycoon]', summary: 'Tytuł [Tycoon], +14 chunków force-load, +10% premii handlowej na Rynku, 8 Doków Eksportowych' }
 };
 
 function getStagePerks(stage) {
   var s = Math.max(0, Math.min(5, Math.floor(Number(stage) || 0)));
-  return STAGE_PERKS[s] || STAGE_PERKS[0];
+  var base = STAGE_PERKS[s] || STAGE_PERKS[0];
+  var bonusCfg = getMarketBonusesConfig(false);
+  var pct =
+    bonusCfg &&
+    Array.isArray(bonusCfg.stage_trade_bonus_percents) &&
+    typeof bonusCfg.stage_trade_bonus_percents[s] === 'number'
+      ? bonusCfg.stage_trade_bonus_percents[s]
+      : base.tradeBonusPercent;
+  return {
+    stage: base.stage,
+    extraForceChunks: base.extraForceChunks,
+    tradeBonusPercent: pct,
+    maxExportDocks: base.maxExportDocks,
+    title: base.title,
+    summary: base.summary
+  };
 }
 
 /**

@@ -14,6 +14,21 @@
     ],
     "notes": "Jedna spójna waluta Lightman's Currency (RFC #5, przebudowa sklepu RFC #46). 1 moneta bazowa = 1 lightmanscurrency:coin_copper. Fizyczne sklepy NPC na Wyspie-Rynku dają +20% marży względem hurtu (/sprzedaj i Trading Terminal)."
   },
+  "market_bonuses": {
+    "remote_sell_multiplier": 0.85,
+    "remote_allows_dynamic_bonuses": false,
+    "export_dock_bonus_percent": 5,
+    "market_boom_bonus_percent": 30,
+    "diversity_min_item_value": 250,
+    "diversity_tiers": [
+      { "min_items": 3, "bonus_percent": 5 },
+      { "min_items": 5, "bonus_percent": 10 },
+      { "min_items": 7, "bonus_percent": 15 }
+    ],
+    "stage_trade_bonus_percents": [0, 2, 4, 6, 8, 10],
+    "max_non_boom_bonus_percent": 25,
+    "max_combined_bonus_percent": 45
+  },
   "stage_tokens": [
     {
       "id": "kubejs:stage_1_token",
@@ -228,7 +243,7 @@
         { "id": "ae2:logic_processor", "wholesale_gui": 2400, "npc_shoppers": 2880 },
         { "id": "ae2:calculation_processor", "wholesale_gui": 2500, "npc_shoppers": 3000 },
         { "id": "ae2:engineering_processor", "wholesale_gui": 3200, "npc_shoppers": 3840 },
-        { "id": "mekanism:advanced_control_circuit", "wholesale_gui": 3200, "npc_shoppers": 3840 },
+        { "id": "mekanism:advanced_control_circuit", "wholesale_gui": 2600, "npc_shoppers": 3120 },
         { "id": "ae2:fluix_pearl", "pack_size": 4, "wholesale_gui": 3600, "npc_shoppers": 4320 },
         { "id": "mekanism:hdpe_sheet", "pack_size": 4, "wholesale_gui": 4200, "npc_shoppers": 5040 },
         { "id": "mekanism:elite_control_circuit", "wholesale_gui": 4800, "npc_shoppers": 5760 },
@@ -239,7 +254,7 @@
         { "id": "ae2:cell_component_64k", "wholesale_gui": 9800, "npc_shoppers": 11760 },
         { "id": "mekanism:pellet_plutonium", "wholesale_gui": 11000, "npc_shoppers": 13200 },
         { "id": "ae2:cell_component_256k", "wholesale_gui": 12000, "npc_shoppers": 14400 },
-        { "id": "mekanism:pellet_polonium", "wholesale_gui": 13500, "npc_shoppers": 16200 }
+        { "id": "mekanism:pellet_polonium", "wholesale_gui": 12000, "npc_shoppers": 14400 }
       ]
     }
   },

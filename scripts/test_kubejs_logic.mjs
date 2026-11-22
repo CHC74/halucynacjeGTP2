@@ -852,8 +852,8 @@ test('economy_anti_exploit.js + economy_market.js (#62): hash prices.json wykryw
   assert(customPrices.get('minecraft:bread') === 24, 'Shoppers po reload ma bread = 24');
 });
 
-// 8. Issue #50: Market Boom (+40%), Premia za Różnorodność (+10/15/20%) i Serie Kontraktów (+35%..+55% + kamień milowy co 5)
-test('economy_market.js + economy_contracts.js (#50): Market Boom +40%, Różnorodność fabryki i Serie Kontraktów', () => {
+// 8. Issue #50 + #79: Market Boom (+30%), Premia za Różnorodność (+5/10/15%, min. 250c/towar) i Serie Kontraktów (+35%..+55% + kamień milowy co 5)
+test('economy_market.js + economy_contracts.js (#50/#79): Market Boom +30%, Różnorodność fabryki (min. 250c) i Serie Kontraktów', () => {
   let tickHandler = null;
   const announcements = [];
   const sandbox = {
@@ -884,29 +884,38 @@ test('economy_market.js + economy_contracts.js (#50): Market Boom +40%, Różnor
     runCommandSilent: () => {}
   };
 
-  // A) Market Boom +40% + rotacja po 20 min + tick
+  // A) Market Boom +30% + rotacja po 20 min + tick
   const t0 = 1_700_000_000_000;
   const boom1 = vm.runInContext('getOrRollMarketBoom', ctx)(server, t0);
-  assert(boom1 && boom1.itemId && boom1.boostedPrice === Math.round(boom1.basePrice * 1.4), 'Boom +40% dokładnie wyliczony');
+  assert(boom1 && boom1.itemId && boom1.boostedPrice === Math.round(boom1.basePrice * 1.3), 'Boom +30% dokładnie wyliczony');
   const boomSame = vm.runInContext('getOrRollMarketBoom', ctx)(server, t0 + 60_000);
   assert(boomSame.itemId === boom1.itemId, 'Boom nie zmienia się przed upływem 20 min');
   const boom2 = vm.runInContext('getOrRollMarketBoom', ctx)(server, t0 + 1_200_001);
   assert(boom2.itemId !== boom1.itemId, 'Po 20 min Boom losuje inny towar');
   assert(typeof tickHandler === 'function', 'ServerEvents.tick zarejestrowany dla rotacji Boomu');
 
-  // B) Premia za Różnorodność (0% -> 10% przy 3 -> 15% przy 5 -> 20% przy 7, wygasanie po 30 min)
+  // B) Premia za Różnorodność (0% -> +5% przy 3 -> +10% przy 5 -> +15% przy 7 towarach >= 250c, wygasanie po 30 min)
   const recordDiv = vm.runInContext('recordDiversitySales', ctx);
   const getDiv = vm.runInContext('getCurrentDiversityStatus', ctx);
-  assert(recordDiv(server, ['item:a', 'item:b'], t0).bonusPercent === 0, '2 towary -> 0%');
-  assert(recordDiv(server, ['item:c'], t0 + 1000).bonusPercent === 10, '3 towary -> +10%');
-  assert(recordDiv(server, ['item:d', 'item:e'], t0 + 2000).bonusPercent === 15, '5 towarów -> +15%');
-  assert(recordDiv(server, ['item:f', 'item:g'], t0 + 3000).bonusPercent === 20, '7 towarów -> +20%');
+  assert(
+    recordDiv(server, [{ itemId: 'item:a', value: 250 }, { itemId: 'item:b', value: 250 }], t0).bonusPercent === 0,
+    '2 towary >= 250c -> 0%'
+  );
+  assert(recordDiv(server, [{ itemId: 'item:c', value: 250 }], t0 + 1000).bonusPercent === 5, '3 towary >= 250c -> +5%');
+  assert(
+    recordDiv(server, [{ itemId: 'item:d', value: 250 }, { itemId: 'item:e', value: 250 }], t0 + 2000).bonusPercent === 10,
+    '5 towarów >= 250c -> +10%'
+  );
+  assert(
+    recordDiv(server, [{ itemId: 'item:f', value: 250 }, { itemId: 'item:g', value: 250 }], t0 + 3000).bonusPercent === 15,
+    '7 towarów >= 250c -> +15%'
+  );
   assert(getDiv(server, t0 + 1_900_000).bonusPercent === 0, 'Po >30 min okno różnorodności wygasa do 0%');
 
-  // C) Łączony mnożnik Boom +40% + Różnorodność +20% = +60%
+  // C) Łączony mnożnik Boom +30% + Różnorodność +15% = +45% (cap 1.45x)
   const applyDyn = vm.runInContext('applyDynamicMarketBonuses', ctx);
-  const combined = applyDyn(server, 1000, boom2.itemId, { uniqueCount: 7, bonusPercent: 20, multiplier: 1.2 }, boom2);
-  assert(combined.isBoom === true && combined.finalPayout === 1600, 'Boom (+40%) + Różnorodność (+20%) = 1600 z 1000');
+  const combined = applyDyn(server, 1000, boom2.itemId, { uniqueCount: 7, bonusPercent: 15, multiplier: 1.15 }, boom2);
+  assert(combined.isBoom === true && combined.finalPayout === 1450, 'Boom (+30%) + Różnorodność (+15%) = 1450 z 1000');
 
   // D) Serie Kontraktów (+35% -> +40% -> +45% -> +50% -> +55% + kamień milowy #5 = +25% + reset przy rerollu)
   const getMult = vm.runInContext('getContractStreakMultiplier', ctx);
@@ -1605,5 +1614,125 @@ test('dimension_gating.js + permissions.json5 (#78): blokada team_create i ostrz
   );
 });
 
-console.log(`🎉 Wszystkie ${passed}/16 pakietów testów KubeJS ZALICZONE!`);
+// 16. Issue #79: Limity premii (+25% bez Boomu / +45% z Boomem = maks. x1.45), próg 250c dla Różnorodności i zdalna < NPC
+test('shared_economy.js + economy_market.js (#79): twardy cap premii x1.45, anty-cheese Różnorodności i zdalna zawsze < NPC', () => {
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { commandRegistry: () => {}, tick: () => {} },
+    Date,
+    Math,
+    assert
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const server = {
+    persistentData: makeCompound(),
+    tell: () => {},
+    runCommandSilent: () => {}
+  };
+  // Odblokuj Stage 5 (+10% premii Etapu)
+  const gs = server.persistentData.getCompound('halucynacje_global_stages');
+  for (let s = 1; s <= 5; s++) gs.putBoolean('stage_' + s, true);
+
+  const recordDiv = vm.runInContext('recordDiversitySales', ctx);
+  const applyDyn = vm.runInContext('applyDynamicMarketBonuses', ctx);
+  const sellHand = vm.runInContext('handleSellHand', ctx);
+
+  // A) Anty-cheese Różnorodności: 7 różnych towarów po 10 monet każdy (< 250c) daje 0%!
+  const t0 = 1_700_500_000_000;
+  const cheapCheese = ['i:1', 'i:2', 'i:3', 'i:4', 'i:5', 'i:6', 'i:7'].map((id) => ({ itemId: id, value: 10 }));
+  const divCheap = recordDiv(server, cheapCheese, t0);
+  assert(
+    divCheap.uniqueCount === 0 && divCheap.bonusPercent === 0,
+    `7 najtańszych towarów po 10c nie może dawać premii Różnorodności (jest +${divCheap.bonusPercent}%)`
+  );
+
+  // Kumulacja w oknie 30 min: dopłata +240c (łącznie 250c/towar) odblokowuje 7 kwalifikujących się towarów -> +15%
+  const topUp = ['i:1', 'i:2', 'i:3', 'i:4', 'i:5', 'i:6', 'i:7'].map((id) => ({ itemId: id, value: 240 }));
+  const divReal = recordDiv(server, topUp, t0 + 1000);
+  assert(
+    divReal.uniqueCount === 7 && divReal.bonusPercent === 15,
+    `7 towarów >= 250c daje dokładnie +15% Różnorodności (jest +${divReal.bonusPercent}%)`
+  );
+
+  // B) Twardy cap bez Boomu (+25%): Dok (+5%) + Różnorodność (+15%) + Stage 5 (+10%) = 30% -> przycięte do +25% (1250 z 1000)
+  const boomOther = { itemId: 'other:item', basePrice: 100, boostedPrice: 130, bonusPercent: 30, expiresAtMs: t0 + 600_000 };
+  const nonBoomCapped = applyDyn(server, 1000, 'mekanism:pellet_polonium', divReal, boomOther, {
+    onMarket: true,
+    isExportDock: true
+  });
+  assert(
+    nonBoomCapped.finalPayout === 1250 && nonBoomCapped.totalBonusPercent === 25 && nonBoomCapped.capped === true,
+    `Maks. premia bez Boomu musi być przycięta do +25% (jest ${nonBoomCapped.finalPayout}, +${nonBoomCapped.totalBonusPercent}%)`
+  );
+
+  // C) Twardy cap z Boomem (+45% = x1.45): Dok (+5%) + Różnorodność (+15%) + Stage 5 (+10%) + Boom (+30%) -> przycięte do +45% (1450 z 1000)
+  const boomSame = { itemId: 'mekanism:pellet_polonium', basePrice: 12000, boostedPrice: 15600, bonusPercent: 30, expiresAtMs: t0 + 600_000 };
+  const boomCapped = applyDyn(server, 1000, 'mekanism:pellet_polonium', divReal, boomSame, {
+    onMarket: true,
+    isExportDock: true
+  });
+  assert(
+    boomCapped.finalPayout === 1450 && boomCapped.totalBonusPercent === 45 && boomCapped.capped === true,
+    `Maks. łączna premia z Boomem musi być przycięta do +45% / x1.45 (jest ${boomCapped.finalPayout})`
+  );
+
+  // D) Sprzedaż zdalna (poza Wyspą-Rynkiem) przy Stage 5 + aktywnym Boomie + 7 towarach Różnorodności = SZTYWNE 0.85x (< NPC!)
+  const boomTag = server.persistentData.getCompound('halucynacje_market_boom');
+  boomTag.putString('itemId', 'mekanism:pellet_polonium');
+  boomTag.putInt('basePrice', 12000);
+  boomTag.putInt('boostedPrice', 15600);
+  boomTag.putInt('bonusPercent', 30);
+  boomTag.putInt('packSize', 1);
+  boomTag.putLong('expiresAtMs', Date.now() + 600_000);
+  server.persistentData.put('halucynacje_market_boom', boomTag);
+
+  const remoteInv = [];
+  const remotePlayer = {
+    username: 'RemoteBoomTester',
+    x: 0,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld' },
+    mainHandItem: sandbox.Item.of('mekanism:pellet_polonium', 1),
+    inventory: { getContainerSize: () => remoteInv.length, getItem: (idx) => remoteInv[idx] },
+    give: (st) => remoteInv.push(st),
+    tell: () => {}
+  };
+  assert(sellHand(remotePlayer, server) === 1, 'Zdalna sprzedaż polonium udana');
+  const coinVals = {
+    'lightmanscurrency:coin_netherite': 100000,
+    'lightmanscurrency:coin_diamond': 10000,
+    'lightmanscurrency:coin_emerald': 1000,
+    'lightmanscurrency:coin_gold': 100,
+    'lightmanscurrency:coin_iron': 10,
+    'lightmanscurrency:coin_copper': 1
+  };
+  const received = remoteInv.reduce((acc, st) => acc + (coinVals[st.id] || 0) * st.count, 0);
+  assert(received === Math.round(12000 * 0.85), `Zdalna sprzedaż z aktywnym Boomem i Stage 5 daje sztywne 85% = 10 200 (jest ${received})`);
+
+  // E) Dla KAŻDEGO towaru w sell_tiers: zdalna sprzedaż z dowolnymi premiami < cena NPC!
+  for (const tierObj of Object.values(prices.sell_tiers)) {
+    for (const item of tierObj.items) {
+      const boomForItem = { itemId: item.id, basePrice: item.wholesale_gui, boostedPrice: Math.round(item.wholesale_gui * 1.3), bonusPercent: 30 };
+      const remoteRes = applyDyn(server, item.wholesale_gui, item.id, divReal, boomForItem, {
+        onMarket: false,
+        isExportDock: false
+      });
+      assert(
+        remoteRes.finalPayout < item.npc_shoppers,
+        `Dla ${item.id}: zdalna (${remoteRes.finalPayout}) musi być < NPC (${item.npc_shoppers})`
+      );
+    }
+  }
+});
+
+console.log(`🎉 Wszystkie ${passed}/17 pakietów testów KubeJS ZALICZONE!`);
+
 

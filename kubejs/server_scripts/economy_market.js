@@ -446,21 +446,23 @@ function sellSingleStack(stack, catalog) {
 }
 
 // ----------------------------------------------------------------------------
-// Dynamiczny Rynek (Issue #50):
-// 1) Rotujący Boom Rynkowy (+40% co 20 minut na 1 towar dopasowany do Etapu).
-// 2) Premia za Różnorodność Fabryk (+10% / +15% / +20% za 3 / 5 / 7+ różnych
-//    towarów sprzedanych przez drużynę w oknie ostatnich 30 minut).
+// Dynamiczny Rynek (Issue #50 + balans i twarde limity Issue #79):
+// Wszystkie parametry premii czytane są centralnie z `prices.json` (`market_bonuses`)
+// przez `getMarketBonusesConfig()` w `shared_economy.js` (wspólne z `validate_economy.mjs`).
+// 1) Rotujący Boom Rynkowy (+30% co 20 minut na 1 towar dopasowany do Etapu).
+// 2) Premia za Różnorodność Fabryk (+5% / +10% / +15% za 3 / 5 / 7+ różnych
+//    towarów sprzedanych na Wyspie-Rynku za min. 250 monet każdy w oknie 30 min).
+// 3) Twardy limit premii: maks. +25% bez Boomu, maks. +45% (x1.45) z Boomem.
+// 4) Poza Wyspą-Rynkiem: zawsze sztywne 85% (-15% kurier, brak premii dynamicznych),
+//    dzięki czemu sprzedaż zdalna jest zawsze poniżej cen NPC (+20%) na Rynku!
 // ----------------------------------------------------------------------------
 const MARKET_BOOM_KEY = 'halucynacje_market_boom';
-const MARKET_BOOM_MULTIPLIER = 1.4; // +40%
 const MARKET_BOOM_DURATION_MS = 1200000; // 20 minut
 const MARKET_BOOM_TICK_INTERVAL = 1200; // sprawdzanie co 60 s (lekkie dla TPS)
 const MARKET_DIVERSITY_KEY = 'halucynacje_diversity_window';
 const MARKET_DIVERSITY_WINDOW_MS = 1800000; // 30 minut
 
 // Zróżnicowanie marż i Automatyczny Dok Eksportowy na Wyspie-Rynku (Issue #48)
-const REMOTE_SELL_MULTIPLIER = 0.85; // -15% opłaty kurierskiej poza Wyspą-Rynkiem
-const EXPORT_DOCK_LOGISTICS_MULTIPLIER = 1.05; // +5% premii za zautomatyzowaną logistykę Create
 const EXPORT_DOCKS_KEY = 'halucynacje_export_docks';
 const EXPORT_PENDING_KEY = 'halucynacje_export_pending';
 const EXPORT_DOCK_MAX = 4;
@@ -495,6 +497,9 @@ function getBoomEligibleItems(catalog, stage) {
 function rollMarketBoom(server, previousItemId, nowMs) {
   var now = nowMs != null ? Number(nowMs) : Date.now();
   var catalog = getMarketCatalog(false);
+  var bonusCfg = getMarketBonusesConfig(false);
+  var boomPct = Number(bonusCfg.market_boom_bonus_percent || 30);
+  var boomMult = 1.0 + boomPct / 100.0;
   var stage = getCurrentUnlockedStage(null, server);
   var pool = getBoomEligibleItems(catalog, stage);
   var filtered = null;
@@ -514,13 +519,14 @@ function rollMarketBoom(server, previousItemId, nowMs) {
         })
       : pool;
   pick = filtered[Math.floor(Math.random() * filtered.length)];
-  boostedPrice = Math.round(pick.wholesale * MARKET_BOOM_MULTIPLIER);
+  boostedPrice = Math.round(pick.wholesale * boomMult);
 
   boom = {
     itemId: pick.id,
     tierKey: pick.tierKey,
     basePrice: pick.wholesale,
     boostedPrice: boostedPrice,
+    bonusPercent: boomPct,
     packSize: pick.packSize,
     expiresAtMs: now + MARKET_BOOM_DURATION_MS
   };
@@ -531,6 +537,7 @@ function rollMarketBoom(server, previousItemId, nowMs) {
     tag.putString('tierKey', boom.tierKey);
     tag.putInt('basePrice', boom.basePrice);
     tag.putInt('boostedPrice', boom.boostedPrice);
+    tag.putInt('bonusPercent', boom.bonusPercent);
     tag.putInt('packSize', boom.packSize);
     tag.putLong('expiresAtMs', boom.expiresAtMs);
     server.persistentData.put(MARKET_BOOM_KEY, tag);
@@ -538,7 +545,7 @@ function rollMarketBoom(server, previousItemId, nowMs) {
 
   if (server && typeof server.tell === 'function') {
     server.tell(
-      Text.gold('🔥 [BOOM RYNKOWY +40%] ')
+      Text.gold(`🔥 [BOOM RYNKOWY +${boomPct}% na Wyspie-Rynku] `)
         .append(Text.white('Przez 20 min gorący towar na giełdzie: '))
         .append(Text.aqua(`${boom.itemId}${boom.packSize > 1 ? ` (x${boom.packSize})` : ''}`))
         .append(Text.white(' — '))
@@ -552,20 +559,27 @@ function rollMarketBoom(server, previousItemId, nowMs) {
 
 function getOrRollMarketBoom(server, nowMs) {
   var now = nowMs != null ? Number(nowMs) : Date.now();
+  var bonusCfg = getMarketBonusesConfig(false);
+  var defaultBoomPct = Number(bonusCfg.market_boom_bonus_percent || 30);
   var tag = null;
   var itemId = '';
   var expiresAtMs = 0;
+  var basePrice = 0;
+  var storedPct = 0;
 
   if (server && server.persistentData) {
     tag = server.persistentData.getCompound(MARKET_BOOM_KEY);
     itemId = tag ? String(tag.getString('itemId') || '') : '';
     expiresAtMs = tag ? Number(tag.getLong('expiresAtMs') || 0) : 0;
     if (itemId && expiresAtMs > now) {
+      basePrice = Number(tag.getInt('basePrice') || 0);
+      storedPct = Number(tag.getInt('bonusPercent') || 0);
       return {
         itemId: itemId,
         tierKey: String(tag.getString('tierKey') || ''),
-        basePrice: Number(tag.getInt('basePrice') || 0),
-        boostedPrice: Number(tag.getInt('boostedPrice') || 0),
+        basePrice: basePrice,
+        boostedPrice: Math.round(basePrice * (1.0 + (storedPct > 0 ? storedPct : defaultBoomPct) / 100.0)),
+        bonusPercent: storedPct > 0 ? storedPct : defaultBoomPct,
         packSize: Number(tag.getInt('packSize') || 1),
         expiresAtMs: expiresAtMs
       };
@@ -583,7 +597,9 @@ function readDiversityMap(server, nowMs) {
   var keys = null;
   var i = 0;
   var k = '';
+  var entry = null;
   var ts = 0;
+  var val = 0;
 
   if (!server || !server.persistentData) {
     return result;
@@ -597,9 +613,17 @@ function readDiversityMap(server, nowMs) {
         keys = Object.keys(parsed);
         for (i = 0; i < keys.length; i++) {
           k = keys[i];
-          ts = Number(parsed[k] || 0);
+          entry = parsed[k];
+          if (entry && typeof entry === 'object') {
+            ts = Number(entry.ts || 0);
+            val = Math.max(0, Number(entry.value || 0));
+          } else {
+            // Migracja ze starego formatu (sam timestamp bez wartości): wartość 0 nie kwalifikuje się do progu
+            ts = Number(entry || 0);
+            val = 0;
+          }
           if (ts > 0 && now - ts <= MARKET_DIVERSITY_WINDOW_MS) {
-            result[k] = ts;
+            result[k] = { ts: ts, value: val };
           }
         }
       }
@@ -611,27 +635,81 @@ function readDiversityMap(server, nowMs) {
   return result;
 }
 
-function getDiversityBonusForCount(uniqueCount) {
-  if (uniqueCount >= 7) return { uniqueCount: uniqueCount, bonusPercent: 20, multiplier: 1.2 };
-  if (uniqueCount >= 5) return { uniqueCount: uniqueCount, bonusPercent: 15, multiplier: 1.15 };
-  if (uniqueCount >= 3) return { uniqueCount: uniqueCount, bonusPercent: 10, multiplier: 1.1 };
-  return { uniqueCount: uniqueCount, bonusPercent: 0, multiplier: 1.0 };
+function getDiversityBonusForCount(qualifiedCount, trackedCount) {
+  var bonusCfg = getMarketBonusesConfig(false);
+  var tiers = bonusCfg.diversity_tiers || [];
+  var minItemValue = Number(bonusCfg.diversity_min_item_value || 250);
+  var bestPct = 0;
+  var i = 0;
+  var t = null;
+
+  for (i = 0; i < tiers.length; i++) {
+    t = tiers[i];
+    if (t && qualifiedCount >= Number(t.min_items || 0) && Number(t.bonus_percent || 0) > bestPct) {
+      bestPct = Number(t.bonus_percent || 0);
+    }
+  }
+
+  return {
+    uniqueCount: qualifiedCount,
+    trackedCount: trackedCount != null ? trackedCount : qualifiedCount,
+    minItemValue: minItemValue,
+    bonusPercent: bestPct,
+    multiplier: 1.0 + bestPct / 100.0
+  };
+}
+
+function summarizeDiversityMap(map) {
+  var bonusCfg = getMarketBonusesConfig(false);
+  var minItemValue = Number(bonusCfg.diversity_min_item_value || 250);
+  var keys = Object.keys(map || {});
+  var qualified = 0;
+  var i = 0;
+  var entry = null;
+
+  for (i = 0; i < keys.length; i++) {
+    entry = map[keys[i]];
+    if (entry && Number(entry.value || 0) >= minItemValue) {
+      qualified++;
+    }
+  }
+  return getDiversityBonusForCount(qualified, keys.length);
 }
 
 function getCurrentDiversityStatus(server, nowMs) {
-  const map = readDiversityMap(server, nowMs);
-  return getDiversityBonusForCount(Object.keys(map).length);
+  var map = readDiversityMap(server, nowMs);
+  return summarizeDiversityMap(map);
 }
 
-function recordDiversitySales(server, itemIds, nowMs) {
+/**
+ * Rejestruje sprzedaże z Wyspy-Rynku / Doków w 30-minutowym oknie Różnorodności.
+ * `salesEntries` to tablica `{ itemId, value }` (wartość bazowa w monetach) — każdy unikalny
+ * towar musi osiągnąć co najmniej `diversity_min_item_value` (domyślnie 250 monet) w oknie,
+ * aby liczyć się do premii (ochrona przed cheesem 1 najtańszego przedmiotu — #79).
+ */
+function recordDiversitySales(server, salesEntries, nowMs) {
   var now = nowMs != null ? Number(nowMs) : Date.now();
   var map = readDiversityMap(server, now);
   var i = 0;
+  var row = null;
+  var id = '';
+  var addVal = 0;
+  var prev = null;
 
-  for (i = 0; i < itemIds.length; i++) {
-    if (itemIds[i]) {
-      map[String(itemIds[i])] = now;
+  for (i = 0; i < (salesEntries || []).length; i++) {
+    row = salesEntries[i];
+    if (!row) continue;
+    if (typeof row === 'string') {
+      id = row;
+      addVal = 0;
+    } else if (row.itemId) {
+      id = String(row.itemId);
+      addVal = Math.max(0, Number(row.value || 0));
+    } else {
+      continue;
     }
+    prev = map[id] || { ts: now, value: 0 };
+    map[id] = { ts: now, value: Number(prev.value || 0) + addVal };
   }
 
   if (server && server.persistentData) {
@@ -642,7 +720,7 @@ function recordDiversitySales(server, itemIds, nowMs) {
     }
   }
 
-  return getDiversityBonusForCount(Object.keys(map).length);
+  return summarizeDiversityMap(map);
 }
 
 function getEffectiveExportDockLimit(server) {
@@ -651,45 +729,100 @@ function getEffectiveExportDockLimit(server) {
   return perks && perks.maxExportDocks > 0 ? perks.maxExportDocks : EXPORT_DOCK_MAX;
 }
 
-function applyDynamicMarketBonuses(server, basePayout, itemId, diversityStatus, boom) {
-  var isBoom = Boolean(boom && boom.itemId === itemId);
-  var st = typeof getCurrentUnlockedStage === 'function' ? getCurrentUnlockedStage(null, server) : 0;
-  var perks = typeof getStagePerks === 'function' ? getStagePerks(st) : null;
-  var stageBonusPct = perks && perks.tradeBonusPercent > 0 ? perks.tradeBonusPercent : 0;
+/**
+ * Oblicza końcową wypłatę z uwzględnieniem lokalizacji (Wyspa-Rynek / Dok / zdalnie),
+ * Boomu Rynkowego, Różnorodności, Perków Etapu oraz twardych limitów z `prices.json` (#79).
+ *
+ * `options`:
+ *   - `onMarket` (domyślnie `true`): czy transakcja odbywa się na Wyspie-Rynku
+ *   - `isExportDock` (domyślnie `false`): czy pochodzi z Automatycznego Doku Eksportowego (+5%)
+ */
+function applyDynamicMarketBonuses(server, basePayout, itemId, diversityStatus, boom, options) {
+  var cfg = getMarketBonusesConfig(false);
+  var opts = options || {};
+  var onMarket = opts.onMarket !== false;
+  var isExportDock = Boolean(opts.isExportDock);
+  var remoteMult = Number(cfg.remote_sell_multiplier || 0.85);
+  var allowRemoteBonuses = Boolean(cfg.remote_allows_dynamic_bonuses);
+  var st = 0;
+  var perks = null;
+  var stageBonusPct = 0;
+  var divBonusPct = 0;
+  var dockBonusPct = 0;
+  var isBoom = false;
+  var boomBonusPct = 0;
+  var rawNonBoomPct = 0;
+  var cappedNonBoomPct = 0;
+  var rawCombinedPct = 0;
+  var effectiveBonusPct = 0;
   var totalMult = 1.0;
-  var finalPayout = basePayout;
+  var finalPayout = 0;
 
-  if (isBoom) {
-    totalMult += MARKET_BOOM_MULTIPLIER - 1.0; // +0.40
-  }
-  if (diversityStatus && diversityStatus.bonusPercent > 0) {
-    totalMult += diversityStatus.bonusPercent / 100.0; // +0.10 / +0.15 / +0.20
-  }
-  if (stageBonusPct > 0) {
-    totalMult += stageBonusPct / 100.0; // +0.02..+0.10 za Etap 1..5 (#51)
+  if (!onMarket && !allowRemoteBonuses) {
+    finalPayout = Math.max(1, Math.round(basePayout * remoteMult));
+    return {
+      finalPayout: finalPayout,
+      bonusCoins: 0,
+      effectiveMultiplier: remoteMult,
+      isRemote: true,
+      isBoom: false,
+      dockBonusPercent: 0,
+      stageBonusPercent: 0,
+      diversityPercent: 0,
+      diversityCount: diversityStatus ? diversityStatus.uniqueCount : 0,
+      totalBonusPercent: 0,
+      capped: false
+    };
   }
 
-  finalPayout = Math.round(basePayout * totalMult);
+  isBoom = Boolean(boom && boom.itemId === itemId);
+  st = typeof getCurrentUnlockedStage === 'function' ? getCurrentUnlockedStage(null, server) : 0;
+  perks = typeof getStagePerks === 'function' ? getStagePerks(st) : null;
+  stageBonusPct = perks && perks.tradeBonusPercent > 0 ? Number(perks.tradeBonusPercent) : 0;
+  divBonusPct = diversityStatus && diversityStatus.bonusPercent > 0 ? Number(diversityStatus.bonusPercent) : 0;
+  dockBonusPct = isExportDock ? Number(cfg.export_dock_bonus_percent || 5) : 0;
+  boomBonusPct = isBoom ? Number(cfg.market_boom_bonus_percent || 30) : 0;
+
+  rawNonBoomPct = dockBonusPct + divBonusPct + stageBonusPct;
+  cappedNonBoomPct = Math.min(Number(cfg.max_non_boom_bonus_percent || 25), rawNonBoomPct);
+  rawCombinedPct = cappedNonBoomPct + boomBonusPct;
+  effectiveBonusPct = isBoom
+    ? Math.min(Number(cfg.max_combined_bonus_percent || 45), rawCombinedPct)
+    : cappedNonBoomPct;
+
+  totalMult = 1.0 + effectiveBonusPct / 100.0;
+  if (!onMarket) {
+    totalMult = totalMult * remoteMult;
+  }
+
+  finalPayout = Math.max(1, Math.round(basePayout * totalMult));
   return {
     finalPayout: finalPayout,
     bonusCoins: Math.max(0, finalPayout - basePayout),
+    effectiveMultiplier: totalMult,
+    isRemote: !onMarket,
     isBoom: isBoom,
+    dockBonusPercent: dockBonusPct,
     stageBonusPercent: stageBonusPct,
-    diversityPercent: diversityStatus ? diversityStatus.bonusPercent : 0,
-    diversityCount: diversityStatus ? diversityStatus.uniqueCount : 0
+    diversityPercent: divBonusPct,
+    diversityCount: diversityStatus ? diversityStatus.uniqueCount : 0,
+    totalBonusPercent: effectiveBonusPct,
+    capped: rawNonBoomPct > cappedNonBoomPct || (isBoom && rawCombinedPct > effectiveBonusPct)
   };
 }
 
 function handleShowMarketBoom(player, server) {
-  const now = Date.now();
-  const boom = getOrRollMarketBoom(server, now);
-  const div = getCurrentDiversityStatus(server, now);
+  var now = Date.now();
+  var cfg = getMarketBonusesConfig(false);
+  var boom = getOrRollMarketBoom(server, now);
+  var div = getCurrentDiversityStatus(server, now);
+  var minsLeft = 0;
 
-  player.tell(Text.gold('=== Giełda Dynamiczna HalucynacjeGTP2 ==='));
+  player.tell(Text.gold('=== Giełda Dynamiczna HalucynacjeGTP2 (tylko na Wyspie-Rynku) ==='));
   if (boom) {
-    const minsLeft = Math.max(1, Math.ceil((boom.expiresAtMs - now) / 60000));
+    minsLeft = Math.max(1, Math.ceil((boom.expiresAtMs - now) / 60000));
     player.tell(
-      Text.white('• 🔥 Boom Rynkowy (+40%): ')
+      Text.white(`• 🔥 Boom Rynkowy (+${boom.bonusPercent}%): `)
         .append(Text.aqua(`${boom.itemId}${boom.packSize > 1 ? ` (x${boom.packSize})` : ''}`))
         .append(Text.white(' — '))
         .append(Text.gold(`${formatCoins(boom.boostedPrice)} monet`))
@@ -700,10 +833,19 @@ function handleShowMarketBoom(player, server) {
     Text.white('• 🏭 Premia za Różnorodność Fabryk (ostatnie 30 min): ')
       .append(
         div.bonusPercent > 0
-          ? Text.green(`+${div.bonusPercent}% (${div.uniqueCount} różnych towarów)`)
-          : Text.gray(`0% (${div.uniqueCount}/3 towarów do +10%)`)
+          ? Text.green(`+${div.bonusPercent}% (${div.uniqueCount} kwalifikujących się towarów)`)
+          : Text.gray(`0% (${div.uniqueCount}/3 towarów >= ${formatCoins(div.minItemValue)} monet do +5%)`)
       )
-      .append(Text.gray(' | progi: 3 -> +10%, 5 -> +15%, 7+ -> +20%'))
+      .append(
+        Text.gray(
+          ` | progi: 3 -> +5%, 5 -> +10%, 7+ -> +15% (min. ${formatCoins(div.minItemValue)} monet/towar)`
+        )
+      )
+  );
+  player.tell(
+    Text.gray(
+      `• Limity premii: maks. +${cfg.max_non_boom_bonus_percent}% bez Boomu, maks. +${cfg.max_combined_bonus_percent}% z Boomem (sprzedaż zdalna poza Rynkiem = sztywne ${Math.round(cfg.remote_sell_multiplier * 100)}%).`
+    )
   );
   return 1;
 }
@@ -740,13 +882,15 @@ function handleSellHand(player, server) {
   }
 
   const onMarket = typeof isPlayerOnMarketIsland === 'function' ? isPlayerOnMarketIsland(player) : true;
-  const locationMult = onMarket ? 1.0 : REMOTE_SELL_MULTIPLIER;
-  const locationBase = Math.max(1, Math.round(res.payout * locationMult));
-
   const now = Date.now();
-  const boom = getOrRollMarketBoom(server, now);
-  const div = recordDiversitySales(server, [res.itemId], now);
-  const dyn = applyDynamicMarketBonuses(server, locationBase, res.itemId, div, boom);
+  const boom = onMarket ? getOrRollMarketBoom(server, now) : null;
+  const div = onMarket
+    ? recordDiversitySales(server, [{ itemId: res.itemId, value: res.payout }], now)
+    : getCurrentDiversityStatus(server, now);
+  const dyn = applyDynamicMarketBonuses(server, res.payout, res.itemId, div, boom, {
+    onMarket: onMarket,
+    isExportDock: false
+  });
 
   giveCoinsToPlayer(player, dyn.finalPayout);
   recordExportStats(server, dyn.finalPayout, res.soldItems, player.username || 'Gracz', [
@@ -757,9 +901,11 @@ function handleSellHand(player, server) {
   }
 
   let bonusTags = '';
-  if (!onMarket) bonusTags += ' 📦-15% kurier poza Rynkiem';
-  if (dyn.isBoom) bonusTags += ' 🔥+40% Boom';
+  if (!onMarket) bonusTags += ' 📦-15% kurier poza Rynkiem (brak premii)';
+  if (dyn.isBoom) bonusTags += ` 🔥+${boom.bonusPercent}% Boom`;
   if (dyn.diversityPercent > 0) bonusTags += ` 🏭+${dyn.diversityPercent}% Różnorodność`;
+  if (dyn.stageBonusPercent > 0) bonusTags += ` ★+${dyn.stageBonusPercent}% Etap`;
+  if (dyn.capped) bonusTags += ` (limit +${dyn.totalBonusPercent}%)`;
 
   player.tell(
     Text.green(`[Rynek Hurtowy] Sprzedano ${res.soldItems}x ${res.itemId} za `)
@@ -770,7 +916,7 @@ function handleSellHand(player, server) {
         Text.gray(
           onMarket
             ? `(Dok Eksportowy /rynek_eksport płaci +5%, a sklepy NPC ok. +${formatCoins(res.npcBonusPotential)} monet więcej!)`
-            : `(Na Wyspie-Rynku 152,64,0 dostajesz 100%, a w Doku Eksportowym /rynek_eksport aż 105%!)`
+            : `(Na Wyspie-Rynku 152,64,0 dostajesz 100% + Boom/Różnorodność/Etap, a w Doku /rynek_eksport dodatkowo +5%!)`
         )
       )
   );
@@ -783,7 +929,7 @@ function handleSellAll(player, server) {
   const size = typeof inv.getContainerSize === 'function' ? inv.getContainerSize() : 36;
 
   const soldLines = [];
-  const soldIds = [];
+  const diversityEntries = [];
   let totalItems = 0;
   let totalBonusPotential = 0;
   let blockedSkipped = 0;
@@ -794,7 +940,7 @@ function handleSellAll(player, server) {
     const res = sellSingleStack(stack, catalog);
     if (res.status === 'sold') {
       soldLines.push(res);
-      soldIds.push(res.itemId);
+      diversityEntries.push({ itemId: res.itemId, value: res.payout });
       totalItems += res.soldItems;
       totalBonusPotential += res.npcBonusPotential;
     } else if (res.status === 'blocked') {
@@ -812,18 +958,22 @@ function handleSellAll(player, server) {
   }
 
   const onMarket = typeof isPlayerOnMarketIsland === 'function' ? isPlayerOnMarketIsland(player) : true;
-  const locationMult = onMarket ? 1.0 : REMOTE_SELL_MULTIPLIER;
-
   const now = Date.now();
-  const boom = getOrRollMarketBoom(server, now);
-  const div = recordDiversitySales(server, soldIds, now);
+  const boom = onMarket ? getOrRollMarketBoom(server, now) : null;
+  const div = onMarket
+    ? recordDiversitySales(server, diversityEntries, now)
+    : getCurrentDiversityStatus(server, now);
 
   let totalPayout = 0;
   let boomHit = false;
+  let anyCapped = false;
+  let stageBonusHit = 0;
   const statBreakdown = [];
   for (let j = 0; j < soldLines.length; j++) {
-    const locBase = Math.max(1, Math.round(soldLines[j].payout * locationMult));
-    const dyn = applyDynamicMarketBonuses(server, locBase, soldLines[j].itemId, div, boom);
+    const dyn = applyDynamicMarketBonuses(server, soldLines[j].payout, soldLines[j].itemId, div, boom, {
+      onMarket: onMarket,
+      isExportDock: false
+    });
     totalPayout += dyn.finalPayout;
     statBreakdown.push({
       itemId: soldLines[j].itemId,
@@ -831,6 +981,8 @@ function handleSellAll(player, server) {
       payout: dyn.finalPayout
     });
     if (dyn.isBoom) boomHit = true;
+    if (dyn.capped) anyCapped = true;
+    if (dyn.stageBonusPercent > stageBonusHit) stageBonusHit = dyn.stageBonusPercent;
   }
 
   giveCoinsToPlayer(player, totalPayout);
@@ -840,9 +992,11 @@ function handleSellAll(player, server) {
   }
 
   let bonusTags = '';
-  if (!onMarket) bonusTags += ' 📦-15% kurier poza Rynkiem';
-  if (boomHit) bonusTags += ' 🔥+40% Boom';
-  if (div.bonusPercent > 0) bonusTags += ` 🏭+${div.bonusPercent}% Różnorodność (${div.uniqueCount} tow.)`;
+  if (!onMarket) bonusTags += ' 📦-15% kurier poza Rynkiem (brak premii)';
+  if (boomHit) bonusTags += ` 🔥+${boom.bonusPercent}% Boom`;
+  if (onMarket && div.bonusPercent > 0) bonusTags += ` 🏭+${div.bonusPercent}% Różnorodność (${div.uniqueCount} tow.)`;
+  if (onMarket && stageBonusHit > 0) bonusTags += ` ★+${stageBonusHit}% Etap`;
+  if (anyCapped) bonusTags += ' (limit premii)';
 
   player.tell(
     Text.green(`[Rynek Hurtowy] Wyeksportowano łącznie ${totalItems} szt. towarów za `)
@@ -853,7 +1007,7 @@ function handleSellAll(player, server) {
         Text.gray(
           onMarket
             ? `(Dok /rynek_eksport daje +5%, a sklepy NPC +${formatCoins(totalBonusPotential)} monet!)`
-            : `(Na Wyspie-Rynku 152,64,0 dostajesz 100%, a przez pociąg + /rynek_eksport aż 105%!)`
+            : `(Na Wyspie-Rynku 152,64,0 dostajesz 100% + Boom/Różnorodność/Etap, a przez pociąg + /rynek_eksport dodatkowo +5%!)`
         )
       )
   );
@@ -1193,7 +1347,7 @@ function handleShowEconomyStatus(player, server) {
   if (boom) {
     const minsLeft = Math.max(1, Math.ceil((boom.expiresAtMs - now) / 60000));
     player.tell(
-      Text.white(`• Boom Rynkowy (+40%): `)
+      Text.white(`• Boom Rynkowy (+${boom.bonusPercent}% na Rynku): `)
         .append(Text.aqua(boom.itemId))
         .append(Text.gold(` (${formatCoins(boom.boostedPrice)} monet)`))
         .append(Text.gray(` • zostało ~${minsLeft} min`))
@@ -1204,9 +1358,9 @@ function handleShowEconomyStatus(player, server) {
       .append(
         diversity.bonusPercent > 0
           ? Text.green(`+${diversity.bonusPercent}%`)
-          : Text.gray('0% (sprzedaj 3/5/7 różnych towarów)')
+          : Text.gray(`0% (sprzedaj na Rynku 3/5/7 towarów >= ${formatCoins(diversity.minItemValue)} monet)`)
       )
-      .append(Text.gray(` (${diversity.uniqueCount} towarów)`))
+      .append(Text.gray(` (${diversity.uniqueCount} kwalifikujących się towarów)`))
   );
   if (nextToken) {
     const missing = Math.max(0, nextToken.buyPrice - cash);
@@ -1609,9 +1763,14 @@ function handleAddExportDock(player, server) {
   });
   writeExportDocks(server, docks);
 
+  var bonusCfg = getMarketBonusesConfig(false);
   player.tell(
     Text.green(`✅ [Dok Eksportowy #${docks.length}/${dockLimit}] Zarejestrowano ${target.blockId} na (${target.x}, ${target.y}, ${target.z})! `)
-      .append(Text.gold('Premia logistyczna: +5% (+ Boom +40% + Różnorodność + Perki Etapu)'))
+      .append(
+        Text.gold(
+          `Premia logistyczna: +${bonusCfg.export_dock_bonus_percent}% (+ Boom +${bonusCfg.market_boom_bonus_percent}% + Różnorodność + Perki Etapu, limit +${bonusCfg.max_combined_bonus_percent}%)`
+        )
+      )
       .append(
         Text.gray(
           teamId >= 0
@@ -1833,12 +1992,21 @@ function processExportDocksTick(server, nowMs) {
       ex = extractExportFromInventory(blk.inventory, catalog);
       if (ex.totalItems <= 0) continue;
 
-      div = recordDiversitySales(server, ex.soldIds, now);
+      var dockDiversityEntries = [];
+      for (j = 0; j < ex.soldLines.length; j++) {
+        dockDiversityEntries.push({
+          itemId: ex.soldLines[j].itemId,
+          value: ex.soldLines[j].payout
+        });
+      }
+      div = recordDiversitySales(server, dockDiversityEntries, now);
       dockPayout = 0;
       var dockBreakdown = [];
       for (j = 0; j < ex.soldLines.length; j++) {
-        logBase = Math.max(1, Math.round(ex.soldLines[j].payout * EXPORT_DOCK_LOGISTICS_MULTIPLIER));
-        dyn = applyDynamicMarketBonuses(server, logBase, ex.soldLines[j].itemId, div, boom);
+        dyn = applyDynamicMarketBonuses(server, ex.soldLines[j].payout, ex.soldLines[j].itemId, div, boom, {
+          onMarket: true,
+          isExportDock: true
+        });
         dockPayout += dyn.finalPayout;
         dockBreakdown.push({
           itemId: ex.soldLines[j].itemId,

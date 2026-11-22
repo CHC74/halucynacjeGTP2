@@ -135,7 +135,53 @@ for (let i = 1; i < tierStats.length; i++) {
   }
 }
 
-// 4. Walidacja katalogu Buy vs Sell (zero bezpośredniego arbitrażu buy <= sell, unikalne aliasy i poprawne kategorie)
+// 3b. Walidacja centralnej sekcji market_bonuses (#79) i obliczenie maksymalnych mnożników
+const mb = data.market_bonuses;
+let maxEffectiveMultiplier = 1.0;
+let maxRemoteMultiplier = 0.85;
+if (!mb || typeof mb !== 'object') {
+  errors.push('Brak wymaganej sekcji `market_bonuses` w prices.json (jedno źródło prawdy, #79).');
+} else {
+  const divTiers = Array.isArray(mb.diversity_tiers) ? mb.diversity_tiers : [];
+  const stagePcts = Array.isArray(mb.stage_trade_bonus_percents) ? mb.stage_trade_bonus_percents : [];
+  const maxDivPct = divTiers.reduce((m, t) => Math.max(m, Number(t.bonus_percent || 0)), 0);
+  const maxStagePct = stagePcts.reduce((m, p) => Math.max(m, Number(p || 0)), 0);
+  const dockPct = Number(mb.export_dock_bonus_percent || 0);
+  const boomPct = Number(mb.market_boom_bonus_percent || 0);
+  const capNonBoom = Number(mb.max_non_boom_bonus_percent || 0);
+  const capCombined = Number(mb.max_combined_bonus_percent || 0);
+  const remoteMult = Number(mb.remote_sell_multiplier || 0);
+  const allowRemoteBonuses = Boolean(mb.remote_allows_dynamic_bonuses);
+
+  if (!(remoteMult > 0 && remoteMult < 1)) {
+    errors.push(`market_bonuses.remote_sell_multiplier musi być w (0, 1) (jest ${remoteMult}).`);
+  }
+  if (!(mb.diversity_min_item_value > 0)) {
+    errors.push(`market_bonuses.diversity_min_item_value musi być > 0 (ochrona przed cheesem 1 sztuki, #79).`);
+  }
+  if (!(capNonBoom > 0) || !(capCombined >= capNonBoom)) {
+    errors.push(
+      `Niepoprawne limity premii: max_non_boom=${capNonBoom}, max_combined=${capCombined}.`
+    );
+  }
+
+  const maxNonBoomPct = Math.min(capNonBoom, dockPct + maxDivPct + maxStagePct);
+  const maxCombinedPct = Math.min(capCombined, maxNonBoomPct + boomPct);
+  maxEffectiveMultiplier = 1.0 + maxCombinedPct / 100.0;
+  maxRemoteMultiplier = allowRemoteBonuses ? maxEffectiveMultiplier * remoteMult : remoteMult;
+
+  // Kryterium akceptacji #79: dla KAŻDEGO towaru sprzedaż zdalna z dowolnymi premiami < cena NPC!
+  for (const [id, item] of sellById.entries()) {
+    const maxRemotePrice = Math.round(item.wholesale_gui * maxRemoteMultiplier);
+    if (maxRemotePrice >= item.npc_shoppers) {
+      errors.push(
+        `Naruszenie marży Rynku (#79) dla "${id}": maks. sprzedaż zdalna (${maxRemotePrice}, mnożnik ×${maxRemoteMultiplier.toFixed(3)}) >= cena NPC (${item.npc_shoppers}).`
+      );
+    }
+  }
+}
+
+// 4. Walidacja katalogu Buy vs Sell (zero bezpośredniego arbitrażu buy <= sell przy maks. mnożniku, unikalne aliasy i poprawne kategorie)
 const ALLOWED_BUY_CATEGORIES = new Set(['plants', 'livestock', 'skyblock', 'tech', 'prestige']);
 const buyById = new Map();
 for (const item of data.buy_catalog ?? []) {
@@ -158,9 +204,12 @@ for (const item of data.buy_catalog ?? []) {
   }
   buyById.set(item.id, item);
   const sell = sellById.get(item.id);
-  if (sell && item.buy_price <= Math.max(sell.wholesale_gui, sell.npc_shoppers)) {
+  const maxDirectSell = sell
+    ? Math.max(Math.round(sell.wholesale_gui * maxEffectiveMultiplier), sell.npc_shoppers)
+    : 0;
+  if (sell && item.buy_price <= maxDirectSell) {
     errors.push(
-      `Arbitraż bezpośredni dla "${item.id}": buy=${item.buy_price} <= sell=${Math.max(sell.wholesale_gui, sell.npc_shoppers)}.`
+      `Arbitraż bezpośredni dla "${item.id}": buy=${item.buy_price} <= maks. sprzedaż z premiami=${maxDirectSell} (×${maxEffectiveMultiplier.toFixed(2)}).`
     );
   }
 }
@@ -216,7 +265,7 @@ for (const portalId of REQUIRED_END_PORTAL_ITEMS) {
   }
 }
 
-// 5. Walidacja zadeklarowanych reguł anty-arbitrażowych (kupione składniki > maks. sprzedaż produktu)
+// 5. Walidacja zadeklarowanych reguł anty-arbitrażowych przy MAKSYMALNYM mnożniku premii (#79)
 for (const check of data.anti_arbitrage_checks ?? []) {
   const out = sellById.get(check.output_id);
   if (!out) {
@@ -232,10 +281,11 @@ for (const check of data.anti_arbitrage_checks ?? []) {
     }
     inputCost += buyItem.buy_price * (inp.count ?? 1);
   }
-  const maxSell = Math.max(out.wholesale_gui, out.npc_shoppers);
+  const maxBoostedWholesale = Math.round(out.wholesale_gui * maxEffectiveMultiplier);
+  const maxSell = Math.max(maxBoostedWholesale, out.npc_shoppers);
   if (inputCost <= maxSell) {
     errors.push(
-      `Ryzyko arbitrażu (${check.name}): koszt zakupu składników (${inputCost}) <= maks. sprzedaż (${maxSell}) dla "${check.output_id}".`
+      `Ryzyko arbitrażu (${check.name}): koszt zakupu składników (${inputCost}) <= maks. sprzedaż z premiami (${maxSell} = hurt ${out.wholesale_gui} × ${maxEffectiveMultiplier.toFixed(2)} lub NPC ${out.npc_shoppers}) dla "${check.output_id}".`
     );
   }
 }
@@ -249,7 +299,7 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `✅ Walidacja ekonomii OK: ${data.stage_tokens.length} Żetonów Etapów, ${tier0Set.size} blokad Tier 0, ${sellById.size} towarów Tier 1–5, ${buyById.size} pozycji Buy, ${(data.anti_arbitrage_checks ?? []).length} reguł anty-arbitrażowych.`
+  `✅ Walidacja ekonomii OK: ${data.stage_tokens.length} Żetonów Etapów, ${tier0Set.size} blokad Tier 0, ${sellById.size} towarów Tier 1–5, ${buyById.size} pozycji Buy, ${(data.anti_arbitrage_checks ?? []).length} reguł anty-arbitrażowych (maks. mnożnik Rynku: ×${maxEffectiveMultiplier.toFixed(2)}, maks. zdalny: ×${maxRemoteMultiplier.toFixed(2)} < NPC).`
 );
 console.log('📊 Symulacja tempa progresji (średnia cena hurt / NPC +20% -> cel kolejnego Etapu):');
 for (const st of tierStats) {
