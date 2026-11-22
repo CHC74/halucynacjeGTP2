@@ -1,7 +1,7 @@
 # HalucynacjeGTP2 — Sophisticated Storage (NeoForge 1.21.1)
 # Rozsądne limity sieci magazynowej chroniące TPS Exaroton i pakiety sieciowe NBT.
-# [VERIFY ON 1.21.1 BOOT]: Zweryfikować dokładne nazwy kluczy TOML wygenerowanych przez
-# Sophisticated Storage 1.21.1 (część opcji może znajdować się w `sophisticatedstorage-server.toml`).
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Plik TOML parsuje się czysto na rozruchu `server-boot`
+# (dodatkowa weryfikacja zasięgu kontrolera w żywej grze w `docs/QOL_AND_SERVER_CONFIGS.md`).
 
 [common]
 	# Ograniczenie zasięgu wyszukiwania Storage Controllera (w blokach), aby zapobiec

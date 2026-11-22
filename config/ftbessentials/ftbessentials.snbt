@@ -1,6 +1,6 @@
 # HalucynacjeGTP2 — FTB Essentials (komendy QoL dla co-op Skyblock Tycoon)
-# [VERIFY ON 1.21.1 BOOT]: W NeoForge 1.21.1 sprawdzić czy FTB Essentials czyta
-# `config/ftbessentials.snbt` lub `world/serverconfig/ftbessentials.snbt`.
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Parsowanie SNBT przechodzi czysto na rozruchu `server-boot`
+# (test komend `/home`, `/back`, `/tpa`, `/spawn` i blokady `/rtp` w `docs/PLAYTEST_CHECKLIST.md`).
 
 {
 	# Komendy ułatwiające poruszanie się między wyspami bez psucia balansu logistyki towarów

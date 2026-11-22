@@ -18,10 +18,12 @@
 // - `/cennik [tier 1-5]`    — tabela skupu hurtowego i marży +20% na Wyspie-Rynku
 // - `/ekonomia`             — panel Tycoona (etap, gotówka, statystyki eksportu)
 //
-// UWAGA DO WERYFIKACJI NA PIERWSZYM URUCHOMIENIU SERWERA 1.21.1:
-// - [VERIFY ON 1.21.1 BOOT] Potwierdzić `Commands.argument('...', Arguments.STRING.create(event))`
-//   / `Arguments.INTEGER.create(event)` w KubeJS 7 (NeoForge 1.21.1) oraz odczyt
-//   `player.inventory.getContainerSize()` / `getItem(i)`.
+// [VERIFIED ON NEOFORGE 21.1.267 CI] (`server-boot`, #59):
+// - Rejestracja komend z `Commands.argument(..., Arguments.STRING.create(event))`
+//   i `Arguments.INTEGER.create(event)` oraz `/halucynacje_reload_economy` przeszły
+//   z 0 błędów KubeJS na NeoForge 21.1.267; odczyt ekwipunku/portfela pokryty przez
+//   `scripts/test_kubejs_logic.mjs` i `scripts/test_tab_balance.mjs` (interaktywne
+//   kliknięcia GUI klienta w `docs/PLAYTEST_CHECKLIST.md`).
 // ============================================================================
 
 const MARKET_TEAM_LIMITS_KEY = 'halucynacje_team_buy_counts';

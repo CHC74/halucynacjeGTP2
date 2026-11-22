@@ -72,10 +72,10 @@ Dlatego czarna lista (`forbiddenTiles` / `forbiddenEntities`) **bezwzględnie bl
 
 ---
 
-## 5. Checklista weryfikacji przy pierwszym starcie (`[VERIFY ON 1.21.1 BOOT]`)
+## 5. Checklista weryfikacji w żywej sesji gracza / na kliencie (`[VERIFY ON 1.21.1 BOOT]`)
 
-Podczas pierwszego rozruchu serwera NeoForge `1.21.1` (po złożeniu `packwiz` w Issue #6) sprawdzić:
-1. **Ścieżki `serverconfig` / `defaultconfigs` dla FTB:** w NeoForge `1.21.1` mody *FTB Chunks* i *FTB Essentials* mogą generować własne konfiguracje świata w `world/serverconfig/` (dziedzicząc wzorce z `defaultconfigs/`). Po pierwszym starcie upewnić się, że wartości `max_force_loaded_chunks = 20`, `fake_players = "allow"` oraz wyłączone komendy cheatujące są aktywne w grze (`/ftbchunks admin ...`, `/home`).
-2. **Składnia wildcardów `Carry On`:** przetestować na żywo, że `Shift + PPM` pustą ręką **działa** na zwykłą skrzynię / krowę, a jest **zablokowane** na `create:fluid_tank`, `lightmanscurrency:terminal`, `waystones:waystone` oraz NPC `shoppers`.
-3. **Klucze `Sophisticated Storage`:** zweryfikować, czy w wybranej wersji 1.21.1 klucze zasięgu kontrolera leżą w `sophisticatedstorage-common.toml` czy `sophisticatedstorage-server.toml`.
-4. **Brak podwójnej minimapy na Mac M2:** sprawdzić, że na ekranie widoczna jest wyłącznie minimapa *Xaero's Minimap*, a okno claimowania *FTB Chunks* otwiera się poprawnie.
+Parsowanie wszystkich plików konfiguracyjnych (`FTB Chunks`, `FTB Essentials`, `Carry On`, `Jade`, `Sophisticated Storage`) przechodzi już automatycznie w jobie CI **`server-boot`** (prawdziwy rozruch NeoForge `21.1.267`, #59). Poniższe 4 punkty wymagają żywej sesji gracza / klienta **Mac M2**:
+1. **Ścieżki `serverconfig` / `defaultconfigs` dla FTB w żywej grze:** po wejściu na świat potwierdzić komendami `/ftbchunks admin ...`, `/home` i pracą Create Deployera na zclaimowanym chunku, że wartości `max_force_loaded_chunks = 20`, `fake_players = "allow"` oraz blokada `/rtp` i komend cheatujących są aktywne.
+2. **Składnia wildcardów `Carry On` w grze:** przetestować na żywo, że `Shift + PPM` pustą ręką **działa** na zwykłą skrzynię / krowę, a jest **zablokowane** na `create:fluid_tank`, `lightmanscurrency:terminal`, `waystones:waystone` oraz NPC `shoppers`.
+3. **Zasięg `Sophisticated Storage` w grze:** zweryfikować w działającej bazie, czy aktywne limity zasięgu kontrolera (15 bloków) i magnesu (5 bloków) czytane są z `sophisticatedstorage-common.toml` (czy wymagają lustrzanego wpisu w `sophisticatedstorage-server.toml`).
+4. **Brak podwójnej minimapy na Mac M2:** sprawdzić na kliencie, że na ekranie widoczna jest wyłącznie minimapa *Xaero's Minimap*, a okno claimowania *FTB Chunks* otwiera się poprawnie.

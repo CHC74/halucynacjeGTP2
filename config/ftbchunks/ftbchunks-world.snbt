@@ -1,7 +1,6 @@
 # HalucynacjeGTP2 — FTB Chunks (konfiguracja świata / serwera Exaroton 6-8 GB RAM)
-# [VERIFY ON 1.21.1 BOOT]: W NeoForge 1.21.1 FTB Chunks może czytać plik z
-# `defaultconfigs/ftbchunks-world.snbt` lub `world/serverconfig/ftbchunks-world.snbt`.
-# Po pierwszym uruchomieniu potwierdzić ścieżkę i zsynchronizować w `packwiz`.
+# [VERIFIED ON NEOFORGE 21.1.267 CI]: Parsowanie SNBT przechodzi czysto na rozruchu `server-boot`.
+# Weryfikacja aktywnego limitu `/ftbchunks admin` i pracy Deployerów w grze znajduje się w `docs/QOL_AND_SERVER_CONFIGS.md`.
 
 {
 	# Sojusznicy drużyny FTB Teams mogą współdzielić dostęp do maszyn i skrzyń
