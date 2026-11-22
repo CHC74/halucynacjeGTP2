@@ -69,9 +69,17 @@
 		{
 			dependencies: ["B400000000000001"]
 			description: [
-				"Zbierz drużynę i wyrusz do normalnego Endu pokonać &5Smoka Endu&r!"
+				"Zbierz drużynę, zbuduj własny Portal Endu i wyrusz do normalnego Endu pokonać &5Smoka Endu&r!"
 				""
-				"Z &fkeepInventory = true&r walka jest czystą frajdą — zdobądź Elytry, Shulker Boxy i oddech smoka do późniejszych linii produkcyjnych. Pamiętaj: surowe &fEnd Stone&r i &fChorus Fruit&r mają cenę skupu &c0 monet&r."
+				"&eSkąd wziąć Portal Endu w świecie Skyblock (brak twierdz)?&r"
+				"• &bRamy Portalu Endu (12 szt.):&r po odblokowaniu Etapu 4 kup przez &a/kup end_portal_frame 12&r lub w GUI &a/sklep&r -> &f[KUP] 5. Maszyny i High-Tech&r (&e6 000 monet/szt.&r, twardy limit &c12 szt. na drużynę&r)."
+				"• &bOczy Endu (12 szt.):&r kup przez &a/kup ender_eye 12&r / &a/sklep&r (&e2 000 monet/szt.&r, limit &c12 szt. na drużynę&r) &alub scraftuj samemu&r z Pereł Endu (od kleryka-wieśniaka z Etapu 2) + proszku płomyka (Blaze Powder z Netheru)!"
+				""
+				"&cWAŻNE — budowa portalu (ram nie da się wykopać ani przenieść Carry On!):&r"
+				"• Wybierz bezpieczną platformę (np. dedykowany taras przy &bWyspie-Rynku 152, 64, 0&r albo na &bHucie Południowej 0, 64, 152&r)."
+				"• &eStań W ŚRODKU pierścienia 3×3&r i ustaw wszystkie 12 ram wokół siebie (4 boki po 3 ramy, bez narożników), aby wypustki ram były zwrócone do środka — potem włóż 12 Oczu Endu."
+				""
+				"Z &fkeepInventory = true&r walka jest czystą frajdą — zdobądź Elytry, Shulker Boxy i oddech smoka do późniejszych linii produkcyjnych. Pamiętaj: surowe &fEnd Stone&r, &fChorus Fruit&r, ramy i oczy mają cenę skupu &c0 monet&r."
 			]
 			id: "B400000000000002"
 			rewards: [

@@ -1339,4 +1339,91 @@ test('shared_economy.js + dimension_gating.js + economy_market.js (#51): perki E
   assert(res.stageBonusPercent === 10 && res.finalPayout === 1100, 'Stage 5 daje +10% premii handlowej (1000 -> 1100)');
 });
 
-console.log(`🎉 Wszystkie ${passed}/13 pakietów testów KubeJS ZALICZONE!`);
+// 13. Issue #64: Dostępność Portalu Endu na Stage 4 (gating < Stage 4, team_limit=12, blokada /sprzedaj)
+test('economy_market.js (#64): end_portal_frame i ender_eye wymagają Stage 4, mają limit 12/drużynę i 0 monet w /sprzedaj', () => {
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { commandRegistry: () => {}, tick: () => {} },
+    Date,
+    Math,
+    assert
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const handleBuy = vm.runInContext('handleBuy', ctx);
+  const handleSellHand = vm.runInContext('handleSellHand', ctx);
+  const handleSellAll = vm.runInContext('handleSellAll', ctx);
+  const sellSingleStack = vm.runInContext('sellSingleStack', ctx);
+  const getMarketCatalog = vm.runInContext('getMarketCatalog', ctx);
+  const getInventoryCoinBalance = vm.runInContext('getInventoryCoinBalance', ctx);
+
+  const server = {
+    persistentData: makeCompound(),
+    tell: () => {},
+    runCommandSilent: () => {}
+  };
+  const gs = server.persistentData.getCompound('halucynacje_global_stages');
+  gs.putBoolean('stage_1', true);
+  gs.putBoolean('stage_2', true);
+  gs.putBoolean('stage_3', true);
+
+  const inv = [sandbox.Item.of('lightmanscurrency:coin_netherite', 5)]; // 500 000 monet
+  const msgs = [];
+  const player = {
+    username: 'EndExplorer',
+    x: 152,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld' },
+    persistentData: makeCompound(),
+    mainHandItem: sandbox.Item.of('minecraft:end_portal_frame', 1),
+    inventory: { getContainerSize: () => inv.length, getItem: (idx) => inv[idx] },
+    give: (st) => inv.push(st),
+    tell: (t) => msgs.push(t.s)
+  };
+
+  // A) Na Stage 3 zakup end_portal_frame i ender_eye musi być ODRZUCONY (0 monet pobranych)
+  assert(handleBuy(player, server, 'end_portal_frame', 1) === 0, '/kup end_portal_frame odrzucone na Stage 3');
+  assert(handleBuy(player, server, 'ender_eye', 1) === 0, '/kup ender_eye odrzucone na Stage 3');
+  assert(getInventoryCoinBalance(player) === 500000, 'Brak pobrania monet przy odrzuceniu Stage 3');
+
+  // B) Po odblokowaniu Stage 4: limit 12 dla end_portal_frame (13 odrzucone, 10 + 2 OK, 13. sztuka odrzucona)
+  gs.putBoolean('stage_4', true);
+  assert(handleBuy(player, server, 'end_portal_frame', 13) === 0, 'Zakup 13x end_portal_frame naraz odrzucony (team_limit=12)');
+  assert(handleBuy(player, server, 'end_portal_frame', 10) === 10, 'Zakup 10x end_portal_frame na Stage 4 udany');
+  assert(handleBuy(player, server, 'end_portal_frame', 2) === 2, 'Zakup brakujących 2x end_portal_frame (łącznie 12) udany');
+  assert(handleBuy(player, server, 'end_portal_frame', 1) === 0, '13. sztuka end_portal_frame odrzucona przez team_limit=12');
+
+  // C) To samo dla ender_eye (13 odrzucone, 12 OK, 13. sztuka odrzucona)
+  assert(handleBuy(player, server, 'ender_eye', 13) === 0, 'Zakup 13x ender_eye naraz odrzucony (team_limit=12)');
+  assert(handleBuy(player, server, 'ender_eye', 12) === 12, 'Zakup 12x ender_eye na Stage 4 udany');
+  assert(handleBuy(player, server, 'ender_eye', 1) === 0, '13. sztuka ender_eye odrzucona przez team_limit=12');
+
+  const balanceAfterBuy = getInventoryCoinBalance(player);
+  const framePrice = prices.buy_catalog.find((x) => x.id === 'minecraft:end_portal_frame').buy_price;
+  const eyePrice = prices.buy_catalog.find((x) => x.id === 'minecraft:ender_eye').buy_price;
+  assert(
+    balanceAfterBuy === 500000 - 12 * framePrice - 12 * eyePrice,
+    'Dokładne saldo po zakupie 12 ram i 12 oczu Endu'
+  );
+
+  // D) Próba /sprzedaj na end_portal_frame i ender_eye musi być ODRZUCONA (0 monet wypłaty)
+  const cat = getMarketCatalog(true);
+  assert(sellSingleStack(sandbox.Item.of('minecraft:end_portal_frame', 12), cat).status === 'blocked', 'end_portal_frame zablokowane w Tier 0');
+  assert(sellSingleStack(sandbox.Item.of('minecraft:ender_eye', 12), cat).status === 'blocked', 'ender_eye zablokowane w Tier 0');
+
+  player.mainHandItem = sandbox.Item.of('minecraft:end_portal_frame', 12);
+  assert(handleSellHand(player, server) === 0, '/sprzedaj end_portal_frame odrzucone');
+  player.mainHandItem = sandbox.Item.of('minecraft:ender_eye', 12);
+  assert(handleSellHand(player, server) === 0, '/sprzedaj ender_eye odrzucone');
+  assert(handleSellAll(player, server) === 0, '/sprzedaj all pomija ramy i oczy (0 sprzedanych)');
+  assert(getInventoryCoinBalance(player) === balanceAfterBuy, 'Saldo po próbach /sprzedaj nie wzrosło (0 monet wypłaty)');
+});
+
+console.log(`🎉 Wszystkie ${passed}/14 pakietów testów KubeJS ZALICZONE!`);

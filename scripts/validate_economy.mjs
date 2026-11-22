@@ -184,6 +184,38 @@ for (const [pieId, sliceId] of piePairs) {
   }
 }
 
+// 4c. Gwarancja dostępności Endu na Skyblocku (Issue #64):
+//     ramy portalu i Oczy Endu muszą być dostępne w Stage 4 z limitem 12 szt./drużynę
+//     i NIE mogą pojawiać się w żadnym tierze skupu (`sell_tiers`) ani w skupie NPC (`tier_0_blocked`).
+const REQUIRED_END_PORTAL_ITEMS = ['minecraft:end_portal_frame', 'minecraft:ender_eye'];
+for (const portalId of REQUIRED_END_PORTAL_ITEMS) {
+  const buyEntry = buyById.get(portalId);
+  if (!buyEntry) {
+    errors.push(`Brak wymaganego elementu portalu Endu "${portalId}" w buy_catalog (Issue #64).`);
+  } else {
+    if (buyEntry.stage !== 4) {
+      errors.push(
+        `Element portalu Endu "${portalId}" musi mieć stage=4 w buy_catalog (obecnie: ${buyEntry.stage}).`
+      );
+    }
+    if (buyEntry.team_limit !== 12) {
+      errors.push(
+        `Element portalu Endu "${portalId}" musi mieć team_limit=12 w buy_catalog (obecnie: ${buyEntry.team_limit}).`
+      );
+    }
+  }
+  if (sellById.has(portalId)) {
+    errors.push(
+      `NARUSZENIE OCHRONY EKONOMII (Issue #64): "${portalId}" nie może występować w sell_tiers!`
+    );
+  }
+  if (!tier0Set.has(portalId)) {
+    errors.push(
+      `Element portalu Endu "${portalId}" powinien znajdować się w tier_0_blocked (0 monet w skupie i NPC Shoppers).`
+    );
+  }
+}
+
 // 5. Walidacja zadeklarowanych reguł anty-arbitrażowych (kupione składniki > maks. sprzedaż produktu)
 for (const check of data.anti_arbitrage_checks ?? []) {
   const out = sellById.get(check.output_id);

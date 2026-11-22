@@ -101,6 +101,8 @@
     { "id": "minecraft:chorus_fruit", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Endu" },
     { "id": "minecraft:shulker_shell", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Endu" },
     { "id": "minecraft:ender_pearl", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop mobów Endu" },
+    { "id": "minecraft:end_portal_frame", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Element portalu Endu (wyłącznie zakup w Stage 4, brak skupu)" },
+    { "id": "minecraft:ender_eye", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Element portalu Endu (wyłącznie zakup w Stage 4 lub crafting, brak skupu)" },
     { "id": "minecraft:rotten_flesh", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop z mobgrinderów" },
     { "id": "minecraft:bone", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop z mobgrinderów" },
     { "id": "minecraft:string", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop z mobgrinderów" },
@@ -322,6 +324,8 @@
     { "id": "mekanism:ingot_lead", "alias": "lead", "category": "tech", "stage": 3, "buy_price": 3000, "note": "Starter Ołowiu (Lead) pod Mekanism i reaktory" },
     { "id": "mekanism:fluorite_gem", "alias": "fluorite", "category": "tech", "stage": 3, "buy_price": 3000, "note": "Starter Fluorytu dla chemii Mekanism" },
     { "id": "mekanism:ingot_uranium", "alias": "uranium", "category": "tech", "stage": 3, "buy_price": 4500, "note": "Starter Uranu pod paliwo jądrowe Mekanism" },
+    { "id": "minecraft:end_portal_frame", "alias": "end_portal_frame", "category": "tech", "stage": 4, "buy_price": 6000, "team_limit": 12, "note": "Rama portalu Endu (brak twierdz w Skyblocku — limit 12 szt./drużynę)" },
+    { "id": "minecraft:ender_eye", "alias": "ender_eye", "category": "tech", "stage": 4, "buy_price": 2000, "team_limit": 12, "note": "Oko Endu do aktywacji portalu (limit 12 szt./drużynę; alternatywnie crafting: Perła Endu + proszek płomyka)" },
 
     {
       "id": "create:creative_motor",
