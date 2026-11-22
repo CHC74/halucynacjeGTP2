@@ -643,8 +643,17 @@ function recordDiversitySales(server, itemIds, nowMs) {
   return getDiversityBonusForCount(Object.keys(map).length);
 }
 
+function getEffectiveExportDockLimit(server) {
+  var st = typeof getCurrentUnlockedStage === 'function' ? getCurrentUnlockedStage(null, server) : 0;
+  var perks = typeof getStagePerks === 'function' ? getStagePerks(st) : null;
+  return perks && perks.maxExportDocks > 0 ? perks.maxExportDocks : EXPORT_DOCK_MAX;
+}
+
 function applyDynamicMarketBonuses(server, basePayout, itemId, diversityStatus, boom) {
   var isBoom = Boolean(boom && boom.itemId === itemId);
+  var st = typeof getCurrentUnlockedStage === 'function' ? getCurrentUnlockedStage(null, server) : 0;
+  var perks = typeof getStagePerks === 'function' ? getStagePerks(st) : null;
+  var stageBonusPct = perks && perks.tradeBonusPercent > 0 ? perks.tradeBonusPercent : 0;
   var totalMult = 1.0;
   var finalPayout = basePayout;
 
@@ -654,12 +663,16 @@ function applyDynamicMarketBonuses(server, basePayout, itemId, diversityStatus, 
   if (diversityStatus && diversityStatus.bonusPercent > 0) {
     totalMult += diversityStatus.bonusPercent / 100.0; // +0.10 / +0.15 / +0.20
   }
+  if (stageBonusPct > 0) {
+    totalMult += stageBonusPct / 100.0; // +0.02..+0.10 za Etap 1..5 (#51)
+  }
 
   finalPayout = Math.round(basePayout * totalMult);
   return {
     finalPayout: finalPayout,
     bonusCoins: Math.max(0, finalPayout - basePayout),
     isBoom: isBoom,
+    stageBonusPercent: stageBonusPct,
     diversityPercent: diversityStatus ? diversityStatus.bonusPercent : 0,
     diversityCount: diversityStatus ? diversityStatus.uniqueCount : 0
   };
@@ -1147,8 +1160,20 @@ function handleShowEconomyStatus(player, server) {
   const diversity = getCurrentDiversityStatus(server, now);
 
   const nextToken = catalog.stageTokens[currentStage] || null;
-  player.tell(Text.gold('=== Panel Ekonomii HalucynacjeGTP2 (Tycoon) ==='));
-  player.tell(Text.white(`• Aktualny Etap drużyny: `).append(Text.aqua(`Stage ${currentStage} / 5`)));
+  const stagePerks = typeof getStagePerks === 'function' ? getStagePerks(currentStage) : null;
+  const titleBadge = stagePerks && stagePerks.title ? ` ${stagePerks.title}` : '';
+  player.tell(Text.gold(`=== Panel Ekonomii HalucynacjeGTP2${titleBadge || ' (Tycoon)'} ===`));
+  player.tell(
+    Text.white(`• Aktualny Etap drużyny: `)
+      .append(Text.aqua(`Stage ${currentStage} / 5`))
+      .append(
+        stagePerks
+          ? Text.gray(
+              ` (Perki: +${stagePerks.tradeBonusPercent}% skup | +${stagePerks.extraForceChunks} FTB Chunks | maks. ${stagePerks.maxExportDocks} Doków)`
+            )
+          : Text.gray('')
+      )
+  );
   player.tell(
     Text.white(`• Łączne saldo LC (TAB / /kup): `)
       .append(Text.gold(`${formatCoins(cash)} monet`))
@@ -1561,10 +1586,11 @@ function handleAddExportDock(player, server) {
     }
   }
 
-  if (docks.length >= EXPORT_DOCK_MAX) {
+  var dockLimit = getEffectiveExportDockLimit(server);
+  if (docks.length >= dockLimit) {
     player.tell(
       Text.red(
-        `[Dok Eksportowy] Osiągnięto limit ${EXPORT_DOCK_MAX} doków eksportowych na serwer (ochrona TPS). Usuń stary dok przez /rynek_eksport usun <nr>.`
+        `[Dok Eksportowy] Osiągnięto limit ${dockLimit} doków eksportowych dla obecnego Etapu (rośnie w Stage 3/4/5 do 8!). Usuń stary dok przez /rynek_eksport usun <nr>.`
       )
     );
     return 0;
@@ -1582,8 +1608,8 @@ function handleAddExportDock(player, server) {
   writeExportDocks(server, docks);
 
   player.tell(
-    Text.green(`✅ [Dok Eksportowy #${docks.length}] Zarejestrowano ${target.blockId} na (${target.x}, ${target.y}, ${target.z})! `)
-      .append(Text.gold('Premia logistyczna: +5% (+ Boom +40% + Różnorodność)'))
+    Text.green(`✅ [Dok Eksportowy #${docks.length}/${dockLimit}] Zarejestrowano ${target.blockId} na (${target.x}, ${target.y}, ${target.z})! `)
+      .append(Text.gold('Premia logistyczna: +5% (+ Boom +40% + Różnorodność + Perki Etapu)'))
       .append(
         Text.gray(
           teamId >= 0
@@ -1597,11 +1623,12 @@ function handleAddExportDock(player, server) {
 
 function handleListExportDocks(player, server) {
   var docks = readExportDocks(server);
+  var dockLimit = getEffectiveExportDockLimit(server);
   var pending = getExportPendingCoins(server);
   var i = 0;
   var d = null;
 
-  player.tell(Text.gold(`=== Automatyczne Doki Eksportowe Wyspy-Rynku (${docks.length}/${EXPORT_DOCK_MAX}) ===`));
+  player.tell(Text.gold(`=== Automatyczne Doki Eksportowe Wyspy-Rynku (${docks.length}/${dockLimit}) ===`));
   if (docks.length === 0) {
     player.tell(
       Text.gray('Brak zarejestrowanych doków. Spójrz na skrzynię/Item Vault na Wyspie-Rynku i wpisz /rynek_eksport dodaj.')

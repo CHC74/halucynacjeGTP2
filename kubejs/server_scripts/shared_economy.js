@@ -697,6 +697,23 @@ function getCurrentUnlockedStage(player, server) {
   return highest;
 }
 
+// ----------------------------------------------------------------------------
+// Perki za Żetony Etapów (Issue #51) — realne nagrody dla każdego Etapu 1..5
+// ----------------------------------------------------------------------------
+const STAGE_PERKS = {
+  0: { stage: 0, extraForceChunks: 0, tradeBonusPercent: 0, maxExportDocks: 4, title: '', summary: 'Start Skyblocka (20 chunków force-load, 4 Doki Eksportowe)' },
+  1: { stage: 1, extraForceChunks: 2, tradeBonusPercent: 2, maxExportDocks: 4, title: '', summary: '+2 chunki force-load, +2% premii handlowej, kontrakty/Boom Tier 2' },
+  2: { stage: 2, extraForceChunks: 4, tradeBonusPercent: 4, maxExportDocks: 4, title: '', summary: 'Normalny Nether, +4 chunki force-load, +4% premii handlowej, Tier 2–3' },
+  3: { stage: 3, extraForceChunks: 6, tradeBonusPercent: 6, maxExportDocks: 5, title: '', summary: '+6 chunków force-load, +6% premii handlowej, 5 Doków Eksportowych, rudy Mekanism' },
+  4: { stage: 4, extraForceChunks: 10, tradeBonusPercent: 8, maxExportDocks: 6, title: '', summary: 'Normalny End, +10 chunków force-load, +8% premii handlowej, 6 Doków Eksportowych' },
+  5: { stage: 5, extraForceChunks: 14, tradeBonusPercent: 10, maxExportDocks: 8, title: '[Tycoon]', summary: 'Tytuł [Tycoon], +14 chunków force-load, +10% premii handlowej, 8 Doków Eksportowych' }
+};
+
+function getStagePerks(stage) {
+  var s = Math.max(0, Math.min(5, Math.floor(Number(stage) || 0)));
+  return STAGE_PERKS[s] || STAGE_PERKS[0];
+}
+
 /**
  * Wysyła odpowiedź komendy OP/gracza w KubeJS 7.2 bez pułapki `ArrowFunction(0)`.
  */
