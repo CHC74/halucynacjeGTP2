@@ -221,13 +221,22 @@ function handleShowContract(player, server) {
   );
   player.tell(
     Text.gray(
-      'Komendy: /kontrakt oddaj (realizacja) | /kontrakt nowy (zmiana co 5 min — uwaga: resetuje serię!)'
+      'Komendy: /kontrakt oddaj (na Wyspie-Rynku 152,64,0) | /kontrakt nowy (zmiana co 5 min — resetuje serię!)'
     )
   );
   return 1;
 }
 
 function handleDeliverContract(player, server) {
+  if (typeof isPlayerOnMarketIsland === 'function' && !isPlayerOnMarketIsland(player)) {
+    player.tell(
+      Text.red(
+        `[Kontrakt] Zlecenia korporacyjne odbierane są wyłącznie na Wyspie-Rynku (${MARKET_ISLAND_CENTER.x}, ${MARKET_ISLAND_CENTER.y}, ${MARKET_ISLAND_CENTER.z}, promień ${MARKET_ISLAND_RADIUS} bloków w Overworldzie)!`
+      ).append(Text.gray(' Dostarcz towary na Rynek (pociągiem / Chain Conveyor / mostem) i wpisz /kontrakt oddaj.'))
+    );
+    return 0;
+  }
+
   const contract = getOrCreateActiveContract(server);
   if (!contract) {
     player.tell(Text.red('[Kontrakt] Brak aktywnego kontraktu.'));

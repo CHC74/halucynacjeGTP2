@@ -25,9 +25,10 @@ Cała ekonomia serwera korzysta z 6 fizycznych nominałów monet (przelicznik dz
 
 | Kanał sprzedaży | Marża | Jak działa | Kiedy używać |
 | :--- | :--- | :--- | :--- |
-| **Dynamiczne Kontrakty Fabryczne (`/kontrakt`)** | **+35% do +55% (+25% co 5. z rzędu!)** | System losuje celowane zlecenie eksportowe dopasowane do Waszego aktualnego Etapu (Stage 0–5) prosto z [prices.json](../config/halucynacje_economy/prices.json). Każdy kolejny kontrakt z rzędu bez rerollu zwiększa premię o `+5%` (do `+55%`), a co 5. kontrakt wypłaca dodatkową premię kamienia milowego `+25%`! | Najwyższa rentowność w grze — motywuje do automatyzacji różnych linii produkcyjnych! |
+| **Dynamiczne Kontrakty Fabryczne (`/kontrakt`)** | **+35% do +55% (+25% co 5. z rzędu!)** | System losuje celowane zlecenie eksportowe dopasowane do Waszego aktualnego Etapu (Stage 0–5) prosto z [prices.json](../config/halucynacje_economy/prices.json). Oddawanie (`/kontrakt oddaj`) odbywa się na **Wyspie-Rynku `(152, 64, 0)`**. Każdy kolejny kontrakt z rzędu bez rerollu zwiększa premię o `+5%` (do `+55%`), a co 5. kontrakt wypłaca dodatkową premię kamienia milowego `+25%`! | Najwyższa rentowność w grze — motywuje do automatyzacji różnych linii produkcyjnych i dostaw na Rynek! |
 | **Fizyczne sklepy NPC na Wyspie-Rynku** (*Lightman's Currency* + *Shoppers*) | **+20% wyższa cena!** | Pociągi Create / Chain Conveyors + Frogporty dowożą towary na tylne korytarze 8 stoisk na Wyspie-Rynku `(152, 64, 0)`. Klienci NPC (`maxShoppers = 10`, bezpieczny promień `4–12` bloków + `VirtualShoppingSimulator` w tle!) kupują towary, a pieniądze trafiają na Wasze **Team Bank Account**. | Główny pasywny silnik zarobku w Stage 1–5 — stały przychód i żywy rynek! |
-| **Rynek Hurtowy (`/sprzedaj` / `/sprzedaj all`) + Boom i Różnorodność** | **100% + do +60% premii dynamicznych!** | Natychmiastowa sprzedaż z ekwipunku za fizyczne monety *Lightman's Currency* (zasilana bezpośrednio z [prices.json](../config/halucynacje_economy/prices.json)). Co **20 minut** losowany jest **Boom Rynkowy (`+40%` ceny)** dla jednego towaru z Waszego Etapu (`/boom`), a sprzedaż **3 / 5 / 7 różnych towarów** w oknie 30 min daje **Premię za Różnorodność (`+10% / +15% / +20%`)**! | Szybki start w Stage 0, polowanie na gorące ceny giełdowe i eksport wieloliniowej fabryki. |
+| **Automatyczny Dok Eksportowy (`/rynek_eksport`)** | **105% (+5% logistyka + Boom/Różnorodność!)** | Podłącz pociąg Create, Chain Conveyor + Frogport lub lejek do skrzyni / beczki / `Create: Item Vault` na **Wyspie-Rynku** i wpisz `/rynek_eksport dodaj` (limit: 4 doki na serwer). Co 30 sekund serwer sam sprzedaje przetworzone towary Tier 1–5 z premią **`+5%`** i przelewa środki prosto na Wasze **Team Bank Account**! | W pełni bezobsługowy, pasywny eksport całych linii produkcyjnych! |
+| **Rynek Hurtowy (`/sprzedaj` / `/sprzedaj all`)** | **100% na Rynku / 85% zdalnie (+ Boom/Różnorodność)** | Natychmiastowa sprzedaż z ekwipunku za fizyczne monety *Lightman's Currency*. Sprzedaż poza Wyspą-Rynkiem pobiera `-15%` opłaty kurierskiej (`85%`), a na Wyspie-Rynku płaci pełne `100%`. Co **20 minut** losowany jest **Boom Rynkowy (`+40%`)** (`/boom`), a **3 / 5 / 7 różnych towarów** w oknie 30 min daje **Premię za Różnorodność (`+10% / +15% / +20%`)**! | Szybki start w Stage 0 i ręczne polowanie na gorące ceny giełdowe. |
 
 ---
 
@@ -37,8 +38,9 @@ Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](..
 
 - **`/ekonomia`** — Twój panel Tycoona: aktualny Etap drużyny, łączne saldo LC (identyczne z TAB: EQ + Portfel + Bank), obrót hurtowy, aktywny **Boom Rynkowy**, **Premia za Różnorodność** oraz ile monet brakuje do kolejnego Żetonu Etapu.
 - **`/boom`** (alias `/gielda`) — pokazuje aktualny **Boom Rynkowy (+40% ceny)** na najbliższe 20 min oraz aktualną **Premię za Różnorodność Fabryki** (`+10% / +15% / +20%`).
+- **`/rynek_eksport dodaj` / `lista` / `usun [nr]` / `odbierz`** — rejestruje kontener (skrzynię, beczkę lub `Create: Item Vault`) na **Wyspie-Rynku** jako **Automatyczny Dok Eksportowy (`105%` + Boom + Różnorodność)** zasilany pociągiem Create lub Chain Conveyorem!
 - **`/cennik [1-5]`** — tabela skupu hurtowego i docelowej ceny NPC `+20%` dla wybranego Tieru (1–5).
-- **`/sprzedaj`** — sprzedaje stack z głównej ręki (respektując `pack_size`, np. pakiety po 16 torów) z automatycznymi premiami Boom/Różnorodności i wypłaca monety *Lightman's Currency*.
+- **`/sprzedaj`** — sprzedaje stack z głównej ręki (`100%` na Wyspie-Rynku, `85%` poza nią + premie Boom/Różnorodności) i wypłaca monety *Lightman's Currency*.
 - **`/sprzedaj all`** — sprzedaje hurtem wszystkie przetworzone towary Tier 1–5 z ekwipunku jednym kliknięciem.
 - **`/sklep`** (lub PPM na bloku `Trading Terminal` na Wyspie-Rynku — zalecamy `/sklep`, bo obsługuje przycisk **„Back to Network Terminal”**) — otwiera **prawdziwe, graficzne GUI Sklepu Sieciowego** (*Lightman's Currency*) zasilane z [config/lightmanscurrency/PersistentTraders.json](../config/lightmanscurrency/PersistentTraders.json) (**10 sklepów, 170 ofert**):
   - **`[KUP] 1. Żetony Etapów`** (`kubejs:stage_1..5_token` za `10k/50k/100k/250k/1M` + `create:creative_motor` za `2M`),
@@ -50,7 +52,7 @@ Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](..
 - **`/sklep lista [0-5]`** (lub `/sklep <0-5>`) — tekstowy podgląd katalogu zakupowego z kategoriami i aliasami do szybkiego `/kup`.
 - **`/kup <alias> [ilość]`** — kupuje wybrany towar za monety z portfela, banku osobistego/drużynowego i ekwipunku (w tym `coinpile`/`coinblock`) i automatycznie wydaje resztę.
 - **`/kontrakt`** — pokazuje aktywny kontrakt fabryczny (towar, ilość, premię serii `+35%..+55%` i licznik serii).
-- **`/kontrakt oddaj`** — pobiera wymagane towary z ekwipunku, wypłaca premię serii (plus `+25%` co 5. kontrakt!) i automatycznie losuje nowe zlecenie dla Waszego Etapu.
+- **`/kontrakt oddaj`** — **na Wyspie-Rynku `(152, 64, 0)`** pobiera wymagane towary z ekwipunku, wypłaca premię serii (plus `+25%` co 5. kontrakt!) i automatycznie losuje nowe zlecenie dla Waszego Etapu.
 - **`/kontrakt nowy`** — losuje inny kontrakt na aktualnym Etapie (cooldown `5 minut`; uwaga: resetuje aktualną serię do `0`).
 
 ---

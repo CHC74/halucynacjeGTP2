@@ -573,6 +573,10 @@ test('economy_contracts.js: losowanie kontraktów per Etap, premia +35%, realiza
       const inv = [Item.of(contract.itemId, contract.requiredCount)];
       const player = {
         username: 'Tycoon',
+        x: 152,
+        y: 65,
+        z: 0,
+        level: { dimension: 'minecraft:overworld' },
         inventory: { getContainerSize: () => inv.length, getItem: (i) => inv[i] },
         give: (st) => inv.push(st),
         tell: () => {}
@@ -910,6 +914,10 @@ test('economy_market.js + economy_contracts.js (#50): Market Boom +40%, Różnor
     const inv = [sandbox.Item.of(c.itemId, c.requiredCount)];
     const p = {
       username: 'StreakTester',
+      x: 152,
+      y: 65,
+      z: 0,
+      level: { dimension: 'minecraft:overworld' },
       inventory: { getContainerSize: () => inv.length, getItem: (idx) => inv[idx] },
       give: (st) => inv.push(st),
       tell: () => {}
@@ -945,4 +953,194 @@ test('economy_market.js + economy_contracts.js (#50): Market Boom +40%, Różnor
   assert(getStreak(server) === 0, 'Reroll resetuje serię kontraktów do 0');
 });
 
-console.log(`🎉 Wszystkie ${passed}/9 pakietów testów KubeJS ZALICZONE!`);
+// 9. Issue #48: Zróżnicowanie marż (85% poza Rynkiem / 100% na Rynku), kotwiczenie /kontrakt oddaj i Automatyczny Dok Eksportowy (105% -> Team Bank)
+test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże Wyspy-Rynku, kontrakty na Rynku i Dok Eksportowy', () => {
+  let teamBankBalance = 0;
+  let bankEnabled = true;
+
+  const makeMoneyVal = (copper) => ({
+    isEmpty: () => copper <= 0,
+    getCoreValue: () => copper
+  });
+
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    Java: {
+      loadClass: (cls) => {
+        if (cls.endsWith('.CoinValue')) {
+          return { fromNumber: (_chain, amt) => makeMoneyVal(Number(amt)) };
+        }
+        if (cls.endsWith('.TeamAPI')) {
+          return {
+            getApi: () => ({
+              GetAllTeamsForPlayer: () =>
+                bankEnabled
+                  ? [
+                      {
+                        getID: () => 42,
+                        hasBankAccount: () => true,
+                        getBankAccount: () => ({
+                          depositMoney: (mv) => {
+                            teamBankBalance += mv.getCoreValue();
+                          }
+                        })
+                      }
+                    ]
+                  : [],
+              GetTeam: (_isClient, id) =>
+                bankEnabled && id === 42
+                  ? {
+                      getID: () => 42,
+                      hasBankAccount: () => true,
+                      getBankAccount: () => ({
+                        depositMoney: (mv) => {
+                          teamBankBalance += mv.getCoreValue();
+                        }
+                      })
+                    }
+                  : null
+            })
+          };
+        }
+        return null;
+      }
+    },
+    ServerEvents: { commandRegistry: () => {}, tick: () => {} },
+    Date,
+    Math,
+    assert
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_contracts.js', 'utf8'), ctx);
+
+  // Przygotuj kontener na Wyspie-Rynku (150, 65, 2) z Tier 0 cobble (nie do ruszenia!) + 10x apple_pie (wholesale=100 -> 1000 bazowo)
+  const dockSlots = [
+    sandbox.Item.of('minecraft:cobblestone', 64),
+    sandbox.Item.of('farmersdelight:apple_pie', 10)
+  ];
+  const dockBlock = {
+    x: 150,
+    y: 65,
+    z: 2,
+    id: 'create:item_vault',
+    inventory: {
+      getContainerSize: () => dockSlots.length,
+      getItem: (idx) => dockSlots[idx],
+      setChanged: () => {}
+    }
+  };
+
+  const server = {
+    persistentData: makeCompound(),
+    tell: () => {},
+    runCommandSilent: () => {},
+    overworld: () => ({
+      isLoaded: () => true,
+      getBlock: (x, y, z) => (x === 150 && y === 65 && z === 2 ? dockBlock : null)
+    })
+  };
+
+  // Ustaw deterministyczny Boom na inny przedmiot (żeby nie zaburzał wyliczeń apple_pie)
+  const boomTag = server.persistentData.getCompound('halucynacje_market_boom');
+  boomTag.putString('itemId', 'minecraft:cookie');
+  boomTag.putInt('basePrice', 6);
+  boomTag.putInt('boostedPrice', 8);
+  boomTag.putInt('packSize', 1);
+  boomTag.putLong('expiresAtMs', Date.now() + 600_000);
+  server.persistentData.put('halucynacje_market_boom', boomTag);
+
+  const sellHand = vm.runInContext('handleSellHand', ctx);
+  const deliverContract = vm.runInContext('handleDeliverContract', ctx);
+  const getContract = vm.runInContext('getOrCreateActiveContract', ctx);
+  const addDock = vm.runInContext('handleAddExportDock', ctx);
+  const processDocks = vm.runInContext('processExportDocksTick', ctx);
+  const claimPending = vm.runInContext('handleClaimExportPending', ctx);
+
+  const coinVals = {
+    'lightmanscurrency:coin_netherite': 100000,
+    'lightmanscurrency:coin_diamond': 10000,
+    'lightmanscurrency:coin_emerald': 1000,
+    'lightmanscurrency:coin_gold': 100,
+    'lightmanscurrency:coin_iron': 10,
+    'lightmanscurrency:coin_copper': 1
+  };
+  const sumCoins = (arr) => arr.reduce((a, st) => a + (coinVals[st.id] || 0) * st.count, 0);
+
+  const applePiePrice = prices.sell_tiers.tier_2_kitchen.items.find((x) => x.id === 'farmersdelight:apple_pie').wholesale_gui;
+
+  // A) Poza Wyspą-Rynkiem (0, 65, 0): /sprzedaj płaci 85%
+  const remoteInv = [];
+  const remotePlayer = {
+    username: 'RemotePlayer',
+    x: 0,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld' },
+    mainHandItem: sandbox.Item.of('farmersdelight:apple_pie', 1),
+    inventory: { getContainerSize: () => remoteInv.length, getItem: (idx) => remoteInv[idx] },
+    give: (st) => remoteInv.push(st),
+    tell: () => {},
+    rayTrace: () => ({ block: { x: 0, y: 65, z: 2, id: 'minecraft:chest', inventory: { getContainerSize: () => 0 } } })
+  };
+  assert(sellHand(remotePlayer, server) === 1, 'Zdalne /sprzedaj działa');
+  assert(
+    sumCoins(remoteInv) === Math.round(applePiePrice * 0.85),
+    `Zdalne /sprzedaj płaci dokładnie 85% (${sumCoins(remoteInv)} === ${Math.round(applePiePrice * 0.85)})`
+  );
+
+  // B) Na Wyspie-Rynku (152, 65, 0): /sprzedaj płaci 100%
+  const marketInv = [];
+  const marketPlayer = {
+    username: 'MarketPlayer',
+    x: 152,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld' },
+    mainHandItem: sandbox.Item.of('farmersdelight:apple_pie', 1),
+    inventory: { getContainerSize: () => marketInv.length, getItem: (idx) => marketInv[idx] },
+    give: (st) => marketInv.push(st),
+    tell: () => {},
+    rayTrace: () => ({ block: dockBlock })
+  };
+  assert(sellHand(marketPlayer, server) === 1, 'Na Rynku /sprzedaj działa');
+  assert(sumCoins(marketInv) === applePiePrice, `Na Rynku /sprzedaj płaci dokładnie 100% (${applePiePrice})`);
+
+  // C) /kontrakt oddaj: zablokowany na Wyspie Startowej, działa na Wyspie-Rynku
+  const c = getContract(server);
+  remoteInv.push(sandbox.Item.of(c.itemId, c.requiredCount));
+  assert(deliverContract(remotePlayer, server) === 0, '/kontrakt oddaj zablokowany poza Wyspą-Rynkiem');
+  marketInv.push(sandbox.Item.of(c.itemId, c.requiredCount));
+  assert(deliverContract(marketPlayer, server) === 1, '/kontrakt oddaj udany na Wyspie-Rynku');
+
+  // D) Rejestracja Doku Eksportowego: zablokowana poza Rynkiem, dozwolona na Rynku
+  assert(addDock(remotePlayer, server) === 0, 'Dok eksportowy zablokowany poza Wyspą-Rynkiem');
+  assert(addDock(marketPlayer, server) === 1, 'Dok eksportowy zarejestrowany na Wyspie-Rynku (Item Vault)');
+
+  // E) Tick Doku Eksportowego: 10x apple_pie * 1.05 trafia do Team Bank #42, cobblestone nietknięty!
+  const expectedDock10 = Math.round(applePiePrice * 10 * 1.05);
+  const tickRes = processDocks(server, Date.now());
+  assert(tickRes.itemsSold === 10, 'Dok sprzedał dokładnie 10x apple_pie');
+  assert(tickRes.deposited === expectedDock10, `Dok przelał ${expectedDock10} monet (+5% logistyka) do Team Bank #42`);
+  assert(teamBankBalance === expectedDock10, `Saldo Team Bank #42 wzrosło dokładnie o ${expectedDock10}`);
+  assert(dockSlots[0].count === 64, 'Surowiec Tier 0 (cobblestone) w Doku pozostał nietknięty');
+  assert(dockSlots[1].count === 0, 'Przetworzony towar został opróżniony z Doku');
+
+  // F) Fallback bez banku -> trafia do pending i daje się odebrać przez /rynek_eksport odbierz
+  bankEnabled = false;
+  const expectedDock2 = Math.round(applePiePrice * 2 * 1.05);
+  dockSlots[1] = sandbox.Item.of('farmersdelight:apple_pie', 2);
+  const tickRes2 = processDocks(server, Date.now());
+  assert(tickRes2.deposited === 0 && tickRes2.pendingAdded === expectedDock2, `Bez banku ${expectedDock2} monet trafia bezpiecznie do pending`);
+  const claimInv = [];
+  const claimPlayer = { username: 'MarketPlayer', give: (st) => claimInv.push(st), tell: () => {} };
+  assert(claimPending(claimPlayer, server) === 1, '/rynek_eksport odbierz udany');
+  assert(sumCoins(claimInv) === expectedDock2, `Odebrano dokładnie ${expectedDock2} monet bez strat`);
+});
+
+console.log(`🎉 Wszystkie ${passed}/10 pakietów testów KubeJS ZALICZONE!`);
