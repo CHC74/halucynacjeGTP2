@@ -13,12 +13,12 @@
 		{
 			dependencies: ["B300000000000006"]
 			description: [
-				"Kup &6Żeton Etapu 4: High-Tech i End&r (&e250 000 monet&r) i kliknij &aPPM&r, aby otworzyć ostatni wymiar i pełną erę High-Tech!"
+				"Kup &6Żeton Etapu 4: High-Tech i End&r (&e250 000 monet&r) w &f/sklep&r (&b[KUP] 1. Żetony Etapów&r) i kliknij &aPPM&r, aby otworzyć ostatni wymiar i pełną erę High-Tech!"
 				""
-				"&eOdblokowania Etapu 4:&r"
-				"• &5Normalny End&r (Smok Endu, Elytry, Shulkery, pełna generacja waniliowa)."
-				"• Pełne skalowanie &bApplied Energistics 2&r + &bCreate: Applied Kinetics&r."
-				"• Pełne wejście w &bMekanism&r i &bMekanism Generators&r."
+				"&eOdblokowania i Perki Etapu 4:&r"
+				"• &5Normalny End&r (Smok Endu, Elytry, Shulkery; ramy portalu w &b[KUP] 5&r)."
+				"• &aPerki:&r &e+10 FTB Chunks force-load&r, &a+8% premii skupu&r oraz &b6 Doków Eksportowych&r."
+				"• Pełne &bAE2&r + &bCreate: Applied Kinetics&r, &bMekanism&r oraz &bSuperheated Mixing&r (&fFluorite&r i &fRaw Uranium&r w JEI)!"
 			]
 			icon: {
 				id: "kubejs:stage_4_token"

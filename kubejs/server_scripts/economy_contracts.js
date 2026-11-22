@@ -348,6 +348,147 @@ function handleRerollContract(player, server) {
   return 1;
 }
 
+// ----------------------------------------------------------------------------
+// Wielki Finał Tycoona — Survivalowy Mega-Kontrakt Endgame (Stage 5, Issue #51)
+// Zastępuje kupowanie Creative Motor: wymaga zautomatyzowanych dostaw ze
+// wszystkich 5 filarów paczki i nagradza Trofeum Imperium Tycoona + 500k monet!
+// ----------------------------------------------------------------------------
+const ENDGAME_FINALE_TROPHY_ID = 'kubejs:tycoon_empire_trophy';
+const ENDGAME_FINALE_PAYOUT = 500000;
+const ENDGAME_FINALE_REQUIREMENTS = [
+  { id: 'farmersdelight:hamburger', count: 64, label: 'Kuchnia (Farmer\'s Delight)' },
+  { id: 'create_confectionery:bar_of_ruby_chocolate', count: 64, label: 'Cukiernia (Confectionery)' },
+  { id: 'create:precision_mechanism', count: 32, label: 'Inżynieria (Create 6)' },
+  { id: 'ae2:cell_component_256k', count: 4, label: 'Cyfrowy Mózg (AE2)' },
+  { id: 'mekanism:pellet_polonium', count: 4, label: 'Energia Jądrowa (Mekanism)' }
+];
+
+function handleShowFinaleContract(player, server) {
+  var stage = getCurrentUnlockedStage(player, server);
+  var stats = server && server.persistentData ? server.persistentData.getCompound(CONTRACT_STATS_KEY) : null;
+  var timesDone = stats ? Number(stats.getInt('finale_completed') || 0) : 0;
+  var i = 0;
+  var req = null;
+  var have = 0;
+  var readyAll = true;
+
+  player.tell(Text.gold('=== 🏆 WIELKI FINAŁ TYCOONA — Mega-Kontrakt Endgame (Stage 5) ==='));
+  if (stage < 5) {
+    player.tell(
+      Text.yellow(`• Wymagany odblokowany Etap 5: Imperium Tycoona (obecnie: Stage ${stage} / 5).`)
+    );
+  }
+  for (i = 0; i < ENDGAME_FINALE_REQUIREMENTS.length; i++) {
+    req = ENDGAME_FINALE_REQUIREMENTS[i];
+    have = countItemInInventory(player, req.id);
+    if (have < req.count) readyAll = false;
+    player.tell(
+      (have >= req.count ? Text.green('  ✔ ') : Text.red('  ✘ '))
+        .append(Text.aqua(`${req.count}x ${req.id}`))
+        .append(Text.gray(` [${req.label}] — masz: ${have}/${req.count}`))
+    );
+  }
+  player.tell(
+    Text.white('• Nagroda: ')
+      .append(Text.gold('Trofeum Imperium Tycoona'))
+      .append(Text.white(' + '))
+      .append(Text.gold(`${formatCoins(ENDGAME_FINALE_PAYOUT)} monet`))
+      .append(Text.gray(` (ukończono: ${timesDone}x)`))
+  );
+  player.tell(
+    readyAll && stage >= 5
+      ? Text.green('Wszystkie 5 filarów gotowe! Stań na Wyspie-Rynku (152,64,0) i wpisz /kontrakt final oddaj!')
+      : Text.gray('Dostarcz wszystkie 5 filarów na Wyspę-Rynek (152,64,0) i wpisz /kontrakt final oddaj.')
+  );
+  return 1;
+}
+
+function handleDeliverFinaleContract(player, server) {
+  var stage = getCurrentUnlockedStage(player, server);
+  var i = 0;
+  var req = null;
+  var have = 0;
+  var missing = [];
+  var coinStacks = null;
+  var cIdx = 0;
+  var stats = null;
+  var doneCount = 1;
+
+  if (stage < 5) {
+    player.tell(
+      Text.red(
+        `[Wielki Finał] Mega-Kontrakt wymaga odblokowanego Etapu 5 (obecnie Stage ${stage}/5)!`
+      )
+    );
+    return 0;
+  }
+
+  if (typeof isPlayerOnMarketIsland === 'function' && !isPlayerOnMarketIsland(player)) {
+    player.tell(
+      Text.red(
+        `[Wielki Finał] Mega-Kontrakt oddaje się wyłącznie na Wyspie-Rynku (${MARKET_ISLAND_CENTER.x}, ${MARKET_ISLAND_CENTER.y}, ${MARKET_ISLAND_CENTER.z})!`
+      )
+    );
+    return 0;
+  }
+
+  // Faza 1: Atomowe sprawdzenie wszystkich 5 składników zanim cokolwiek zabierzemy
+  for (i = 0; i < ENDGAME_FINALE_REQUIREMENTS.length; i++) {
+    req = ENDGAME_FINALE_REQUIREMENTS[i];
+    have = countItemInInventory(player, req.id);
+    if (have < req.count) {
+      missing.push(`${req.id} (${have}/${req.count})`);
+    }
+  }
+
+  if (missing.length > 0) {
+    player.tell(
+      Text.yellow(`[Wielki Finał] Brakuje składników: ${missing.join(', ')}. Wpisz /kontrakt final.`)
+    );
+    return 0;
+  }
+
+  // Faza 2: Pobranie wszystkich 5 stosów i wydanie Trofeum + 500 000 monet
+  for (i = 0; i < ENDGAME_FINALE_REQUIREMENTS.length; i++) {
+    req = ENDGAME_FINALE_REQUIREMENTS[i];
+    removeItemFromInventory(player, req.id, req.count);
+  }
+
+  player.give(Item.of(ENDGAME_FINALE_TROPHY_ID, 1));
+  coinStacks = splitIntoCoinStacks(ENDGAME_FINALE_PAYOUT);
+  for (cIdx = 0; cIdx < coinStacks.length; cIdx++) {
+    player.give(Item.of(coinStacks[cIdx].id, coinStacks[cIdx].count));
+  }
+
+  if (server && server.persistentData) {
+    stats = server.persistentData.getCompound(CONTRACT_STATS_KEY);
+    doneCount = Number(stats.getInt('finale_completed') || 0) + 1;
+    stats.putInt('finale_completed', doneCount);
+    stats.putLong('total_payout', Number(stats.getLong('total_payout') || 0) + ENDGAME_FINALE_PAYOUT);
+    server.persistentData.put(CONTRACT_STATS_KEY, stats);
+  }
+
+  if (typeof syncPlayerTabBalance === 'function') {
+    syncPlayerTabBalance(player, server, true);
+  }
+
+  if (server && typeof server.tell === 'function') {
+    server.tell(
+      Text.gold(`🏆★ [WIELKI FINAŁ TYCOONA #${doneCount}] `)
+        .append(Text.green(`${player.username}`))
+        .append(Text.white(' zjednoczył(a) wszystkie 5 filarów fabryki i zdobył(a) '))
+        .append(Text.aqua('Trofeum Imperium Tycoona'))
+        .append(Text.gold(` + ${formatCoins(ENDGAME_FINALE_PAYOUT)} monet! ★🏆`))
+    );
+  }
+  if (server && typeof server.runCommandSilent === 'function') {
+    server.runCommandSilent(
+      `execute at ${player.username} run playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 1.0 1.0`
+    );
+  }
+  return 1;
+}
+
 ServerEvents.commandRegistry((event) => {
   const { commands: Commands } = event;
   event.register(
@@ -370,6 +511,21 @@ ServerEvents.commandRegistry((event) => {
           if (!player) return 0;
           return handleRerollContract(player, ctx.source.server);
         })
+      )
+      .then(
+        Commands.literal('final')
+          .executes((ctx) => {
+            const player = ctx.source.player;
+            if (!player) return 0;
+            return handleShowFinaleContract(player, ctx.source.server);
+          })
+          .then(
+            Commands.literal('oddaj').executes((ctx) => {
+              const player = ctx.source.player;
+              if (!player) return 0;
+              return handleDeliverFinaleContract(player, ctx.source.server);
+            })
+          )
       )
   );
 });

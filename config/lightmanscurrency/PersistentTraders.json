@@ -4,7 +4,7 @@
       "Type": "lightmanscurrency:item_trader",
       "ID": "halucynacje_kup_01_etapy",
       "Name": "[KUP] 1. Żetony Etapów",
-      "OwnerName": "Stage 1-5 i Creative Motor",
+      "OwnerName": "Stage 1-5 (10k..1M monet)",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -106,24 +106,6 @@
             ]
           },
           "DisplayName": "Żeton Etapu 5: Imperium Tycoona"
-        },
-        {
-          "TradeType": "SALE",
-          "SellItem": {
-            "id": "create:creative_motor",
-            "count": 1
-          },
-          "Price": {
-            "type": "lightmanscurrency:coins",
-            "Chain": "main",
-            "Value": [
-              {
-                "Coin": "lightmanscurrency:coin_netherite",
-                "Amount": 20
-              }
-            ]
-          },
-          "DisplayName": "Creative Motor (Prestiż 2M — cel końcowy)"
         }
       ]
     },

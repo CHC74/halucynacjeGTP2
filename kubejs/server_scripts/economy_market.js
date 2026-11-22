@@ -1219,7 +1219,7 @@ function handleShowEconomyStatus(player, server) {
     );
   } else {
     player.tell(
-      Text.gold('★ Osiągnięto Stage 5! Opcjonalny cel flex: /kup creative_motor (2 000 000 monet, limit 2 szt.).')
+      Text.gold('★ Osiągnięto Stage 5! Ostateczny cel survivalowy: /kontrakt final (Wielki Finał -> Trofeum Imperium + 500 000 monet)!')
     );
   }
   player.tell(

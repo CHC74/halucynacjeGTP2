@@ -59,4 +59,15 @@ StartupEvents.registry('item', (event) => {
       .tooltip(Text.aqua(`Odblokowuje: ${token.unlocks}`))
       .tooltip(Text.gray('Kliknij PPM, aby aktywować etap dla siebie i serwera/drużyny.'));
   });
+
+  // Survivalowy cel endgame (Issue #51 — zastępuje Creative Motor)
+  event
+    .create('tycoon_empire_trophy')
+    .displayName('Trofeum Imperium Tycoona')
+    .maxStackSize(1)
+    .rarity('epic')
+    .glow(true)
+    .tooltip(Text.gold('Najwyższe odznaczenie inżynieryjne HalucynacjeGTP2'))
+    .tooltip(Text.aqua('Nagroda za ukończenie Wielkiego Finału Tycoona (/kontrakt final)'))
+    .tooltip(Text.gray('Zdobądź na Etapie 5, dostarczając na Wyspę-Rynek wszystkie 5 filarów paczki.'));
 });
