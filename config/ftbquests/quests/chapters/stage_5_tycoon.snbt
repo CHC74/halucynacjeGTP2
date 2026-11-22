@@ -13,9 +13,9 @@
 		{
 			dependencies: ["B400000000000005"]
 			description: [
-				"Ostateczny kamień milowy kampanii! Kup &6Żeton Etapu 5: Imperium Tycoona&r (&e1 000 000 monet&r) i kliknij &aPPM&r, aby oficjalnie zdobyć &6Certyfikat Imperium Tycoona&r dla całej drużyny!"
+				"Ostateczny kamień milowy kampanii! Kup &6Żeton Etapu 5: Imperium Tycoona&r (&e1 000 000 monet&r) w &f/sklep&r (&b[KUP] 1. Żetony Etapów&r) i kliknij &aPPM&r, aby oficjalnie zdobyć &6Certyfikat Imperium Tycoona&r dla całej drużyny!"
 				""
-				"Odblokowujesz kategorię endgame w Trading Terminalu, w tym opcjonalny cel prestiżowy: zakup &bCreative Motor&r za dodatkowe &e2 000 000 monet&r."
+				"Odblokowujesz kategorię endgame w &f/sklep&r, w tym opcjonalny cel prestiżowy: zakup &bCreative Motor&r za dodatkowe &e2 000 000 monet&r (limit 2 szt./drużynę). Sprawdź statystyki całego imperium pod &f/ekonomia top&r!"
 			]
 			icon: {
 				id: "kubejs:stage_5_token"
@@ -69,7 +69,7 @@
 				"Zwieńczenie logistyki Skyblocka: zamknij pełną &b3-stacyjną pętlę kolejową&r łączącą:"
 				"• &fWyspę Startową (0, 64, 0)&r"
 				"• &fWyspę Przemysłową (0, 64, 152)&r"
-				"• &fWyspę-Rynek (152, 64, 0)&r"
+				"• &fWyspę-Rynek (152, 64, 0)&r z podpiętymi &bAutomatycznymi Dokami Eksportowymi&r (&f/rynek_eksport&r) i stoiskami NPC!"
 				""
 				"Pociągi, Frogporty, Packagery i Hypertubes pracujące razem jak szwajcarski zegarek to esencja HalucynacjeGTP2!"
 			]

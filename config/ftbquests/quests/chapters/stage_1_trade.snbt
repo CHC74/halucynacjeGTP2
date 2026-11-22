@@ -13,11 +13,12 @@
 		{
 			dependencies: ["B000000000000007"]
 			description: [
-				"Kup &6Żeton Etapu 1: Rzemiosło i Handel&r (&e10 000 monet&r) w Pawilonie Centralnym na Wyspie-Rynku &b(152, 64, 0)&r i kliknij nim &aPPM&r, aby odblokować Etap 1 dla całej drużyny co-op!"
+				"Kup &6Żeton Etapu 1: Rzemiosło i Handel&r (&e10 000 monet&r) w &f/sklep&r (&b[KUP] 1. Żetony Etapów&r) lub wpisz &f/kup stage_1&r i kliknij nim &aPPM&r, aby odblokować Etap 1 dla całej drużyny co-op!"
 				""
-				"&eOdblokowania Etapu 1:&r"
-				"• Kategoria sklepu: &bGastronomia & Rolnictwo&r (egzotyczne sadzonki, kakaowiec, kelp, startowe Blaze Burnery)."
-				"• Wyższe tiery skrzyń &bSophisticated Storage&r oraz pierwsze materiały kolejowe."
+				"&eOdblokowania Etapu 1 w /sklep:&r"
+				"• &b[KUP] 3. Zwierzęta i Hodowla&r (krowy, owce, świnie, kury, pszczoły, ryby)."
+				"• &b[KUP] 4. Skyblock i Bloki&r (w tym &fSoul Sand&r pod wczesne Bulk Haunting, lód, mech, dripstone, budding amethyst)."
+				"• &b[KUP] 5. Maszyny i High-Tech&r (startowe &fBlaze Burnery&r, &fWarp Stone&r, przenośny &fTrading Terminal&r)."
 				""
 				"&7Zadanie aktywacji zalicza się automatycznie w chwili użycia żetonu (KubeJS).&r"
 			]
@@ -121,6 +122,7 @@
 				""
 				"• Na Pirsie Wschodnim Wyspy Startowej &b(+8, 72, 0)&r masz gotowy maszt startowy."
 				"• Pakuj gotowe posiłki przez &bPackager&r, nadaj im adres stoiska i wysyłaj &bPackage Frogportami&r prosto do korytarza serwisowego Wyspy-Rynku &b(152, 64, 0)&r!"
+				"• Wskazówka: skieruj Frogport do &fCreate: Item Vault&r na Wyspie-Rynku i wpisz &f/rynek_eksport dodaj&r, aby automatycznie eksportować towary z premią &a+5%&r prosto do Banku Drużyny!"
 			]
 			id: "B100000000000003"
 			rewards: [
@@ -214,8 +216,8 @@
 				""
 				"• &fTerracotta&r -> &fMillstone&r -> &fRed Sand&r (lub &fSand + Red Dye&r w Mikserze)."
 				"• &fCobblestone + Red Sand + Lava&r -> &fNetherrack&r (pod &fEmpty Blaze Burner&r i &fCinder Flour&r)."
-				"• &fSand&r -> &fBulk Haunting&r -> &fSoul Sand&r -> &fBulk Washing&r -> &fNether Quartz&r."
-				"• Pierwsze napełnione Blaze Burnery możesz kupić w sklepie Etapu 1, a po odblokowaniu Netheru złapiesz ich dowolną liczbę!"
+				"• Startowy &fSoul Sand&r kupisz w &f/sklep&r (&b[KUP] 4. Skyblock i Bloki&r), a potem &fSand&r -> &fBulk Haunting&r -> &fSoul Sand&r -> &fBulk Washing&r -> &fNether Quartz&r."
+				"• Pierwsze napełnione Blaze Burnery kupisz w &b[KUP] 5. Maszyny i High-Tech&r, a po odblokowaniu Netheru złapiesz ich dowolną liczbę!"
 			]
 			id: "B100000000000005"
 			rewards: [

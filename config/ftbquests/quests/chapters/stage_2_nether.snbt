@@ -13,11 +13,11 @@
 		{
 			dependencies: ["B100000000000005"]
 			description: [
-				"Kup &6Żeton Etapu 2: Ekspansja i Nether&r (&e50 000 monet&r) i kliknij &aPPM&r, aby zdjąć blokadę portalu Netheru dla całej drużyny!"
+				"Kup &6Żeton Etapu 2: Ekspansja i Nether&r (&e50 000 monet&r) w &f/sklep&r (&b[KUP] 1. Żetony Etapów&r) i kliknij &aPPM&r, aby zdjąć blokadę portalu Netheru dla całej drużyny!"
 				""
 				"&eOdblokowania Etapu 2:&r"
 				"• &cNormalny Nether&r (pełna generacja waniliowa — fortece, morza lawy, kwarc)."
-				"• Kategoria sklepu: &bPrzemysł & Kolej&r (*Steam 'n' Rails*, *Hypertubes*, *Create: Confectionery*, *Enchantment Industry*, silniki elektryczne C&A)."
+				"• Nowe pozycje w &f/sklep&r: &bOsadnik&r (&b[KUP] 3&r pod *Create: Trading Floor*), &bWaystone&r (&b[KUP] 5&r) oraz kolej *Steam 'n' Rails*, *Hypertubes* i słodycze *Create: Confectionery*."
 				""
 				"&cPrzypomnienie anty-exploit:&r surowe bloki z Netheru (netherrack, kwarc, złoto) sprzedają się za &c0 monet&r — używaj ich jako taniego surowca dla swoich fabryk!"
 			]

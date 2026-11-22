@@ -1229,4 +1229,47 @@ test('economy_market.js + assets (#53): kamienie milowe Tycoona (jednorazowe), /
   assert(joined.includes('100 000 monet'), '/ekonomia top pokazuje kolejny kamień milowy (100k)');
 });
 
-console.log(`🎉 Wszystkie ${passed}/11 pakietów testów KubeJS ZALICZONE!`);
+// 11. Issue #52: Walidacja SNBT FTB Quests (unikalność ID, bilans nawiasów, dotacja startowa Stage 0 = 1500 monet)
+test('config/ftbquests (#52): poprawne SNBT, brak duplikatów ID i nagrody startowe LC w Stage 0', () => {
+  const chaptersDir = 'config/ftbquests/quests/chapters';
+  const files = fs.readdirSync(chaptersDir).filter((f) => f.endsWith('.snbt')).sort();
+  assert(files.length >= 6, 'Oczekiwano >= 6 rozdziałów FTB Quests');
+
+  const seenIds = new Map();
+  for (const file of files) {
+    const raw = fs.readFileSync(`${chaptersDir}/${file}`, 'utf8');
+    // Sprawdź bilans nawiasów { } i [ ] poza stringami
+    let braces = 0;
+    let brackets = 0;
+    let inStr = false;
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      if (ch === '"' && raw[i - 1] !== '\\') {
+        inStr = !inStr;
+        continue;
+      }
+      if (inStr) continue;
+      if (ch === '{') braces++;
+      else if (ch === '}') braces--;
+      else if (ch === '[') brackets++;
+      else if (ch === ']') brackets--;
+      assert(braces >= 0 && brackets >= 0, `Niepoprawny nawias zamykający w ${file}`);
+    }
+    assert(braces === 0 && brackets === 0 && !inStr, `Niedomknięty nawias/string w ${file}`);
+
+    // Unikalność wszystkich 16-znakowych ID hex (rozdział, quest, task, reward)
+    for (const m of raw.matchAll(/\bid:\s*"([0-9A-F]{16})"/g)) {
+      const id = m[1];
+      assert(!seenIds.has(id), `Duplikat ID FTB Quests "${id}" w ${file} (już w ${seenIds.get(id)})`);
+      seenIds.set(id, file);
+    }
+  }
+
+  // Weryfikacja nagród monetowych Stage 0 (250 + 500 + 750 = 1500 monet)
+  const s0 = fs.readFileSync(`${chaptersDir}/stage_0_start.snbt`, 'utf8');
+  assert(s0.includes('D000000000000202') && s0.includes('lightmanscurrency:coin_iron'), 'Nagroda +250c za Mechanical Extruder');
+  assert(s0.includes('D000000000000403') && s0.includes('lightmanscurrency:coin_gold'), 'Nagroda +500c za Bulk Washing');
+  assert(s0.includes('D000000000000603') && s0.includes('D000000000000604'), 'Nagroda +750c za Pierwszą Kuchnię');
+});
+
+console.log(`🎉 Wszystkie ${passed}/12 pakietów testów KubeJS ZALICZONE!`);

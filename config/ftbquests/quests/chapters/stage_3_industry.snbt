@@ -16,11 +16,11 @@
 				"B200000000000006"
 			]
 			description: [
-				"Kup &6Żeton Etapu 3: Przemysł Ciężki&r (&e100 000 monet&r) i kliknij &aPPM&r!"
+				"Kup &6Żeton Etapu 3: Przemysł Ciężki&r (&e100 000 monet&r) w &f/sklep&r (&b[KUP] 1. Żetony Etapów&r) i kliknij &aPPM&r!"
 				""
 				"&eOdblokowania Etapu 3:&r"
-				"• Kategoria sklepu: &bZaawansowana Inżynieria&r (rzadkie minerały startowe pod AE2: Certus Quartz / Sky Stone, elementy bazowe pod Mekanism)."
-				"• Narzędzia przemysłowe (*Create: Trading Floor*, *Create: Stuff 'N Additions*, wyższe tiery *Building Gadgets 2*)."
+				"• &b[KUP] 5. Maszyny i High-Tech&r: startowe &fSky Stone&r, &fFlawless Budding Quartz&r, wszystkie &f4 matryce AE2 Inscriber Press&r oraz startowe sztabki &bMekanism&r (Osmium, Tin, Lead)."
+				"• &bOdnawialne rudy Mekanism w Create (JEI)&r: &fHeated Mixing&r pozwala produkować nieskończone &fraw_tin&r, &fraw_lead&r i &fraw_osmium&r pod 3x–5x mnożniki rud Mekanism!"
 			]
 			icon: {
 				id: "kubejs:stage_3_token"
