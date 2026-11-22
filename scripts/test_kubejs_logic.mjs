@@ -1161,4 +1161,72 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
   assert(sumCoins(claimInv) === expectedDock2, `Odebrano dokładnie ${expectedDock2} monet bez strat`);
 });
 
-console.log(`🎉 Wszystkie ${passed}/10 pakietów testów KubeJS ZALICZONE!`);
+// 10. Issue #53: Ogłoszenia kamieni milowych Tycoona, /ekonomia top oraz weryfikacja tekstur 16x16 Żetonów Etapów
+test('economy_market.js + assets (#53): kamienie milowe Tycoona (jednorazowe), /ekonomia top i tekstury 16x16 Żetonów Etapów', () => {
+  // A) Weryfikacja 5 tekstur PNG 16x16 i modeli item/generated w kubejs/assets/kubejs/
+  for (let s = 1; s <= 5; s++) {
+    const texPath = `kubejs/assets/kubejs/textures/item/stage_${s}_token.png`;
+    const modelPath = `kubejs/assets/kubejs/models/item/stage_${s}_token.json`;
+    assert(fs.existsSync(texPath), `Brak tekstury ${texPath}`);
+    assert(fs.existsSync(modelPath), `Brak modelu ${modelPath}`);
+    const png = fs.readFileSync(texPath);
+    assert(png.slice(0, 8).toString('hex') === '89504e470d0a1a0a', `${texPath} musi być poprawnym PNG`);
+    const width = png.readUInt32BE(16);
+    const height = png.readUInt32BE(20);
+    assert(width === 16 && height === 16, `${texPath} musi mieć wymiary 16x16 (jest ${width}x${height})`);
+    const model = JSON.parse(fs.readFileSync(modelPath, 'utf8'));
+    assert(model.textures && model.textures.layer0 === `kubejs:item/stage_${s}_token`, `Poprawny layer0 w ${modelPath}`);
+  }
+
+  // B) Kamienie milowe (10k, 50k...) odpalają się DOKŁADNIE RAZ + ranking w /ekonomia top
+  const broadcasts = [];
+  const cmds = [];
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { commandRegistry: () => {}, tick: () => {} },
+    Date,
+    Math,
+    assert
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const server = {
+    persistentData: makeCompound(),
+    tell: (t) => broadcasts.push(t.s),
+    runCommandSilent: (c) => cmds.push(c)
+  };
+
+  const recordStats = vm.runInContext('recordExportStats', ctx);
+  const showTop = vm.runInContext('handleShowEconomyTop', ctx);
+
+  // 1) Eksport 9 000 -> jeszcze bez kamienia milowego
+  let trig = recordStats(server, 9000, 150, 'Alice', [{ itemId: 'farmersdelight:hamburger', soldItems: 150, payout: 9000 }]);
+  assert(trig.length === 0 && broadcasts.length === 0, 'Poniżej 10k brak ogłoszenia milowego');
+
+  // 2) Eksport +45 000 (łącznie 54 000) -> odpala 10k i 50k (2 ogłoszenia)
+  trig = recordStats(server, 45000, 100, '[Dok Eksportowy]', [{ itemId: 'create:precision_mechanism', soldItems: 100, payout: 45000 }]);
+  assert(trig.length === 2, 'Przekroczenie 54k wyzwala kamienie 10k i 50k');
+  assert(broadcasts.length === 2, 'Wysłano dokładnie 2 ogłoszenia milowe');
+
+  // 3) Kolejny eksport +1 000 (55 000) -> ZERO duplikatów!
+  trig = recordStats(server, 1000, 10, 'Alice', [{ itemId: 'farmersdelight:hamburger', soldItems: 10, payout: 1000 }]);
+  assert(trig.length === 0 && broadcasts.length === 2, 'Raz zdobyte kamienie milowe nie duplikują ogłoszeń');
+
+  // 4) /ekonomia top wypisuje ranking produktów (precision_mechanism > hamburger) i eksporterów ([Dok Eksportowy] > Alice)
+  const topLines = [];
+  const viewer = { username: 'Alice', tell: (t) => topLines.push(t.s) };
+  assert(showTop(viewer, server) === 1, '/ekonomia top zwraca 1');
+  const joined = topLines.join('\n');
+  assert(joined.includes('create:precision_mechanism') && joined.includes('farmersdelight:hamburger'), '/ekonomia top zawiera oba produkty');
+  assert(joined.indexOf('create:precision_mechanism') < joined.indexOf('farmersdelight:hamburger'), 'precision_mechanism jest przed hamburgerem w TOP');
+  assert(joined.includes('[Dok Eksportowy]') && joined.includes('Alice'), '/ekonomia top zawiera eksporterów');
+  assert(joined.includes('100 000 monet'), '/ekonomia top pokazuje kolejny kamień milowy (100k)');
+});
+
+console.log(`🎉 Wszystkie ${passed}/11 pakietów testów KubeJS ZALICZONE!`);

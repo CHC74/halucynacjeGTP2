@@ -71,35 +71,7 @@ const DIMENSION_REQUIREMENTS = {
   }
 };
 
-/**
- * Normalizuje dowolną reprezentację wymiaru z KubeJS 7 / NeoForge 1.21.1
- * do kanonicznego formatu `namespace:path` (np. `'minecraft:the_nether'`).
- * Obsługuje:
- * - obiekty ResourceKey z metodą `.location()`,
- * - stringi postaci `ResourceKey[minecraft:dimension / minecraft:the_nether]`,
- * - czyste stringi `'minecraft:the_nether'`.
- */
-function normalizeDimensionId(dimLike) {
-  if (!dimLike) {
-    return '';
-  }
-
-  try {
-    if (typeof dimLike.location === 'function') {
-      return String(dimLike.location()).trim();
-    }
-  } catch (e) {
-    // Fallback na konwersję tekstową poniżej
-  }
-
-  const raw = String(dimLike).trim();
-  const rkMatch = raw.match(/\/\s*([a-z0-9_.-]+:[a-z0-9_./-]+)\s*\]/i);
-  if (rkMatch && rkMatch[1]) {
-    return rkMatch[1].trim();
-  }
-
-  return raw;
-}
+// `normalizeDimensionId(dimLike)` jest zdefiniowane centralnie w `shared_economy.js` (priority: 100).
 
 /**
  * Bezpiecznie wyciąga kanoniczne ID wymiaru z obiektu `level` (KubeJS 7 / NeoForge 1.21.1).

@@ -3,11 +3,10 @@
 // HalucynacjeGTP2 — Rejestracja Żetonów Etapów (Stage Tokens)
 // Platforma: Minecraft 1.21.1 | NeoForge | KubeJS 7
 //
-// UWAGA DO WERYFIKACJI NA PIERWSZYM URUCHOMIENIU SERWERA 1.21.1:
-// - Potwierdzić dokładną składnię KubeJS 7 (1.21.1) dla `.tooltip(...)`,
-//   `.glow(true)` oraz `.rarity(...)` w `StartupEvents.registry('item', ...)`.
-// - Docelowo dodać własne tekstury w `kubejs/assets/kubejs/textures/item/`
-//   oraz ewentualne tłumaczenia w `kubejs/assets/kubejs/lang/pl_pl.json`.
+// Zasoby klienckie (zweryfikowane w CI — Issue #53):
+// - Tekstury 16x16 RGBA: `kubejs/assets/kubejs/textures/item/stage_1..5_token.png`
+// - Modele item/generated: `kubejs/assets/kubejs/models/item/stage_1..5_token.json`
+// - Polskie nazwy: `kubejs/assets/kubejs/lang/pl_pl.json`
 // ============================================================================
 
 const STAGE_TOKENS = [

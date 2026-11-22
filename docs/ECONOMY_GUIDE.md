@@ -37,6 +37,7 @@ Cała ekonomia serwera korzysta z 6 fizycznych nominałów monet (przelicznik dz
 Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](../kubejs/server_scripts/economy_market.js), a system dynamicznych zleceń — [kubejs/server_scripts/economy_contracts.js](../kubejs/server_scripts/economy_contracts.js):
 
 - **`/ekonomia`** — Twój panel Tycoona: aktualny Etap drużyny, łączne saldo LC (identyczne z TAB: EQ + Portfel + Bank), obrót hurtowy, aktywny **Boom Rynkowy**, **Premia za Różnorodność** oraz ile monet brakuje do kolejnego Żetonu Etapu.
+- **`/ekonomia top`** — ranking Tycoona: postęp do kolejnego kamienia milowego (`10k / 50k / 100k / 250k / 500k / 1M` — każdy próg ogłaszany jest na czacie serwera!), **TOP 5 eksportowanych produktów** oraz **ranking eksporterów** (gracze + Automatyczne Doki).
 - **`/boom`** (alias `/gielda`) — pokazuje aktualny **Boom Rynkowy (+40% ceny)** na najbliższe 20 min oraz aktualną **Premię za Różnorodność Fabryki** (`+10% / +15% / +20%`).
 - **`/rynek_eksport dodaj` / `lista` / `usun [nr]` / `odbierz`** — rejestruje kontener (skrzynię, beczkę lub `Create: Item Vault`) na **Wyspie-Rynku** jako **Automatyczny Dok Eksportowy (`105%` + Boom + Różnorodność)** zasilany pociągiem Create lub Chain Conveyorem!
 - **`/cennik [1-5]`** — tabela skupu hurtowego i docelowej ceny NPC `+20%` dla wybranego Tieru (1–5).
