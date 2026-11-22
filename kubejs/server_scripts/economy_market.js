@@ -772,24 +772,48 @@ ServerEvents.commandRegistry((event) => {
   );
 
   // Komenda OP do przeładowania cennika z pliku JSON bez restartu serwera
+  // (odświeża zarówno rynek hurtowy/sklep, jak i ceny NPC Shoppers — Issue #62)
   event.register(
     Commands.literal('halucynacje_reload_economy')
       .requires((src) => src.hasPermission(2))
       .executes((ctx) => {
-        const cat = getMarketCatalog(true);
-        const msg = Text.green(
-          `[HalucynacjeGTP2] Przeładowano prices.json (${Object.keys(cat.sellById).length} skup, ${cat.buyList.length} sklep, ${Object.keys(cat.tier0).length} blokad Tier 0).`
+        var reloadRes = handleReloadEconomy(ctx.source.server);
+        var shoppersNote = reloadRes.shoppers
+          ? reloadRes.shoppers.viaJavaApi
+            ? ` | Shoppers: ${reloadRes.shoppers.total} cen (${reloadRes.shoppers.tier0} Tier 0 + ${reloadRes.shoppers.npc} NPC)`
+            : ` | Shoppers (fallback): ${reloadRes.shoppers.npc} cen NPC`
+          : '';
+        sendCommandFeedback(
+          ctx,
+          Text.green(
+            `[HalucynacjeGTP2] Przeładowano prices.json (${reloadRes.marketSell} skup, ${reloadRes.marketBuy} sklep, ${reloadRes.marketTier0} blokad Tier 0${shoppersNote}).`
+          )
         );
-        try {
-          if (ctx && ctx.source && typeof ctx.source.sendSuccess === 'function') {
-            ctx.source.sendSuccess(msg, true);
-          } else if (ctx && ctx.source && ctx.source.player) {
-            ctx.source.player.tell(msg);
-          }
-        } catch (e) {
-          if (ctx && ctx.source && ctx.source.player) ctx.source.player.tell(msg);
-        }
         return 1;
       })
   );
 });
+
+function handleReloadEconomy(server) {
+  var cat = null;
+  var shoppersRes = null;
+
+  clearPricesJsonCache();
+  cat = getMarketCatalog(true);
+
+  if (typeof applyShoppersTier0ZeroWorth === 'function' && server) {
+    try {
+      shoppersRes = applyShoppersTier0ZeroWorth(server, true);
+    } catch (err) {
+      console.error(`[HalucynacjeGTP2] Błąd synchronizacji Shoppers podczas reloadu ekonomii: ${err}`);
+    }
+  }
+
+  return {
+    catalog: cat,
+    marketSell: Object.keys(cat.sellById).length,
+    marketBuy: cat.buyList.length,
+    marketTier0: Object.keys(cat.tier0).length,
+    shoppers: shoppersRes
+  };
+}

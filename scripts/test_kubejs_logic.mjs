@@ -739,4 +739,97 @@ test('shared_economy.js + economy_market.js (#61): portfel, coinblock, mieszanka
   vm.runInNewContext(src, sandbox);
 });
 
-console.log(`🎉 Wszystkie ${passed}/7 pakietów testów KubeJS ZALICZONE!`);
+// 7. Issue #62: Automatyczny hash prices.json dla Shoppers + /halucynacje_reload_economy odświeża rynek i NPC
+test('economy_anti_exploit.js + economy_market.js (#62): hash prices.json wykrywa edycje, pomija brak zmian, a reload odświeża oba cache', () => {
+  const antiSrc = fs.readFileSync('kubejs/server_scripts/economy_anti_exploit.js', 'utf8');
+  assert(!/\bSHOPPERS_SCHEMA_VERSION\b/.test(antiSrc), 'Stała SHOPPERS_SCHEMA_VERSION musi zostać usunięta (#62)');
+
+  let currentPricesObj = JSON.parse(JSON.stringify(prices));
+  let setCustomPriceCalls = 0;
+  const customPrices = new Map();
+  let loadedHandler = null;
+
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: {
+      readString: () => JSON.stringify(currentPricesObj),
+      read: () => currentPricesObj
+    },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    Java: {
+      loadClass: (cls) => {
+        if (cls === 'com.velesbh.shoppers.economy.ShoppersWorldData') {
+          return {
+            get: () => ({
+              setCustomPrice: (id, worth) => {
+                setCustomPriceCalls++;
+                customPrices.set(String(id), Number(worth));
+              }
+            })
+          };
+        }
+        return null;
+      }
+    },
+    ServerEvents: {
+      recipes: () => {},
+      loaded: (cb) => {
+        loadedHandler = cb;
+      },
+      commandRegistry: () => {}
+    },
+    assert,
+    __makeCompound: makeCompound,
+    __getCalls: () => setCustomPriceCalls,
+    __resetCalls: () => {
+      setCustomPriceCalls = 0;
+    },
+    __customPrices: customPrices,
+    __setBreadPrice: (w, npc) => {
+      const next = JSON.parse(JSON.stringify(currentPricesObj));
+      const bread = next.sell_tiers.tier_1_start.items.find((x) => x.id === 'minecraft:bread');
+      bread.wholesale_gui = w;
+      bread.npc_shoppers = npc;
+      currentPricesObj = next;
+    }
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(antiSrc, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const mockServer = {
+    persistentData: makeCompound(),
+    overworld: () => ({ __isOverworld: true }),
+    runCommandSilent: () => {}
+  };
+
+  // 1) Pierwszy start -> brak zapisanego hasha -> synchronizacja Shoppers
+  loadedHandler({ server: mockServer });
+  assert(setCustomPriceCalls > 100, 'Pierwszy start musi zsynchronizować wszystkie ceny Shoppers');
+  assert(customPrices.get('minecraft:bread') === 5, 'Początkowa cena NPC bread = 5');
+
+  // 2) Drugi start bez edycji prices.json -> hash identyczny -> BRAK synchronizacji
+  setCustomPriceCalls = 0;
+  loadedHandler({ server: mockServer });
+  assert(setCustomPriceCalls === 0, 'Brak zmiany prices.json nie może ponownie synchronizować Shoppers');
+
+  // 3) Edycja prices.json -> kolejny start automatycznie wykrywa zmianę hasha i synchronizuje nową cenę
+  sandbox.__setBreadPrice(10, 12);
+  loadedHandler({ server: mockServer });
+  assert(setCustomPriceCalls > 100, 'Zmiana prices.json musi wyzwolić automatyczną synchronizację przy starcie');
+  assert(customPrices.get('minecraft:bread') === 12, 'Shoppers otrzymał nową cenę NPC bread = 12');
+
+  // 4) Edycja prices.json + /halucynacje_reload_economy (handleReloadEconomy) -> oba cache odświeżone od razu!
+  sandbox.__setBreadPrice(20, 24);
+  setCustomPriceCalls = 0;
+  const reloadRes = vm.runInContext('handleReloadEconomy', ctx)(mockServer);
+  assert(reloadRes.catalog.sellById['minecraft:bread'].wholesale === 20, 'Rynek hurtowy po reload ma bread = 20');
+  assert(reloadRes.shoppers && reloadRes.shoppers.viaJavaApi === true, 'Reload wywołał synchronizację Shoppers');
+  assert(setCustomPriceCalls > 100, 'Reload zapisał nowe ceny do ShoppersWorldData');
+  assert(customPrices.get('minecraft:bread') === 24, 'Shoppers po reload ma bread = 24');
+});
+
+console.log(`🎉 Wszystkie ${passed}/8 pakietów testów KubeJS ZALICZONE!`);
