@@ -70,8 +70,17 @@
 					type: "xp"
 					xp: 100
 				}
+				{
+					count: 25
+					id: "D000000000000202"
+					item: {
+						count: 1
+						id: "lightmanscurrency:coin_iron"
+					}
+					type: "item"
+				}
 			]
-			subtitle: "Wydajna produkcja bruku i kamieni bez lagów"
+			subtitle: "Wydajna produkcja bruku i kamieni bez lagów (+250 monet startowych)"
 			tasks: [
 				{
 					count: 16L
@@ -156,7 +165,7 @@
 				"• &fSand&r -> &fClay Balls&r"
 				"• &fTuff&r (z Extrudera lub Compacting) -> &fZinc Nuggets&r + &fCopper Nuggets&r (receptura KubeJS)"
 				""
-				"W nagrodę otrzymasz &bEngineer's Goggles&r, które pokazują obciążenie SU i stan maszyn."
+				"W nagrodę otrzymasz &bEngineer's Goggles&r oraz &6500 monet&r na startowe sadzonki i kelp w &f/sklep&r!"
 			]
 			id: "B000000000000004"
 			rewards: [
@@ -173,8 +182,17 @@
 					}
 					type: "item"
 				}
+				{
+					count: 5
+					id: "D000000000000403"
+					item: {
+						count: 1
+						id: "lightmanscurrency:coin_gold"
+					}
+					type: "item"
+				}
 			]
-			subtitle: "Bulk Washing zastępuje kopalnię i sita"
+			subtitle: "Bulk Washing zastępuje kopalnię i sita (+500 monet startowych)"
 			tasks: [
 				{
 					id: "C000000000000401"
@@ -261,7 +279,8 @@
 				""
 				"• Postaw &bCooking Pot&r i &bCutting Board&r."
 				"• Automatyczne mielenie pszenicy -> mąka -> płukanie -> &fDough&r -> wypiekanie &fBread&r daje stały, bezobsługowy dochód!"
-				"• Startowe nasiona, sadzonki i kelp dokupisz w Pawilonie Centralnym na Wyspie-Rynku &b(152, 64, 0)&r."
+				"• Startowe nasiona, sadzonki i kelp dokupisz przez &f/sklep&r w kategorii &b[KUP] 2. Rośliny i Sadzonki&r!"
+				"• Za ukończenie tego zadania otrzymasz aż &6750 monet&r dotacji rozruchowej."
 			]
 			id: "B000000000000006"
 			rewards: [
@@ -279,8 +298,26 @@
 					}
 					type: "item"
 				}
+				{
+					count: 7
+					id: "D000000000000603"
+					item: {
+						count: 1
+						id: "lightmanscurrency:coin_gold"
+					}
+					type: "item"
+				}
+				{
+					count: 5
+					id: "D000000000000604"
+					item: {
+						count: 1
+						id: "lightmanscurrency:coin_iron"
+					}
+					type: "item"
+				}
 			]
-			subtitle: "Pierwsza piekarnia i kuchnia pod rynek (Tier 1)"
+			subtitle: "Pierwsza piekarnia i kuchnia pod rynek (+750 monet startowych)"
 			tasks: [
 				{
 					id: "C000000000000601"
@@ -320,12 +357,13 @@
 			description: [
 				"Twoja baza ma już stabilne żelazo, andezyt i pierwszą kuchnię. Czas spojrzeć na wschód — w stronę &bWielkiej Wyspy-Rynku (152, 64, 0)&r!"
 				""
-				"&eTrzy kanały zarobku (ekonomia Tycoona):&r"
-				"• &f/sklep&r oraz centralny &bTrading Terminal&r w Rotundzie &b(152, 65, 0)&r — graficzny skup hurtowy (&f100%&r) i zakup Żetonów Etapów."
+				"&eCztery kanały zarobku (ekonomia Tycoona):&r"
+				"• &f/sprzedaj [all]&r — szybki hurt (&e85%&r zdalnie, &a100%&r na Wyspie-Rynku) + &6Boom Rynkowy +40%&r (&f/boom&r) i &bRóżnorodność +10/15/20%&r!"
+				"• &f/rynek_eksport&r — &bAutomatyczny Dok Eksportowy&r na Wyspie-Rynku (&a105%&r + Boom/Różnorodność, przelew prosto do Banku Drużyny!)."
 				"• Własne stoiska &bLightman's Currency&r dla NPC &bShoppers&r na Wyspie-Rynku — premia &a+20%&r!"
-				"• Dynamiczne zlecenia fabryczne &f/kontrakt&r (&f/kontrakt oddaj&r) — najwyższa premia &6+35%&r!"
+				"• &f/kontrakt&r (&f/kontrakt oddaj&r na Wyspie-Rynku) — premia serii &6+35% do +55%&r (+25% co 5. kontrakt)!"
 				""
-				"Uzbieraj &610 000 monet&r (sprawdzaj stan konta pod &eTAB&r lub &f/ekonomia&r), kup &bŻeton Etapu 1&r i otwórz kolejny rozdział księgi."
+				"Uzbieraj &610 000 monet&r (sprawdzaj pod &eTAB&r, &f/ekonomia&r lub &f/ekonomia top&r), kup &bŻeton Etapu 1&r w &f/sklep&r (&b[KUP] 1. Żetony Etapów&r) i otwórz kolejny rozdział księgi."
 			]
 			icon: {
 				id: "kubejs:stage_1_token"
@@ -343,7 +381,7 @@
 			tasks: [
 				{
 					id: "C000000000000701"
-					title: "Rozumiem premię +20% w sklepach NPC na Wyspie-Rynku"
+					title: "Rozumiem kanały sprzedaży, /boom, /kontrakt i /rynek_eksport"
 					type: "checkmark"
 				}
 			]
