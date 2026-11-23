@@ -506,6 +506,9 @@ const EXPORT_DOCK_TICK_INTERVAL = 600; // skan doków co 30 s (bezpieczne dla TP
 
 let MARKET_BOOM_TICK_COUNTER = 0;
 let EXPORT_DOCK_TICK_COUNTER = 0;
+const EXPORT_DOCK_LOGGED_ERRORS = {};
+let EXPORT_DOCK_BLOCK_POS_CLASS = null;
+let EXPORT_DOCK_BLOCK_POS_LOADED = false;
 
 function getBoomEligibleItems(catalog, stage) {
   var allowedTierNums = [1];
@@ -1720,6 +1723,39 @@ ServerEvents.commandRegistry((event) => {
         return 1;
       })
   );
+
+  // Komenda OP do smoke-testu Doku Eksportowego na żywym serwerze (CI `server-boot`, #89)
+  event.register(
+    Commands.literal('halucynacje_test_export_dock')
+      .requires((src) => src.hasPermission(2))
+      .then(
+        Commands.literal('forceload_on').executes((ctx) => {
+          var ok = setExportDockChunkForceload(ctx.source.server, 152, 0, true);
+          if (!ok) {
+            console.error('[HalucynacjeGTP2] [ExportDockTest] FAIL: błąd dodania forceload dla (152, 0).');
+            return 0;
+          }
+          sendCommandFeedback(
+            ctx,
+            Text.green('[HalucynacjeGTP2] [ExportDockTest] Forceload dodany dla (152, 0).')
+          );
+          return 1;
+        })
+      )
+      .then(
+        Commands.literal('run').executes((ctx) => {
+          var res = handleRunExportDockSmokeTest(ctx.source.server);
+          if (!res || !res.ok) {
+            console.error(
+              `[HalucynacjeGTP2] [ExportDockTest] FAIL: ${res && res.error ? res.error : 'nieznany błąd'}`
+            );
+            return 0;
+          }
+          sendCommandFeedback(ctx, Text.green(res.summary));
+          return 1;
+        })
+      )
+  );
 });
 
 // ----------------------------------------------------------------------------
@@ -1750,8 +1786,129 @@ function writeExportDocks(server, docks) {
   try {
     server.persistentData.putString(EXPORT_DOCKS_KEY, JSON.stringify(docks || []));
   } catch (err) {
-    console.warn(`[HalucynacjeGTP2] Nie udało się zapisać listy doków eksportowych: ${err}`);
+    console.warn(`[HalucynacjeGTP2] Błąd zapisu listy doków eksportowych: ${err}`);
   }
+}
+
+function getExportDockBlockPosClass() {
+  if (EXPORT_DOCK_BLOCK_POS_LOADED) {
+    return EXPORT_DOCK_BLOCK_POS_CLASS;
+  }
+  EXPORT_DOCK_BLOCK_POS_LOADED = true;
+  if (typeof Java === 'undefined' || typeof Java.loadClass !== 'function') {
+    EXPORT_DOCK_BLOCK_POS_CLASS = null;
+    return null;
+  }
+  try {
+    EXPORT_DOCK_BLOCK_POS_CLASS = Java.loadClass('net.minecraft.core.BlockPos');
+  } catch (err) {
+    console.warn(`[HalucynacjeGTP2] Błąd ładowania net.minecraft.core.BlockPos: ${err}`);
+    EXPORT_DOCK_BLOCK_POS_CLASS = null;
+  }
+  return EXPORT_DOCK_BLOCK_POS_CLASS;
+}
+
+function logExportDockErrorOnce(key, label, err) {
+  var k = String(key || '__generic__');
+  if (EXPORT_DOCK_LOGGED_ERRORS[k]) {
+    return false;
+  }
+  EXPORT_DOCK_LOGGED_ERRORS[k] = true;
+  console.warn(`[HalucynacjeGTP2] Błąd Doku Eksportowego ${label}: ${err}`);
+  return true;
+}
+
+/**
+ * Sprawdza bez wymuszania ładowania, czy chunk doku jest załadowany w Overworldzie (MC 1.21.1).
+ * Używa `LevelReader.hasChunk(chunkX, chunkZ)` (bezpośrednie API 1.21.1), a w razie jego braku
+ * bezpiecznego `Level.isLoaded(new BlockPos(x, y, z))` — nigdy nieistniejącego `isLoaded(x, y, z)`.
+ */
+function isExportDockChunkLoaded(overworld, x, y, z) {
+  var bx = Math.floor(Number(x));
+  var by = Math.floor(Number(y));
+  var bz = Math.floor(Number(z));
+  var cx = bx >> 4;
+  var cz = bz >> 4;
+  var BlockPosCls = null;
+
+  if (!overworld) return false;
+  if (typeof overworld.hasChunk === 'function') {
+    return Boolean(overworld.hasChunk(cx, cz));
+  }
+  if (typeof overworld.isLoaded === 'function') {
+    BlockPosCls = getExportDockBlockPosClass();
+    if (BlockPosCls) {
+      return Boolean(overworld.isLoaded(new BlockPosCls(bx, by, bz)));
+    }
+    throw new Error(
+      'Overworld nie udostępnia hasChunk(cx, cz), a klasa net.minecraft.core.BlockPos jest niedostępna'
+    );
+  }
+  return true;
+}
+
+function getDockChunkCoords(x, z) {
+  return {
+    cx: Math.floor(Number(x)) >> 4,
+    cz: Math.floor(Number(z)) >> 4
+  };
+}
+
+function hasOtherExportDockInChunk(docks, x, z) {
+  var target = getDockChunkCoords(x, z);
+  var i = 0;
+  var cur = null;
+  if (!Array.isArray(docks)) return false;
+  for (i = 0; i < docks.length; i++) {
+    if (!docks[i]) continue;
+    cur = getDockChunkCoords(docks[i].x, docks[i].z);
+    if (cur.cx === target.cx && cur.cz === target.cz) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function setExportDockChunkForceload(server, x, z, enable) {
+  var bx = Math.floor(Number(x));
+  var bz = Math.floor(Number(z));
+  var action = enable ? 'add' : 'remove';
+  var cmd = `execute in minecraft:overworld run forceload ${action} ${bx} ${bz}`;
+  if (!server || typeof server.runCommandSilent !== 'function') {
+    return false;
+  }
+  try {
+    server.runCommandSilent(cmd);
+    return true;
+  } catch (err) {
+    logExportDockErrorOnce(
+      `forceload:${action}:${bx >> 4},${bz >> 4}`,
+      `(${bx}, ${bz}, forceload ${action})`,
+      err
+    );
+    return false;
+  }
+}
+
+function syncExportDocksForceload(server) {
+  var docks = readExportDocks(server);
+  var seen = {};
+  var count = 0;
+  var i = 0;
+  var c = null;
+  var key = '';
+  if (!server || docks.length === 0) return 0;
+  for (i = 0; i < docks.length; i++) {
+    if (!docks[i]) continue;
+    c = getDockChunkCoords(docks[i].x, docks[i].z);
+    key = `${c.cx},${c.cz}`;
+    if (seen[key]) continue;
+    seen[key] = true;
+    if (setExportDockChunkForceload(server, docks[i].x, docks[i].z, true)) {
+      count++;
+    }
+  }
+  return count;
 }
 
 function getExportPendingCoins(server) {
@@ -1880,8 +2037,10 @@ function handleAddExportDock(player, server) {
     teamId: teamId
   });
   writeExportDocks(server, docks);
+  setExportDockChunkForceload(server, target.x, target.z, true);
 
   var bonusCfg = getMarketBonusesConfig(false);
+  var chunkCoords = getDockChunkCoords(target.x, target.z);
   player.tell(
     Text.green(`✅ [Dok Eksportowy #${docks.length}/${dockLimit}] Zarejestrowano ${target.blockId} na (${target.x}, ${target.y}, ${target.z})! `)
       .append(
@@ -1894,6 +2053,11 @@ function handleAddExportDock(player, server) {
           teamId >= 0
             ? ' • Przelewy automatycznie trafią na Bank Drużyny LC co 30 s.'
             : ' • Przelewy trafią na Twój Bank LC (lub /rynek_eksport odbierz) co 30 s.'
+        )
+      )
+      .append(
+        Text.aqua(
+          ` • Chunk doku (${chunkCoords.cx}, ${chunkCoords.cz}) jest automatycznie trzymany w pamięci (forceload).`
         )
       )
   );
@@ -1969,8 +2133,23 @@ function handleRemoveExportDock(player, server, indexArg) {
 
   removed = docks.splice(removeIdx, 1)[0];
   writeExportDocks(server, docks);
+  delete EXPORT_DOCK_LOGGED_ERRORS[`${removed.x},${removed.y},${removed.z}`];
+  var keepChunkLoaded = hasOtherExportDockInChunk(docks, removed.x, removed.z);
+  var dockLimit = getEffectiveExportDockLimit(server);
+  var removedChunk = getDockChunkCoords(removed.x, removed.z);
+  if (!keepChunkLoaded) {
+    setExportDockChunkForceload(server, removed.x, removed.z, false);
+  }
   player.tell(
-    Text.green(`[Dok Eksportowy] Usunięto dok (${removed.x}, ${removed.y}, ${removed.z}). Pozostało: ${docks.length}/${EXPORT_DOCK_MAX}.`)
+    Text.green(
+      `[Dok Eksportowy] Usunięto dok (${removed.x}, ${removed.y}, ${removed.z}). Pozostało: ${docks.length}/${dockLimit}.`
+    ).append(
+      Text.gray(
+        keepChunkLoaded
+          ? ` Chunk (${removedChunk.cx}, ${removedChunk.cz}) pozostaje w pamięci (inny dok w tym chunku).`
+          : ` Zwolniono forceload chunku (${removedChunk.cx}, ${removedChunk.cz}).`
+      )
+    )
   );
   return 1;
 }
@@ -2087,8 +2266,10 @@ function processExportDocksTick(server, nowMs) {
   }
 
   try {
-    overworld = typeof server.overworld === 'function' ? server.overworld() : server.level || null;
+    overworld =
+      typeof server.overworld === 'function' ? server.overworld() : server.overworld || server.level || null;
   } catch (errOw) {
+    logExportDockErrorOnce('__overworld__', '(Overworld)', errOw);
     return { itemsSold: 0, deposited: 0, pendingAdded: 0 };
   }
   if (!overworld || typeof overworld.getBlock !== 'function') {
@@ -2104,7 +2285,8 @@ function processExportDocksTick(server, nowMs) {
     if (!d || !isCoordsOnMarketIsland(Number(d.x), Number(d.z), 'minecraft:overworld')) continue;
     try {
       // Nie wymuszaj ładowania niezaładowanych chunków (ochrona TPS Exaroton)
-      if (typeof overworld.isLoaded === 'function' && !overworld.isLoaded(d.x, d.y, d.z)) {
+      // MC 1.21.1: `LevelReader.hasChunk(cx, cz)` / `Level.isLoaded(BlockPos)` (#89)
+      if (!isExportDockChunkLoaded(overworld, d.x, d.y, d.z)) {
         continue;
       }
       blk = overworld.getBlock(d.x, d.y, d.z);
@@ -2148,7 +2330,8 @@ function processExportDocksTick(server, nowMs) {
         totalPendingAdded += dockPayout;
       }
     } catch (errDock) {
-      // Pojedynczy błędny dok nie przerywa reszty
+      // Pojedynczy błędny dok nie przerywa reszty, ale błąd zawsze trafia do logu (raz na dok do restartu, #89)
+      logExportDockErrorOnce(`${d.x},${d.y},${d.z}`, `(${d.x}, ${d.y}, ${d.z})`, errDock);
     }
   }
 
@@ -2165,6 +2348,180 @@ function processExportDocksTick(server, nowMs) {
     deposited: totalDeposited,
     pendingAdded: totalPendingAdded
   };
+}
+
+function countItemInExportInventory(inv, targetId) {
+  var total = 0;
+  var size = 0;
+  var useItemHandler = false;
+  var s = 0;
+  var stack = null;
+  if (!inv) return 0;
+  if (typeof inv.getSlots === 'function' && typeof inv.getStackInSlot === 'function') {
+    useItemHandler = true;
+    size = Number(inv.getSlots() || 0);
+  } else if (typeof inv.getContainerSize === 'function' && typeof inv.getItem === 'function') {
+    size = Number(inv.getContainerSize() || 0);
+  }
+  for (s = 0; s < size; s++) {
+    stack = useItemHandler ? inv.getStackInSlot(s) : inv.getItem(s);
+    if (!stack || (typeof stack.isEmpty === 'function' && stack.isEmpty())) continue;
+    if (String(stack.id || '') === targetId) {
+      total += Number(stack.count || 0);
+    }
+  }
+  return total;
+}
+
+/**
+ * End-to-end smoke-test Doku Eksportowego na żywym serwerze NeoForge 1.21.1 (CI `server-boot`, #89).
+ * Sprawdza bez graczy online:
+ * 1) czy chunk (152, 0) po `forceload add` jest załadowany według `isExportDockChunkLoaded` (`hasChunk`),
+ * 2) ekstrakcję i wypłatę 16x `minecraft:bread` z prawdziwej skrzyni `minecraft:chest` (z zachowaniem 32x cobble),
+ * 3) ekstrakcję i wypłatę 16x `minecraft:bread` z prawdziwego `create:item_vault`,
+ * 4) pełne posprzątanie bloków, stanu persistentData i zdjęcie `forceload`.
+ */
+function handleRunExportDockSmokeTest(server) {
+  var overworld = null;
+  var hasChunkMethod = false;
+  var chunkLoaded = false;
+  var savedDocksRaw = '';
+  var savedPending = 0;
+  var savedDiversityRaw = '';
+  var savedByPlayerRaw = '';
+  var savedByItemRaw = '';
+  var savedStatsEarned = 0;
+  var savedStatsItems = 0;
+  var savedDocksArr = [];
+  var statsTag = null;
+  var chestRes = null;
+  var chestBlk = null;
+  var breadLeft = -1;
+  var cobbleLeft = -1;
+  var vaultBlk = null;
+  var vaultInv = null;
+  var vaultRes = null;
+  var vaultBreadLeft = -1;
+  var hadSavedDockInChunk = false;
+
+  if (!server || !server.persistentData) {
+    return { ok: false, error: 'Brak obiektu serwera lub persistentData' };
+  }
+
+  overworld =
+    typeof server.overworld === 'function' ? server.overworld() : server.overworld || server.level || null;
+  if (!overworld || typeof overworld.getBlock !== 'function') {
+    return { ok: false, error: 'Brak Overworld lub metody getBlock' };
+  }
+
+  hasChunkMethod = typeof overworld.hasChunk === 'function';
+  chunkLoaded = isExportDockChunkLoaded(overworld, 152, 65, 0);
+  if (!hasChunkMethod || !chunkLoaded) {
+    return {
+      ok: false,
+      error: `Oczekiwano hasChunk=true i chunkLoaded=true dla (152, 65, 0), otrzymano hasChunk=${hasChunkMethod}, chunkLoaded=${chunkLoaded}`
+    };
+  }
+
+  savedDocksRaw = String(server.persistentData.getString(EXPORT_DOCKS_KEY) || '');
+  savedDocksArr = readExportDocks(server);
+  hadSavedDockInChunk = hasOtherExportDockInChunk(savedDocksArr, 152, 0);
+  savedPending = getExportPendingCoins(server);
+  savedDiversityRaw = String(server.persistentData.getString(MARKET_DIVERSITY_KEY) || '');
+  savedByPlayerRaw = String(server.persistentData.getString(TYCOON_EXPORT_BY_PLAYER_KEY) || '');
+  savedByItemRaw = String(server.persistentData.getString(TYCOON_EXPORT_BY_ITEM_KEY) || '');
+  statsTag = server.persistentData.getCompound(MARKET_STATS_KEY);
+  savedStatsEarned = Number(statsTag.getLong('total_earned') || 0);
+  savedStatsItems = Number(statsTag.getLong('total_items_sold') || 0);
+
+  try {
+    // 1) Test skrzyni `minecraft:chest` na (152, 65, 0)
+    server.runCommandSilent('execute in minecraft:overworld run setblock 152 65 0 minecraft:chest replace');
+    server.runCommandSilent(
+      'execute in minecraft:overworld run item replace block 152 65 0 container.0 with minecraft:bread 16'
+    );
+    server.runCommandSilent(
+      'execute in minecraft:overworld run item replace block 152 65 0 container.1 with minecraft:cobblestone 32'
+    );
+
+    writeExportDocks(server, [
+      { x: 152, y: 65, z: 0, blockId: 'minecraft:chest', owner: '__boot_test__', teamId: -1 }
+    ]);
+    chestRes = processExportDocksTick(server, Date.now());
+    chestBlk = overworld.getBlock(152, 65, 0);
+    breadLeft = chestBlk && chestBlk.inventory ? countItemInExportInventory(chestBlk.inventory, 'minecraft:bread') : -1;
+    cobbleLeft =
+      chestBlk && chestBlk.inventory ? countItemInExportInventory(chestBlk.inventory, 'minecraft:cobblestone') : -1;
+
+    if (!chestRes || chestRes.itemsSold !== 16 || chestRes.pendingAdded <= 0 || breadLeft !== 0 || cobbleLeft !== 32) {
+      return {
+        ok: false,
+        error: `Test skrzyni nieudany: itemsSold=${chestRes && chestRes.itemsSold}, pendingAdded=${chestRes && chestRes.pendingAdded}, breadLeft=${breadLeft}, cobbleLeft=${cobbleLeft}`
+      };
+    }
+
+    // 2) Test `create:item_vault` na (154, 65, 0) (ten sam chunk [9, 0])
+    server.runCommandSilent('execute in minecraft:overworld run setblock 154 65 0 create:item_vault replace');
+    vaultBlk = overworld.getBlock(154, 65, 0);
+    vaultInv = vaultBlk ? vaultBlk.inventory : null;
+    if (!vaultInv || typeof vaultInv.insertItem !== 'function') {
+      return { ok: false, error: 'create:item_vault nie udostępnia blk.inventory z insertItem' };
+    }
+    vaultInv.insertItem(0, Item.of('minecraft:bread', 16), false);
+
+    writeExportDocks(server, [
+      { x: 154, y: 65, z: 0, blockId: 'create:item_vault', owner: '__boot_test__', teamId: -1 }
+    ]);
+    vaultRes = processExportDocksTick(server, Date.now());
+    vaultBlk = overworld.getBlock(154, 65, 0);
+    vaultBreadLeft =
+      vaultBlk && vaultBlk.inventory ? countItemInExportInventory(vaultBlk.inventory, 'minecraft:bread') : -1;
+
+    if (!vaultRes || vaultRes.itemsSold !== 16 || vaultRes.pendingAdded <= 0 || vaultBreadLeft !== 0) {
+      return {
+        ok: false,
+        error: `Test create:item_vault nieudany: itemsSold=${vaultRes && vaultRes.itemsSold}, pendingAdded=${vaultRes && vaultRes.pendingAdded}, vaultBreadLeft=${vaultBreadLeft}`
+      };
+    }
+
+    return {
+      ok: true,
+      summary: `[HalucynacjeGTP2] [ExportDockTest] PASS: hasChunk=true, chestSold=${chestRes.itemsSold} (+${chestRes.pendingAdded} monet), vaultSold=${vaultRes.itemsSold} (+${vaultRes.pendingAdded} monet), cobbleUntouched=${cobbleLeft}, forceload=removed.`
+    };
+  } catch (errTest) {
+    return { ok: false, error: String(errTest) };
+  } finally {
+    try {
+      server.runCommandSilent('execute in minecraft:overworld run setblock 152 65 0 minecraft:air replace');
+      server.runCommandSilent('execute in minecraft:overworld run setblock 154 65 0 minecraft:air replace');
+    } catch (errCleanBlk) {
+      // Ignoruj przy sprzątaniu
+    }
+    server.persistentData.putString(EXPORT_DOCKS_KEY, savedDocksRaw);
+    setExportPendingCoins(server, savedPending);
+    server.persistentData.putString(MARKET_DIVERSITY_KEY, savedDiversityRaw);
+    server.persistentData.putString(TYCOON_EXPORT_BY_PLAYER_KEY, savedByPlayerRaw);
+    server.persistentData.putString(TYCOON_EXPORT_BY_ITEM_KEY, savedByItemRaw);
+    statsTag = server.persistentData.getCompound(MARKET_STATS_KEY);
+    statsTag.putLong('total_earned', savedStatsEarned);
+    statsTag.putLong('total_items_sold', savedStatsItems);
+    server.persistentData.put(MARKET_STATS_KEY, statsTag);
+    if (!hadSavedDockInChunk) {
+      setExportDockChunkForceload(server, 152, 0, false);
+    }
+  }
+}
+
+// Przywrócenie forceload dla zapisanych Doków Eksportowych po starcie serwera (#89)
+if (typeof ServerEvents !== 'undefined' && typeof ServerEvents.loaded === 'function') {
+  ServerEvents.loaded((event) => {
+    var srv = event && event.server ? event.server : null;
+    if (!srv) return;
+    var forced = syncExportDocksForceload(srv);
+    if (forced > 0) {
+      console.info(`[HalucynacjeGTP2] Przywrócono forceload dla ${forced} chunków Doków Eksportowych.`);
+    }
+  });
 }
 
 // Lekka rotacja Boomu Rynkowego (60 s) + skan Automatycznych Doków Eksportowych (30 s)
@@ -2189,7 +2546,7 @@ if (typeof ServerEvents !== 'undefined' && typeof ServerEvents.tick === 'functio
       try {
         processExportDocksTick(srv, Date.now());
       } catch (errExport) {
-        // Nie przerywaj pętli serwera
+        logExportDockErrorOnce('__tick__', '(cykl tick)', errExport);
       }
     }
   });
