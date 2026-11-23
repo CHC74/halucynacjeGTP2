@@ -17,6 +17,8 @@
 const HALUCYNACJE_PRICES_FILE = 'config/halucynacje_economy/prices.json';
 const GLOBAL_STAGES_KEY = 'halucynacje_global_stages';
 const PLAYER_STAGES_KEY = 'halucynacje_stages';
+const MARKET_HOURLY_CAPS_KEY = 'halucynacje_hourly_caps';
+const HOURLY_CAP_WINDOW_MS = 60 * 60 * 1000; // 60 minut (jedno okno co-op na serwer)
 
 const LC_COINS = [
   { id: 'lightmanscurrency:coin_netherite', value: 100000 },
@@ -709,6 +711,195 @@ function resolveItemSellStage(itemObj, tierObj, tierNum) {
     return Math.max(0, Math.floor(tierObj.sell_stage));
   }
   return Math.max(0, Math.floor(Number(tierNum || 1)) - 1);
+}
+
+/**
+ * Odczytuje serwerowy limit godzinowy sprzedaży (`hourly_cap_coins`) z wpisu w `prices.json` (Issue #94).
+ * Zwraca dodatnią liczbę całkowitą w monetach bazowych albo `0` (brak limitu).
+ */
+function resolveItemHourlyCap(itemObj) {
+  if (
+    itemObj &&
+    typeof itemObj.hourly_cap_coins === 'number' &&
+    Number.isFinite(itemObj.hourly_cap_coins) &&
+    itemObj.hourly_cap_coins > 0
+  ) {
+    return Math.floor(itemObj.hourly_cap_coins);
+  }
+  return 0;
+}
+
+/**
+ * Odczytuje stan licznika godzinowego dla `itemId` z `server.persistentData[MARKET_HOURLY_CAPS_KEY]`
+ * (wspiera zarówno NBT `CompoundTag`, jak i czyste obiekty JS w testach).
+ */
+function readHourlyCapEntry(server, itemId) {
+  var caps = null;
+  var entry = null;
+  var rawMap = null;
+  var idKey = String(itemId || '');
+
+  if (!server || !server.persistentData || !idKey) {
+    return { windowStartMs: 0, spentCoins: 0 };
+  }
+
+  try {
+    if (typeof server.persistentData.getCompound === 'function') {
+      caps = server.persistentData.getCompound(MARKET_HOURLY_CAPS_KEY);
+      if (caps && typeof caps.getCompound === 'function') {
+        entry = caps.getCompound(idKey);
+        if (entry) {
+          return {
+            windowStartMs:
+              Number(typeof entry.getLong === 'function' ? entry.getLong('windowStartMs') : entry.windowStartMs || 0) ||
+              0,
+            spentCoins:
+              Number(typeof entry.getLong === 'function' ? entry.getLong('spentCoins') : entry.spentCoins || 0) || 0
+          };
+        }
+      }
+    } else {
+      rawMap = server.persistentData[MARKET_HOURLY_CAPS_KEY];
+      if (rawMap && typeof rawMap === 'object' && rawMap[idKey]) {
+        return {
+          windowStartMs: Number(rawMap[idKey].windowStartMs || 0) || 0,
+          spentCoins: Number(rawMap[idKey].spentCoins || 0) || 0
+        };
+      }
+    }
+  } catch (err) {
+    // Bezpieczny fallback
+  }
+  return { windowStartMs: 0, spentCoins: 0 };
+}
+
+/**
+ * Zapisuje stan licznika godzinowego dla `itemId` do `server.persistentData[MARKET_HOURLY_CAPS_KEY]`.
+ */
+function writeHourlyCapEntry(server, itemId, windowStartMs, spentCoins) {
+  var caps = null;
+  var entry = null;
+  var idKey = String(itemId || '');
+  var safeStart = Math.max(0, Math.floor(Number(windowStartMs) || 0));
+  var safeSpent = Math.max(0, Math.floor(Number(spentCoins) || 0));
+
+  if (!server || !server.persistentData || !idKey) {
+    return;
+  }
+
+  try {
+    if (
+      typeof server.persistentData.getCompound === 'function' &&
+      typeof server.persistentData.put === 'function'
+    ) {
+      caps = server.persistentData.getCompound(MARKET_HOURLY_CAPS_KEY);
+      if (caps && typeof caps.getCompound === 'function' && typeof caps.put === 'function') {
+        entry = caps.getCompound(idKey);
+        if (entry && typeof entry.putLong === 'function') {
+          entry.putLong('windowStartMs', safeStart);
+          entry.putLong('spentCoins', safeSpent);
+          caps.put(idKey, entry);
+          server.persistentData.put(MARKET_HOURLY_CAPS_KEY, caps);
+          return;
+        }
+      }
+    }
+    if (
+      !server.persistentData[MARKET_HOURLY_CAPS_KEY] ||
+      typeof server.persistentData[MARKET_HOURLY_CAPS_KEY] !== 'object'
+    ) {
+      server.persistentData[MARKET_HOURLY_CAPS_KEY] = {};
+    }
+    server.persistentData[MARKET_HOURLY_CAPS_KEY][idKey] = {
+      windowStartMs: safeStart,
+      spentCoins: safeSpent
+    };
+  } catch (err) {
+    // Bezpieczny fallback
+  }
+}
+
+/**
+ * Zwraca bieżący stan 60-minutowego okna limitu sprzedaży dla `itemId` (Issue #94).
+ */
+function getHourlyCapStatus(server, itemId, capCoins, nowMs) {
+  var cap = Math.max(0, Math.floor(Number(capCoins) || 0));
+  var now = nowMs != null ? Number(nowMs) : Date.now();
+  var stored = null;
+  var elapsed = 0;
+  var spent = 0;
+  var remaining = cap;
+  var resetMinutes = 60;
+
+  if (cap <= 0) {
+    return {
+      active: false,
+      cap: 0,
+      spent: 0,
+      remaining: Infinity,
+      resetMinutes: 0,
+      windowStartMs: 0
+    };
+  }
+
+  stored = readHourlyCapEntry(server, itemId);
+  if (stored.windowStartMs > 0) {
+    elapsed = now - stored.windowStartMs;
+    if (elapsed >= 0 && elapsed < HOURLY_CAP_WINDOW_MS) {
+      spent = Math.max(0, Math.floor(Number(stored.spentCoins) || 0));
+      remaining = Math.max(0, cap - spent);
+      resetMinutes = Math.max(1, Math.ceil((HOURLY_CAP_WINDOW_MS - elapsed) / 60000));
+      return {
+        active: true,
+        cap: cap,
+        spent: spent,
+        remaining: remaining,
+        resetMinutes: resetMinutes,
+        windowStartMs: stored.windowStartMs
+      };
+    }
+  }
+
+  return {
+    active: false,
+    cap: cap,
+    spent: 0,
+    remaining: cap,
+    resetMinutes: 60,
+    windowStartMs: 0
+  };
+}
+
+/**
+ * Rejestruje wypłatę `earnedCoins` dla towaru z limitem `capCoins` i zwraca zaktualizowany stan okna.
+ */
+function recordHourlyCapSale(server, itemId, capCoins, earnedCoins, nowMs) {
+  var cap = Math.max(0, Math.floor(Number(capCoins) || 0));
+  var earned = Math.max(0, Math.floor(Number(earnedCoins) || 0));
+  var now = nowMs != null ? Number(nowMs) : Date.now();
+  var current = null;
+  var nextWindowStart = now;
+  var nextSpent = earned;
+
+  if (cap <= 0) {
+    return getHourlyCapStatus(server, itemId, 0, now);
+  }
+
+  current = getHourlyCapStatus(server, itemId, cap, now);
+  if (earned <= 0) {
+    return current;
+  }
+
+  if (current.active && current.windowStartMs > 0) {
+    nextWindowStart = current.windowStartMs;
+    nextSpent = current.spent + earned;
+  } else {
+    nextWindowStart = now;
+    nextSpent = earned;
+  }
+
+  writeHourlyCapEntry(server, itemId, nextWindowStart, nextSpent);
+  return getHourlyCapStatus(server, itemId, cap, now);
 }
 
 // ----------------------------------------------------------------------------

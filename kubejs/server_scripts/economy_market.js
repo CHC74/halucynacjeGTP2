@@ -98,7 +98,8 @@ function getMarketCatalog(forceReload) {
             sellStage: resolveItemSellStage(it, tierObj, t + 1),
             packSize: it.pack_size && Number(it.pack_size) > 1 ? Number(it.pack_size) : 1,
             wholesale: Number(it.wholesale_gui || 0),
-            npc: Number(it.npc_shoppers || 0)
+            npc: Number(it.npc_shoppers || 0),
+            hourlyCapCoins: resolveItemHourlyCap(it)
           };
           catalog.sellById[parsed.id] = parsed;
           parsedItems.push(parsed);
@@ -437,15 +438,62 @@ function buildBuyLimitDeniedMessage(entry, bought) {
   );
 }
 
-function sellSingleStack(stack, catalog, currentStage) {
+function getHourlyCapItemLabel(itemId) {
+  if (itemId === 'minecraft:cobblestone') return 'Bruk';
+  return String(itemId || '');
+}
+
+function buildHourlyCapStatusNote(itemId, capStatus, payoutPerPack) {
+  var label = getHourlyCapItemLabel(itemId);
+  var base = `${label}: ${formatCoins(capStatus.spent)} / ${formatCoins(capStatus.cap)} monet w tej godzinie`;
+  if (capStatus.remaining < (payoutPerPack || 1)) {
+    return `${base} (limit wyczerpany — reset za ${capStatus.resetMinutes} min)`;
+  }
+  return `${base} (reset za ${capStatus.resetMinutes} min)`;
+}
+
+function buildHourlyCapDeniedMessage(itemId, capStatus) {
+  var label = getHourlyCapItemLabel(itemId);
+  return Text.red(
+    `[Rynek] Osiągnięto limit godzinowy dla ${label} (${formatCoins(capStatus.spent)} / ${formatCoins(capStatus.cap)} monet) — reset za ${capStatus.resetMinutes} min.`
+  );
+}
+
+function computeCappedPackPayout(wholesale, onMarket) {
+  var cfg = getMarketBonusesConfig(false);
+  var remoteMult = Number(cfg.remote_sell_multiplier || 0.85);
+  if (onMarket === false) {
+    return Math.max(1, Math.round(Number(wholesale || 0) * remoteMult));
+  }
+  return Math.max(1, Math.round(Number(wholesale || 0)));
+}
+
+function sellSingleStack(stack, catalog, currentStage, options) {
+  var opts = options || {};
+  var itemId = '';
+  var def = null;
+  var packs = 0;
+  var soldPacks = 0;
+  var soldItems = 0;
+  var basePayout = 0;
+  var effectivePayout = 0;
+  var payoutPerPack = 0;
+  var onMarket = opts.onMarket !== false;
+  var server = opts.server || null;
+  var nowMs = opts.nowMs != null ? Number(opts.nowMs) : Date.now();
+  var capStatus = null;
+  var maxPacksByCap = 0;
+  var partialCap = false;
+  var npcBonusPerPack = 0;
+
   if (!stack || stack.isEmpty()) {
     return { status: 'empty' };
   }
-  const itemId = String(stack.id);
+  itemId = String(stack.id);
   if (catalog.tier0[itemId]) {
     return { status: 'blocked', itemId: itemId, reason: catalog.tier0[itemId] };
   }
-  const def = catalog.sellById[itemId];
+  def = catalog.sellById[itemId];
   if (!def || def.wholesale <= 0) {
     return { status: 'not_buyable', itemId: itemId };
   }
@@ -458,7 +506,7 @@ function sellSingleStack(stack, catalog, currentStage) {
     };
   }
 
-  const packs = Math.floor(stack.count / def.packSize);
+  packs = Math.floor(stack.count / def.packSize);
   if (packs <= 0) {
     return {
       status: 'too_few',
@@ -468,16 +516,65 @@ function sellSingleStack(stack, catalog, currentStage) {
     };
   }
 
-  const soldItems = packs * def.packSize;
-  const payout = packs * def.wholesale;
+  soldPacks = packs;
+  npcBonusPerPack = Math.max(0, def.npc - def.wholesale);
+
+  if (def.hourlyCapCoins > 0) {
+    payoutPerPack = computeCappedPackPayout(def.wholesale, onMarket);
+    if (server) {
+      capStatus = getHourlyCapStatus(server, def.id, def.hourlyCapCoins, nowMs);
+      maxPacksByCap = Math.floor(capStatus.remaining / payoutPerPack);
+      if (maxPacksByCap <= 0) {
+        return {
+          status: 'cap_reached',
+          itemId: itemId,
+          cap: capStatus.cap,
+          spent: capStatus.spent,
+          remaining: capStatus.remaining,
+          resetMinutes: capStatus.resetMinutes,
+          capStatus: capStatus
+        };
+      }
+      if (soldPacks > maxPacksByCap) {
+        soldPacks = maxPacksByCap;
+        partialCap = true;
+      }
+    }
+    soldItems = soldPacks * def.packSize;
+    basePayout = soldPacks * def.wholesale;
+    effectivePayout = soldPacks * payoutPerPack;
+    stack.shrink(soldItems);
+    if (server) {
+      capStatus = recordHourlyCapSale(server, def.id, def.hourlyCapCoins, effectivePayout, nowMs);
+    }
+    return {
+      status: 'sold',
+      itemId: itemId,
+      soldItems: soldItems,
+      packs: soldPacks,
+      payout: basePayout,
+      effectivePayout: effectivePayout,
+      payoutPerPack: payoutPerPack,
+      hourlyCapCoins: def.hourlyCapCoins,
+      capStatus: capStatus,
+      partialCap: partialCap,
+      npcBonusPotential: soldPacks * npcBonusPerPack
+    };
+  }
+
+  soldItems = soldPacks * def.packSize;
+  basePayout = soldPacks * def.wholesale;
   stack.shrink(soldItems);
   return {
     status: 'sold',
     itemId: itemId,
     soldItems: soldItems,
-    packs: packs,
-    payout: payout,
-    npcBonusPotential: packs * (def.npc - def.wholesale)
+    packs: soldPacks,
+    payout: basePayout,
+    hourlyCapCoins: 0,
+    capStatus: null,
+    partialCap: false,
+    npcBonusPotential: soldPacks * npcBonusPerPack
   };
 }
 
@@ -530,6 +627,7 @@ function getBoomEligibleItems(catalog, stage) {
     for (j = 0; j < t.items.length; j++) {
       item = t.items[j];
       if (item.sellStage > stage) continue;
+      if (item.hourlyCapCoins > 0) continue;
       pool.push(item);
     }
   }
@@ -539,7 +637,7 @@ function getBoomEligibleItems(catalog, stage) {
       t = catalog.tiersList[i];
       for (j = 0; j < t.items.length; j++) {
         item = t.items[j];
-        if (item.sellStage <= stage) {
+        if (item.sellStage <= stage && !(item.hourlyCapCoins > 0)) {
           pool.push(item);
         }
       }
@@ -630,7 +728,7 @@ function getOrRollMarketBoom(server, nowMs) {
     expiresAtMs = tag ? Number(tag.getLong('expiresAtMs') || 0) : 0;
     if (itemId && expiresAtMs > now) {
       storedDef = catalog && catalog.sellById ? catalog.sellById[itemId] : null;
-      if (!storedDef || storedDef.sellStage <= currentStage) {
+      if (!storedDef || (storedDef.sellStage <= currentStage && !(storedDef.hourlyCapCoins > 0))) {
         basePrice = Number(tag.getInt('basePrice') || 0);
         storedPct = Number(tag.getInt('bonusPercent') || 0);
         return {
@@ -799,6 +897,8 @@ function getEffectiveExportDockLimit(server) {
  */
 function applyDynamicMarketBonuses(server, basePayout, itemId, diversityStatus, boom, options) {
   var cfg = getMarketBonusesConfig(false);
+  var catalog = getMarketCatalog(false);
+  var itemDef = catalog && catalog.sellById && itemId ? catalog.sellById[String(itemId)] : null;
   var opts = options || {};
   var onMarket = opts.onMarket !== false;
   var isExportDock = Boolean(opts.isExportDock);
@@ -817,6 +917,36 @@ function applyDynamicMarketBonuses(server, basePayout, itemId, diversityStatus, 
   var effectiveBonusPct = 0;
   var totalMult = 1.0;
   var finalPayout = 0;
+  var packCount = 0;
+
+  // Pozycje z limitem godzinowym (np. bruk — Issue #94) NIGDY nie dostają premii
+  // Boom / Różnorodność / Etap / Dok; poza Wyspą-Rynkiem stosują wyłącznie mnożnik 0,85x.
+  if (itemDef && itemDef.hourlyCapCoins > 0) {
+    if (!onMarket) {
+      if (itemDef.wholesale > 0 && basePayout > 0 && basePayout % itemDef.wholesale === 0) {
+        packCount = basePayout / itemDef.wholesale;
+        finalPayout = packCount * computeCappedPackPayout(itemDef.wholesale, false);
+      } else {
+        finalPayout = Math.max(1, Math.round(basePayout * remoteMult));
+      }
+    } else {
+      finalPayout = Math.max(1, Math.round(basePayout));
+    }
+    return {
+      finalPayout: finalPayout,
+      bonusCoins: 0,
+      effectiveMultiplier: onMarket ? 1.0 : remoteMult,
+      isRemote: !onMarket,
+      isBoom: false,
+      dockBonusPercent: 0,
+      stageBonusPercent: 0,
+      diversityPercent: 0,
+      diversityCount: diversityStatus ? diversityStatus.uniqueCount : 0,
+      totalBonusPercent: 0,
+      capped: false,
+      hourlyCapped: true
+    };
+  }
 
   if (!onMarket && !allowRemoteBonuses) {
     finalPayout = Math.max(1, Math.round(basePayout * remoteMult));
@@ -910,11 +1040,17 @@ function handleShowMarketBoom(player, server) {
   return 1;
 }
 
-function handleSellHand(player, server) {
+function handleSellHand(player, server, nowMs) {
   const catalog = getMarketCatalog(false);
   const currentStage = getCurrentUnlockedStage(player, server);
+  const onMarket = typeof isPlayerOnMarketIsland === 'function' ? isPlayerOnMarketIsland(player) : true;
+  const now = nowMs != null ? Number(nowMs) : Date.now();
   const hand = player.mainHandItem;
-  const res = sellSingleStack(hand, catalog, currentStage);
+  const res = sellSingleStack(hand, catalog, currentStage, {
+    server: server,
+    onMarket: onMarket,
+    nowMs: now
+  });
 
   if (res.status === 'empty') {
     player.tell(Text.yellow('[Rynek] Trzymaj w głównej ręce towar fabryczny (Tier 1–5) albo wpisz /sprzedaj all.'));
@@ -945,13 +1081,17 @@ function handleSellHand(player, server) {
     );
     return 0;
   }
+  if (res.status === 'cap_reached') {
+    player.tell(buildHourlyCapDeniedMessage(res.itemId, res.capStatus));
+    return 0;
+  }
 
-  const onMarket = typeof isPlayerOnMarketIsland === 'function' ? isPlayerOnMarketIsland(player) : true;
-  const now = Date.now();
-  const boom = onMarket ? getOrRollMarketBoom(server, now) : null;
-  const div = onMarket
-    ? recordDiversitySales(server, [{ itemId: res.itemId, value: res.payout }], now)
-    : getCurrentDiversityStatus(server, now);
+  const isHourlyCapped = Boolean(res.hourlyCapCoins > 0);
+  const boom = onMarket && !isHourlyCapped ? getOrRollMarketBoom(server, now) : null;
+  const div =
+    onMarket && !isHourlyCapped
+      ? recordDiversitySales(server, [{ itemId: res.itemId, value: res.payout }], now)
+      : getCurrentDiversityStatus(server, now);
   const dyn = applyDynamicMarketBonuses(server, res.payout, res.itemId, div, boom, {
     onMarket: onMarket,
     isExportDock: false
@@ -972,44 +1112,74 @@ function handleSellHand(player, server) {
   if (dyn.stageBonusPercent > 0) bonusTags += ` ★+${dyn.stageBonusPercent}% Etap`;
   if (dyn.capped) bonusTags += ` (limit +${dyn.totalBonusPercent}%)`;
 
+  let suffixNote = '';
+  if (isHourlyCapped && res.capStatus) {
+    suffixNote = `(${buildHourlyCapStatusNote(res.itemId, res.capStatus, res.payoutPerPack)}${
+      res.partialCap ? '; nadmiar pozostał w ekwipunku' : ''
+    })`;
+  } else if (onMarket) {
+    suffixNote = `(Dok Eksportowy /rynek_eksport płaci +5%, a sklepy NPC ok. +${formatCoins(res.npcBonusPotential)} monet więcej!)`;
+  } else {
+    suffixNote = `(Na Wyspie-Rynku 152,64,0 dostajesz 100% + Boom/Różnorodność/Etap, a w Doku /rynek_eksport dodatkowo +5%!)`;
+  }
+
   player.tell(
     Text.green(`[Rynek Hurtowy] Sprzedano ${res.soldItems}x ${res.itemId} za `)
       .append(Text.gold(`${formatCoins(dyn.finalPayout)} monet`))
       .append(bonusTags ? Text.aqua(` (${bonusTags.trim()})`) : Text.green(''))
       .append(Text.green('! '))
-      .append(
-        Text.gray(
-          onMarket
-            ? `(Dok Eksportowy /rynek_eksport płaci +5%, a sklepy NPC ok. +${formatCoins(res.npcBonusPotential)} monet więcej!)`
-            : `(Na Wyspie-Rynku 152,64,0 dostajesz 100% + Boom/Różnorodność/Etap, a w Doku /rynek_eksport dodatkowo +5%!)`
-        )
-      )
+      .append(Text.gray(suffixNote))
   );
   return 1;
 }
 
-function handleSellAll(player, server) {
+function handleSellAll(player, server, nowMs) {
   const catalog = getMarketCatalog(false);
   const currentStage = getCurrentUnlockedStage(player, server);
+  const onMarket = typeof isPlayerOnMarketIsland === 'function' ? isPlayerOnMarketIsland(player) : true;
+  const now = nowMs != null ? Number(nowMs) : Date.now();
   const inv = player.inventory;
   const size = typeof inv.getContainerSize === 'function' ? inv.getContainerSize() : 36;
 
   const soldLines = [];
   const diversityEntries = [];
+  const cappedSummaryById = {};
+  const capReachedOnlyById = {};
   let totalItems = 0;
   let totalBonusPotential = 0;
   let blockedSkipped = 0;
   let stageLockedSkipped = 0;
+  let hasUncappedSold = false;
 
   for (let i = 0; i < size; i++) {
     const stack = inv.getItem(i);
     if (!stack || stack.isEmpty()) continue;
-    const res = sellSingleStack(stack, catalog, currentStage);
+    const res = sellSingleStack(stack, catalog, currentStage, {
+      server: server,
+      onMarket: onMarket,
+      nowMs: now
+    });
     if (res.status === 'sold') {
       soldLines.push(res);
-      diversityEntries.push({ itemId: res.itemId, value: res.payout });
+      if (res.hourlyCapCoins > 0) {
+        cappedSummaryById[res.itemId] = {
+          capStatus: res.capStatus,
+          payoutPerPack: res.payoutPerPack,
+          leftover: Boolean(res.partialCap || (cappedSummaryById[res.itemId] && cappedSummaryById[res.itemId].leftover))
+        };
+      } else {
+        hasUncappedSold = true;
+        diversityEntries.push({ itemId: res.itemId, value: res.payout });
+      }
       totalItems += res.soldItems;
       totalBonusPotential += res.npcBonusPotential;
+    } else if (res.status === 'cap_reached') {
+      if (cappedSummaryById[res.itemId]) {
+        cappedSummaryById[res.itemId].capStatus = res.capStatus;
+        cappedSummaryById[res.itemId].leftover = true;
+      } else {
+        capReachedOnlyById[res.itemId] = res.capStatus;
+      }
     } else if (res.status === 'blocked') {
       blockedSkipped++;
     } else if (res.status === 'stage_locked') {
@@ -1017,7 +1187,14 @@ function handleSellAll(player, server) {
     }
   }
 
+  const capOnlyIds = Object.keys(capReachedOnlyById);
   if (soldLines.length === 0) {
+    if (capOnlyIds.length > 0) {
+      for (let cIdx = 0; cIdx < capOnlyIds.length; cIdx++) {
+        player.tell(buildHourlyCapDeniedMessage(capOnlyIds[cIdx], capReachedOnlyById[capOnlyIds[cIdx]]));
+      }
+      return 0;
+    }
     const skipParts = [];
     if (blockedSkipped > 0) skipParts.push('surowce Tier 0');
     if (stageLockedSkipped > 0) skipParts.push('towary wymagające wyższego Etapu');
@@ -1030,12 +1207,11 @@ function handleSellAll(player, server) {
     return 0;
   }
 
-  const onMarket = typeof isPlayerOnMarketIsland === 'function' ? isPlayerOnMarketIsland(player) : true;
-  const now = Date.now();
-  const boom = onMarket ? getOrRollMarketBoom(server, now) : null;
-  const div = onMarket
-    ? recordDiversitySales(server, diversityEntries, now)
-    : getCurrentDiversityStatus(server, now);
+  const boom = onMarket && hasUncappedSold ? getOrRollMarketBoom(server, now) : null;
+  const div =
+    onMarket && diversityEntries.length > 0
+      ? recordDiversitySales(server, diversityEntries, now)
+      : getCurrentDiversityStatus(server, now);
 
   let totalPayout = 0;
   let boomHit = false;
@@ -1067,23 +1243,51 @@ function handleSellAll(player, server) {
   let bonusTags = '';
   if (!onMarket) bonusTags += ' 📦-15% kurier poza Rynkiem (brak premii)';
   if (boomHit) bonusTags += ` 🔥+${boom.bonusPercent}% Boom`;
-  if (onMarket && div.bonusPercent > 0) bonusTags += ` 🏭+${div.bonusPercent}% Różnorodność (${div.uniqueCount} tow.)`;
+  if (onMarket && hasUncappedSold && div.bonusPercent > 0) {
+    bonusTags += ` 🏭+${div.bonusPercent}% Różnorodność (${div.uniqueCount} tow.)`;
+  }
   if (onMarket && stageBonusHit > 0) bonusTags += ` ★+${stageBonusHit}% Etap`;
   if (anyCapped) bonusTags += ' (limit premii)';
+
+  const cappedSoldIds = Object.keys(cappedSummaryById);
+  const capNotes = [];
+  for (let k = 0; k < cappedSoldIds.length; k++) {
+    const cId = cappedSoldIds[k];
+    const info = cappedSummaryById[cId];
+    if (info && info.capStatus) {
+      capNotes.push(
+        `${buildHourlyCapStatusNote(cId, info.capStatus, info.payoutPerPack)}${
+          info.leftover ? '; nadmiar pozostał w ekwipunku' : ''
+        }`
+      );
+    }
+  }
+  for (let m = 0; m < capOnlyIds.length; m++) {
+    const oId = capOnlyIds[m];
+    const oDef = catalog.sellById[oId];
+    const oPackPayout = oDef ? computeCappedPackPayout(oDef.wholesale, onMarket) : 1;
+    capNotes.push(`${buildHourlyCapStatusNote(oId, capReachedOnlyById[oId], oPackPayout)}; pominięto nadmiar`);
+  }
+
+  let allSuffixNote = '';
+  if (!hasUncappedSold && capNotes.length > 0) {
+    allSuffixNote = `(${capNotes.join(' | ')})`;
+  } else if (onMarket) {
+    allSuffixNote = `(Dok /rynek_eksport daje +5%, a sklepy NPC +${formatCoins(totalBonusPotential)} monet!)`;
+  } else {
+    allSuffixNote = `(Na Wyspie-Rynku 152,64,0 dostajesz 100% + Boom/Różnorodność/Etap, a przez pociąg + /rynek_eksport dodatkowo +5%!)`;
+  }
 
   player.tell(
     Text.green(`[Rynek Hurtowy] Wyeksportowano łącznie ${totalItems} szt. towarów za `)
       .append(Text.gold(`${formatCoins(totalPayout)} monet`))
       .append(bonusTags ? Text.aqua(` (${bonusTags.trim()})`) : Text.green(''))
       .append(Text.green('! '))
-      .append(
-        Text.gray(
-          onMarket
-            ? `(Dok /rynek_eksport daje +5%, a sklepy NPC +${formatCoins(totalBonusPotential)} monet!)`
-            : `(Na Wyspie-Rynku 152,64,0 dostajesz 100% + Boom/Różnorodność/Etap, a przez pociąg + /rynek_eksport dodatkowo +5%!)`
-        )
-      )
+      .append(Text.gray(allSuffixNote))
   );
+  if (hasUncappedSold && capNotes.length > 0) {
+    player.tell(Text.aqua(`[Rynek] Limity godzinowe: ${capNotes.join(' | ')}`));
+  }
   return totalItems;
 }
 
@@ -1404,20 +1608,24 @@ function handleShowPrices(player, requestedTier, server) {
     const it = tier.items[i];
     const packLabel = it.packSize > 1 ? ` (pakiet x${it.packSize})` : '';
     const isLocked = it.sellStage > currentStage;
+    const rightCol =
+      it.hourlyCapCoins > 0
+        ? Text.aqua(`limit ${formatCoins(it.hourlyCapCoins)}/h (bez NPC i Doków)`)
+        : Text.green(`Rynek NPC ~${formatCoins(it.npc)} (+20%)`);
     if (isLocked) {
       player.tell(
         Text.red(`🔒 [Etap ${it.sellStage}] `)
           .append(Text.gray(`${it.id}${packLabel}: `))
           .append(Text.yellow(`hurt ${formatCoins(it.wholesale)}`))
           .append(Text.gray(' | '))
-          .append(Text.green(`Rynek NPC ~${formatCoins(it.npc)} (+20%)`))
+          .append(rightCol)
       );
     } else {
       player.tell(
         Text.white(`• ${it.id}${packLabel}: `)
           .append(Text.yellow(`hurt ${formatCoins(it.wholesale)}`))
           .append(Text.gray(' | '))
-          .append(Text.green(`Rynek NPC ~${formatCoins(it.npc)} (+20%)`))
+          .append(rightCol)
       );
     }
   }
@@ -1711,7 +1919,7 @@ ServerEvents.commandRegistry((event) => {
         var reloadRes = handleReloadEconomy(ctx.source.server);
         var shoppersNote = reloadRes.shoppers
           ? reloadRes.shoppers.viaJavaApi
-            ? ` | Shoppers: ${reloadRes.shoppers.total} cen (${reloadRes.shoppers.tier0} Tier 0 + ${reloadRes.shoppers.stageLocked || 0} zablok. Etapem + ${reloadRes.shoppers.npc} NPC)`
+            ? ` | Shoppers: ${reloadRes.shoppers.total} cen (${reloadRes.shoppers.tier0} Tier 0 + ${reloadRes.shoppers.npcBlocked || 0} bez NPC + ${reloadRes.shoppers.stageLocked || 0} zablok. Etapem + ${reloadRes.shoppers.npc} NPC)`
             : ` | Shoppers (fallback): ${reloadRes.shoppers.npc} cen NPC`
           : '';
         sendCommandFeedback(
@@ -2244,6 +2452,7 @@ function extractExportFromInventory(inv, catalog, currentStage) {
     if (!itemId || catalog.tier0[itemId]) continue;
     entry = catalog.sellById[itemId];
     if (!entry) continue;
+    if (entry.hourlyCapCoins > 0) continue;
     if (currentStage != null && entry.sellStage > Number(currentStage)) continue;
 
     have = Number(stack.count || 0);
@@ -2426,7 +2635,7 @@ function putExportSmokeTestItem(inv, slot, itemStack) {
  * End-to-end smoke-test Doku Eksportowego na żywym serwerze NeoForge 1.21.1 (CI `server-boot`, #89).
  * Sprawdza bez graczy online:
  * 1) czy chunk [9, 0] po `forceload add 152 0` jest załadowany według `isExportDockChunkLoaded` (`hasChunk`),
- * 2) ekstrakcję i wypłatę 16x `minecraft:bread` z prawdziwej skrzyni `minecraft:chest` (z zachowaniem 32x cobble),
+ * 2) ekstrakcję i wypłatę 16x `minecraft:bread` z prawdziwej skrzyni `minecraft:chest` (z zachowaniem 64x cobble),
  * 3) ekstrakcję i wypłatę 16x `minecraft:bread` z prawdziwego `create:item_vault`,
  * 4) pełne posprzątanie bloków, stanu persistentData i zdjęcie `forceload`.
  */
@@ -2497,7 +2706,7 @@ function handleRunExportDockSmokeTest(server) {
       return { ok: false, error: `Skrzynia nie udostępnia inventory (${chestDiag})` };
     }
     putExportSmokeTestItem(chestInv, 0, Item.of('minecraft:bread', 16));
-    putExportSmokeTestItem(chestInv, 1, Item.of('minecraft:cobblestone', 32));
+    putExportSmokeTestItem(chestInv, 1, Item.of('minecraft:cobblestone', 64));
 
     writeExportDocks(server, [
       { x: 150, y: 65, z: 2, blockId: 'minecraft:chest', owner: '__boot_test__', teamId: -1 }
@@ -2508,7 +2717,7 @@ function handleRunExportDockSmokeTest(server) {
     breadLeft = chestInvAfter ? countItemInExportInventory(chestInvAfter, 'minecraft:bread') : -1;
     cobbleLeft = chestInvAfter ? countItemInExportInventory(chestInvAfter, 'minecraft:cobblestone') : -1;
 
-    if (!chestRes || chestRes.itemsSold !== 16 || chestRes.pendingAdded <= 0 || breadLeft !== 0 || cobbleLeft !== 32) {
+    if (!chestRes || chestRes.itemsSold !== 16 || chestRes.pendingAdded <= 0 || breadLeft !== 0 || cobbleLeft !== 64) {
       return {
         ok: false,
         error: `Test skrzyni nieudany: itemsSold=${chestRes && chestRes.itemsSold}, pendingAdded=${chestRes && chestRes.pendingAdded}, breadLeft=${breadLeft}, cobbleLeft=${cobbleLeft}, diag=(${chestDiag})`
@@ -2796,7 +3005,26 @@ function applyTerminalTradeDenial(event, player, msg) {
   notifyTerminalDenial(player, msg);
 }
 
-function handleTerminalPreTrade(event) {
+function getTerminalTradePriceCopper(trade, fallbackPrice) {
+  var cost = null;
+  var core = 0;
+  try {
+    if (trade && typeof trade.getCost === 'function') {
+      cost = trade.getCost();
+      if (cost && typeof cost.getCoreValue === 'function') {
+        core = Number(cost.getCoreValue() || 0);
+        if (Number.isFinite(core) && core > 0) {
+          return Math.floor(core);
+        }
+      }
+    }
+  } catch (e) {
+    // Fallback na cenę hurtową z prices.json
+  }
+  return Math.max(0, Math.floor(Number(fallbackPrice) || 0));
+}
+
+function handleTerminalPreTrade(event, nowMs) {
   var trader = null;
   var trade = null;
   var pid = '';
@@ -2812,6 +3040,8 @@ function handleTerminalPreTrade(event) {
   var buyEntry = null;
   var bought = 0;
   var sellDef = null;
+  var tradePrice = 0;
+  var capStatus = null;
 
   if (!event) return false;
   trader = typeof event.getTrader === 'function' ? event.getTrader() : event.trader;
@@ -2867,21 +3097,33 @@ function handleTerminalPreTrade(event) {
       applyTerminalTradeDenial(event, player, buildSellStageDeniedMessage(sellDef.id, sellDef.sellStage, currentStage));
       return true;
     }
+    if (sellDef.hourlyCapCoins > 0) {
+      tradePrice = getTerminalTradePriceCopper(trade, sellDef.wholesale);
+      capStatus = getHourlyCapStatus(server, sellDef.id, sellDef.hourlyCapCoins, nowMs);
+      if (capStatus.remaining < tradePrice) {
+        applyTerminalTradeDenial(event, player, buildHourlyCapDeniedMessage(sellDef.id, capStatus));
+        return true;
+      }
+    }
   }
 
   return false;
 }
 
-function handleTerminalPostTrade(event) {
+function handleTerminalPostTrade(event, nowMs) {
   var trader = null;
   var trade = null;
   var pid = '';
+  var isBuyShop = false;
+  var isSellShop = false;
   var resolved = null;
   var player = null;
   var server = null;
   var itemId = '';
   var catalog = null;
   var buyEntry = null;
+  var sellDef = null;
+  var tradePrice = 0;
 
   if (!event) return false;
   trader = typeof event.getTrader === 'function' ? event.getTrader() : event.trader;
@@ -2889,10 +3131,14 @@ function handleTerminalPostTrade(event) {
   if (typeof trader.isClient === 'function' && trader.isClient()) return false;
 
   pid = getTerminalTraderPersistentId(trader);
-  if (!pid || pid.indexOf('halucynacje_kup_') !== 0) return false;
+  if (!pid) return false;
+
+  isBuyShop = pid.indexOf('halucynacje_kup_') === 0;
+  isSellShop = pid.indexOf('halucynacje_skup_') === 0;
+  if (!isBuyShop && !isSellShop) return false;
 
   trade = typeof event.getTrade === 'function' ? event.getTrade() : event.trade;
-  if (!trade || !isTerminalTradeSale(trade)) return false;
+  if (!trade) return false;
 
   resolved = resolveTradeEventContext(event);
   player = resolved.player;
@@ -2905,14 +3151,31 @@ function handleTerminalPostTrade(event) {
   if (!itemId) return false;
 
   catalog = getMarketCatalog(false);
-  buyEntry = catalog.buyById[itemId] || catalog.buyByKey[itemId.toLowerCase()];
-  if (buyEntry && buyEntry.teamLimit > 0 && server) {
-    addTeamBuyCount(server, buyEntry.id, 1);
+
+  if (isBuyShop && isTerminalTradeSale(trade)) {
+    buyEntry = catalog.buyById[itemId] || catalog.buyByKey[itemId.toLowerCase()];
+    if (buyEntry && buyEntry.teamLimit > 0 && server) {
+      addTeamBuyCount(server, buyEntry.id, 1);
+    }
+    if (player && server && typeof syncPlayerTabBalance === 'function') {
+      syncPlayerTabBalance(player, server, true);
+    }
+    return true;
   }
-  if (player && server && typeof syncPlayerTabBalance === 'function') {
-    syncPlayerTabBalance(player, server, true);
+
+  if (isSellShop && isTerminalTradePurchase(trade)) {
+    sellDef = catalog.sellById[itemId];
+    if (sellDef && sellDef.hourlyCapCoins > 0 && server) {
+      tradePrice = getTerminalTradePriceCopper(trade, sellDef.wholesale);
+      recordHourlyCapSale(server, sellDef.id, sellDef.hourlyCapCoins, tradePrice, nowMs);
+    }
+    if (player && server && typeof syncPlayerTabBalance === 'function') {
+      syncPlayerTabBalance(player, server, true);
+    }
+    return true;
   }
-  return true;
+
+  return false;
 }
 
 if (typeof NativeEvents !== 'undefined' && typeof NativeEvents.onEvent === 'function') {

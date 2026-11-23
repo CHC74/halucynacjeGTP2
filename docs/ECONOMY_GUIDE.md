@@ -43,7 +43,7 @@ Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](..
 - **`/cennik [1-5]`** — tabela skupu hurtowego i docelowej ceny NPC `+20%` dla wybranego Tieru (1–5).
 - **`/sprzedaj`** — sprzedaje stack z głównej ręki (`100%` + premie na Wyspie-Rynku, sztywne `85%` poza nią bez premii) i wypłaca monety *Lightman's Currency*.
 - **`/sprzedaj all`** — sprzedaje hurtem wszystkie przetworzone towary Tier 1–5 z ekwipunku jednym kliknięciem.
-- **`/sklep`** (lub PPM na bloku `Trading Terminal` na Wyspie-Rynku — zalecamy `/sklep`, bo obsługuje przycisk **„Back to Network Terminal”**) — otwiera **prawdziwe, graficzne GUI Sklepu Sieciowego** (*Lightman's Currency*) zasilane z [config/lightmanscurrency/PersistentTraders.json](../config/lightmanscurrency/PersistentTraders.json) (**14 sklepów, 450 ofert**):
+- **`/sklep`** (lub PPM na bloku `Trading Terminal` na Wyspie-Rynku — zalecamy `/sklep`, bo obsługuje przycisk **„Back to Network Terminal”**) — otwiera **prawdziwe, graficzne GUI Sklepu Sieciowego** (*Lightman's Currency*) zasilane z [config/lightmanscurrency/PersistentTraders.json](../config/lightmanscurrency/PersistentTraders.json) (**14 sklepów, 451 ofert**):
   - **`[KUP] 1. Żetony Etapów`** (`kubejs:stage_1..5_token` za `10k/50k/100k/250k/1M` — czysto survivalowo, bez przedmiotów kreatywnych!),
   - **`[KUP] 2. Rośliny i Sadzonki`** (30 pozycji: wszystkie 8 drzew, nasiona Vanilla i FD, grzyby, kakao, jagody),
   - **`[KUP] 3. Zwierzęta i Hodowla`** (14 pozycji: zwierzęta farmowe, pszczoły/ule, ryby, kałamarnice, osadnik S2),
@@ -53,7 +53,7 @@ Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](..
   - **`[KUP] 7. Sztabki i Surowce`** (46 pozycji w paczkach: sztabki, blachy, obudowy, `electron_tube`, `precision_mechanism`, surowce),
   - **`[KUP] 8. Bloki Dekoracyjne`** (97 pozycji w paczkach: kamienie Create, *Create Deco*, *Copycats*, szkło, cegły, kwarc, lampy, 16 barwników),
   - **`[KUP] 9. Narzędzia i Plecaki`** (40 pozycji: klucz, gogle, backtank, schematicannon, *Sophisticated Backpacks/Storage*, *Building Gadgets 2*),
-  - **`[SKUP] 1..5`** (85 przetworzonych dóbr fabrycznych Tier 1–5 odblokowywanych wraz z Etapami `sell_stage = Tier - 1`, zero surowców Tier 0!).
+  - **`[SKUP] 1..5`** (86 pozycji Tier 1–5 odblokowywanych wraz z Etapami `sell_stage = Tier - 1` — 85 przetworzonych dóbr fabrycznych + startowy bruk `minecraft:cobblestone` z limitem godzinowym, zero surowców Tier 0!).
 - **`/sklep lista [0-5]`** (lub `/sklep <0-5>`) — tekstowy podgląd katalogu zakupowego z kategoriami i aliasami do szybkiego `/kup`.
 - **`/kup <alias> [ilość]`** — kupuje wybrany towar za monety z portfela, banku osobistego/drużynowego i ekwipunku (w tym `coinpile`/`coinblock`) i automatycznie wydaje resztę.
 - **`/kontrakt`** — pokazuje aktywny kontrakt fabryczny (towar, ilość, premię serii `+35%..+55%` i licznik serii).
@@ -63,12 +63,16 @@ Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](..
 
 ---
 
-## 4. Tarcza anty-exploitowa (4 warstwy ochrony)
+## 4. Tarcza anty-exploitowa (4 warstwy ochrony) + Bruk startowy na Etapie 0
 
-1. **Zero zysku za surowiznę (61 blokad Tier 0):** wszystkie kamienie, rudy, surowe sztabki (w tym surowe metale Mekanism i kryształy Certus Quartz), dropy mobów, diamenty, redstone oraz bloki z Netheru i Endu mają cenę `0` monet zarówno w `/sprzedaj`, jak i w `Shoppers`.
-2. **Wyłączony `Coin Mint` i `Slot Machines`:** receptury usunięte przez [economy_anti_exploit.js](../kubejs/server_scripts/economy_anti_exploit.js) oraz wyłączone w zweryfikowanych plikach `ConfigFile` moda *Lightman's Currency*: [lightmanscurrency-common.txt](../config/lightmanscurrency-common.txt) (`canCraftCoinMint=false`, `canMint=false`, `canMelt=false`) oraz [lightmanscurrency-server.txt](../config/lightmanscurrency-server.txt) (`lcterminalCommand=true`, `interest=0.0`).
-3. **Limit marży w `Shoppers` (`overpriceMultiplier = 1.25`):** skonfigurowane w [shoppers-common.toml](../config/shoppers-common.toml) — NPC odmawiają zakupu przedmiotów wystawionych powyżej +25% ich wartości rynkowej.
-4. **Automatyczna walidacja anty-arbitrażowa i spójności GUI w CI:** [scripts/validate_economy.mjs](../scripts/validate_economy.mjs) pilnuje anty-arbitrażu przy maksymalnym mnożniku `×1,45` (7 reguł zużywalnych materiałów + wszystkie nakładki Buy/Sell), spójności składania (`10` par `≥ 1,1×`), spójności `sell_stage` oraz zasady `zdalna ×0,85 < NPC`, a [scripts/generate_persistent_traders.mjs](../scripts/generate_persistent_traders.mjs) (`--check`) gwarantuje 100% synchronizacji `PersistentTraders.json` z `prices.json`.
+1. **Zero zysku za surowiznę (60 blokad Tier 0):** wszystkie kamienie (poza limitowanym brukiem startowym poniżej), rudy, surowe sztabki (w tym surowe metale Mekanism i kryształy Certus Quartz), dropy mobów, diamenty, redstone oraz bloki z Netheru i Endu mają cenę `0` monet zarówno w `/sprzedaj`, jak i w `Shoppers`.
+2. **Startowa sprzedaż bruku (`minecraft:cobblestone`) z twardym limitem `2 000 monet/h` (Issue #94):**
+   - **Cena:** `64× minecraft:cobblestone → 32 monety` (`0,5` monety/szt.) od **Etapu 0** na Wyspie-Rynku (`/sprzedaj`) i w terminalu `[SKUP] 1. Farma i Piekarnia` — lub **`27 monet`** poza Wyspą-Rynkiem (mnożnik zdalny `0,85`).
+   - **Limit godzinowy (co-op na serwer):** maksymalnie **`2 000 monet`** w ruchomym oknie **60 minut** od pierwszej sprzedaży bruku (wspólny licznik dla `/sprzedaj`, `/sprzedaj all` i terminala `[SKUP]`). Przy próbie sprzedaży ponad limit system sprzedaje tylko tyle pełnych stacków, ile mieści się w limicie, zostawia nadmiar w ekwipunku i podaje czas do resetu (`reset za N min`).
+   - **Wykluczenia anty-exploitowe:** bruk z limitem godzinowym jest **wyłączony** z Automatycznych Doków Eksportowych (zostaje nietknięty w skrzyni), sklepów NPC *Shoppers* (`0` monet), Boomu Rynkowego, Premii za Różnorodność, premii Etapu oraz Kontraktów `/kontrakt` — więc automatyczny *Mechanical Extruder* nie drukuje nieskończonych monet.
+3. **Wyłączony `Coin Mint` i `Slot Machines`:** receptury usunięte przez [economy_anti_exploit.js](../kubejs/server_scripts/economy_anti_exploit.js) oraz wyłączone w zweryfikowanych plikach `ConfigFile` moda *Lightman's Currency*: [lightmanscurrency-common.txt](../config/lightmanscurrency-common.txt) (`canCraftCoinMint=false`, `canMint=false`, `canMelt=false`) oraz [lightmanscurrency-server.txt](../config/lightmanscurrency-server.txt) (`lcterminalCommand=true`, `interest=0.0`).
+4. **Limit marży w `Shoppers` (`overpriceMultiplier = 1.25`):** skonfigurowane w [shoppers-common.toml](../config/shoppers-common.toml) — NPC odmawiają zakupu przedmiotów wystawionych powyżej +25% ich wartości rynkowej.
+5. **Automatyczna walidacja anty-arbitrażowa i spójności GUI w CI:** [scripts/validate_economy.mjs](../scripts/validate_economy.mjs) pilnuje anty-arbitrażu przy maksymalnym mnożniku `×1,45` (7 reguł zużywalnych materiałów + wszystkie nakładki Buy/Sell), spójności składania (`10` par `≥ 1,1×`), spójności `sell_stage`, reguł `hourly_cap_coins` (`npc_shoppers === 0`) oraz zasady `zdalna ×0,85 < NPC`, a [scripts/generate_persistent_traders.mjs](../scripts/generate_persistent_traders.mjs) (`--check`) gwarantuje 100% synchronizacji `PersistentTraders.json` z `prices.json`.
 
 ---
 

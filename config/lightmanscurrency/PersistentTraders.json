@@ -7697,7 +7697,7 @@
       "Type": "lightmanscurrency:item_trader",
       "ID": "halucynacje_skup_01_start",
       "Name": "[SKUP] 1. Farma i Piekarnia",
-      "OwnerName": "Tier 1 (Etap 0+) | 4-31c",
+      "OwnerName": "Tier 1 (Etap 0+) | 4-32c",
       "CustomIcon": {
         "Type": "lightmanscurrency:item",
         "Item": {
@@ -7900,6 +7900,27 @@
               {
                 "Coin": "lightmanscurrency:coin_copper",
                 "Amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "TradeType": "PURCHASE",
+          "SellItem": {
+            "id": "minecraft:cobblestone",
+            "count": 64
+          },
+          "Price": {
+            "type": "lightmanscurrency:coins",
+            "Chain": "main",
+            "Value": [
+              {
+                "Coin": "lightmanscurrency:coin_iron",
+                "Amount": 3
+              },
+              {
+                "Coin": "lightmanscurrency:coin_copper",
+                "Amount": 2
               }
             ]
           }

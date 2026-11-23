@@ -543,9 +543,11 @@ for expected_marker in \
   "Wymuszono gamerule keepInventory = true" \
   "Przeładowano prices.json" \
   "cen Shoppers z prices.json" \
+  "60 blokad Tier 0 = 0, 1 bez NPC = 0 (minecraft:cobblestone)" \
   "Zsynchronizowano etapy co-op i taski FTB Quests" \
   "Chunk at [9, 0] in Overworld is marked for force loading" \
   "[ExportDockTest] PASS: hasChunk=true" \
+  "cobbleUntouched=64" \
   "Chunk at [9, 0] in Overworld is not marked for force loading"
 do
   if [ "${#SEARCH_LOGS[@]}" -gt 0 ] && grep -Fq "${expected_marker}" "${SEARCH_LOGS[@]}"; then

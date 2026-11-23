@@ -61,6 +61,8 @@
 				""
 				"Jak najszybciej przejdź z ręcznego kopania na &bCreate: Mechanical Extruder&r — pojedynczy blok napędzany obrotami zastępuje lagujące farmy tłokowe i chroni TPS naszego serwera Exaroton!"
 				""
+				"&6Zarobek na Etapie 0:&r bruk z generatora sprzedasz od razu w &b[SKUP] 1. Farma i Piekarnia&r (&f/sklep&r) oraz przez &f/sprzedaj&r (&632 monety&r za 64 szt., limit drużyny &62 000 monet/h&r)."
+				""
 				"&7Wskazówka:&r podłożenie bloku katalizatora pod Ekstruder (np. &fAndesite&r) pozwala automatycznie generować także &fTuff&r (receptura KubeJS) oraz inne kamienie."
 			]
 			id: "B000000000000002"
