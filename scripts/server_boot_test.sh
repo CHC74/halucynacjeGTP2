@@ -17,6 +17,7 @@
 #      - `halucynacje_reload_economy`
 #      - `halucynacje_sync_shoppers`
 #      - `halucynacje_sync_stages`
+#      - `halucynacje_test_export_dock` + `forceload query 152 0` (weryfikacja Doku Eksportowego #89)
 #      - `stop` (czyste zamknięcie z kodem wyjścia 0).
 #   6. Twardą weryfikację logów:
 #      - brak błędów `ERROR` / `[ERR]` / wyjątków Rhino w `logs/kubejs/startup.log`,
@@ -374,7 +375,11 @@ if [ "${BOOT_DONE}" -eq 1 ]; then
   for cmd in \
     "halucynacje_reload_economy" \
     "halucynacje_sync_shoppers" \
-    "halucynacje_sync_stages"
+    "halucynacje_sync_stages" \
+    "halucynacje_test_export_dock forceload_on" \
+    "execute in minecraft:overworld run forceload query 152 0" \
+    "halucynacje_test_export_dock run" \
+    "execute in minecraft:overworld run forceload query 152 0"
   do
     send_console_cmd "${cmd}" || break
     sleep 3
@@ -538,7 +543,10 @@ for expected_marker in \
   "Wymuszono gamerule keepInventory = true" \
   "Przeładowano prices.json" \
   "cen Shoppers z prices.json" \
-  "Zsynchronizowano etapy co-op i taski FTB Quests"
+  "Zsynchronizowano etapy co-op i taski FTB Quests" \
+  "Chunk at [9, 0] in Overworld is marked for force loading" \
+  "[ExportDockTest] PASS: hasChunk=true" \
+  "Chunk at [9, 0] in Overworld is not marked for force loading"
 do
   if [ "${#SEARCH_LOGS[@]}" -gt 0 ] && grep -Fq "${expected_marker}" "${SEARCH_LOGS[@]}"; then
     pass_check "Potwierdzono wpis w logach: '${expected_marker}'."

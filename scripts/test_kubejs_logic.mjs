@@ -72,6 +72,62 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`Assertion failed: ${msg}`);
 }
 
+class MockBlockPos {
+  constructor(x, y, z) {
+    if (arguments.length !== 3 || !Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
+      throw new TypeError(`Invalid BlockPos args: (${x}, ${y}, ${z})`);
+    }
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+  getX() {
+    return this.x;
+  }
+  getY() {
+    return this.y;
+  }
+  getZ() {
+    return this.z;
+  }
+}
+
+function makeStrictOverworldMock({ getBlock, loadedChunks = null, exposeHasChunk = true }) {
+  const isChunkLoaded = (cx, cz) => {
+    if (!loadedChunks) return true;
+    return loadedChunks.has(`${cx},${cz}`);
+  };
+  const ow = {
+    isLoaded(...args) {
+      if (args.length !== 1 || !(args[0] instanceof MockBlockPos)) {
+        throw new TypeError(
+          `Can't find method net.minecraft.world.level.Level.isLoaded(${args.map((a) => typeof a).join(', ')})`
+        );
+      }
+      return isChunkLoaded(args[0].x >> 4, args[0].z >> 4);
+    },
+    getBlock(x, y, z) {
+      if (arguments.length !== 3 || !Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
+        throw new TypeError(`Invalid getBlock args: (${x}, ${y}, ${z})`);
+      }
+      return getBlock(x, y, z);
+    }
+  };
+  if (exposeHasChunk) {
+    ow.hasChunk = function hasChunk(cx, cz) {
+      if (arguments.length !== 2 || !Number.isInteger(cx) || !Number.isInteger(cz)) {
+        throw new TypeError(
+          `Can't find method net.minecraft.world.level.Level.hasChunk(${Array.from(arguments)
+            .map((a) => typeof a)
+            .join(', ')})`
+        );
+      }
+      return isChunkLoaded(cx, cz);
+    };
+  }
+  return ow;
+}
+
 let passed = 0;
 function test(name, fn) {
   fn();
@@ -811,7 +867,8 @@ test('economy_anti_exploit.js + economy_market.js (#62): hash prices.json wykryw
   let currentPricesObj = JSON.parse(JSON.stringify(prices));
   let setCustomPriceCalls = 0;
   const customPrices = new Map();
-  let loadedHandler = null;
+  const loadedHandlers = [];
+  const fireLoaded = (ev) => loadedHandlers.forEach((fn) => fn(ev));
 
   const sandbox = {
     console: { info: () => {}, warn: () => {}, error: () => {} },
@@ -839,7 +896,7 @@ test('economy_anti_exploit.js + economy_market.js (#62): hash prices.json wykryw
     ServerEvents: {
       recipes: () => {},
       loaded: (cb) => {
-        loadedHandler = cb;
+        loadedHandlers.push(cb);
       },
       commandRegistry: () => {}
     },
@@ -871,18 +928,18 @@ test('economy_anti_exploit.js + economy_market.js (#62): hash prices.json wykryw
   };
 
   // 1) Pierwszy start -> brak zapisanego hasha -> synchronizacja Shoppers
-  loadedHandler({ server: mockServer });
+  fireLoaded({ server: mockServer });
   assert(setCustomPriceCalls > 100, 'Pierwszy start musi zsynchronizować wszystkie ceny Shoppers');
   assert(customPrices.get('minecraft:bread') === 5, 'Początkowa cena NPC bread = 5');
 
   // 2) Drugi start bez edycji prices.json -> hash identyczny -> BRAK synchronizacji
   setCustomPriceCalls = 0;
-  loadedHandler({ server: mockServer });
+  fireLoaded({ server: mockServer });
   assert(setCustomPriceCalls === 0, 'Brak zmiany prices.json nie może ponownie synchronizować Shoppers');
 
   // 3) Edycja prices.json -> kolejny start automatycznie wykrywa zmianę hasha i synchronizuje nową cenę
   sandbox.__setBreadPrice(10, 12);
-  loadedHandler({ server: mockServer });
+  fireLoaded({ server: mockServer });
   assert(setCustomPriceCalls > 100, 'Zmiana prices.json musi wyzwolić automatyczną synchronizację przy starcie');
   assert(customPrices.get('minecraft:bread') === 12, 'Shoppers otrzymał nową cenę NPC bread = 12');
 
@@ -1109,10 +1166,10 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
     persistentData: makeCompound(),
     tell: () => {},
     runCommandSilent: () => {},
-    overworld: () => ({
-      isLoaded: () => true,
-      getBlock: (x, y, z) => (x === 150 && y === 65 && z === 2 ? dockBlock : null)
-    })
+    overworld: () =>
+      makeStrictOverworldMock({
+        getBlock: (x, y, z) => (x === 150 && y === 65 && z === 2 ? dockBlock : null)
+      })
   };
 
   // Ustaw deterministyczny Boom na inny przedmiot (żeby nie zaburzał wyliczeń squid_ink_pasta)
@@ -1879,10 +1936,10 @@ test('shared_economy.js + economy_market.js (#83 cz. B pkt 1-2): blokada sell_st
     persistentData: makeCompound(),
     tell: () => {},
     runCommandSilent: () => {},
-    overworld: () => ({
-      isLoaded: () => true,
-      getBlock: (x, y, z) => (x === 152 && y === 65 && z === 0 ? dockBlock : null)
-    })
+    overworld: () =>
+      makeStrictOverworldMock({
+        getBlock: (x, y, z) => (x === 152 && y === 65 && z === 0 ? dockBlock : null)
+      })
   };
   // Etap 1 odblokowany
   const gs = server.persistentData.getCompound('halucynacje_global_stages');
@@ -2361,6 +2418,218 @@ test('economy_contracts.js + economy_market.js (#83 cz. B pkt 6): targetValue ko
   assert(
     ecoMsgs.some((m) => m.includes('750 000 monet')),
     '/ekonomia na Etapie 5 pokazuje nagrodę Wielkiego Finału 750 000 monet'
+  );
+});
+
+// 23. Issue #89: Doki Eksportowe — API 1.21.1 (hasChunk / BlockPos), logowanie błędów raz na dok i automatyczny forceload
+test('economy_market.js (#89): ścisła atrapa Overworld, wypłata w załadowanym chunku, logowanie błędów i forceload add/remove', () => {
+  const warnings = [];
+  const ranCmds = [];
+  const loadedHandlers = [];
+
+  const sandbox = {
+    console: {
+      info: () => {},
+      warn: (m) => warnings.push(String(m)),
+      error: () => {}
+    },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    Java: {
+      loadClass: (cls) => {
+        if (cls === 'net.minecraft.core.BlockPos') return MockBlockPos;
+        return null;
+      }
+    },
+    ServerEvents: {
+      commandRegistry: () => {},
+      tick: () => {},
+      loaded: (fn) => loadedHandlers.push(fn)
+    },
+    NativeEvents: { onEvent: () => {} },
+    Date,
+    Math,
+    assert
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const addDock = vm.runInContext('handleAddExportDock', ctx);
+  const removeDock = vm.runInContext('handleRemoveExportDock', ctx);
+  const processDocks = vm.runInContext('processExportDocksTick', ctx);
+  const syncForceload = vm.runInContext('syncExportDocksForceload', ctx);
+
+  // A) Self-test ścisłej atrapy: wywołanie isLoaded z 3 liczbami MUSI rzucić błąd (regresja MC 1.21.1)
+  const strictOwCheck = makeStrictOverworldMock({ getBlock: () => null });
+  let threw3Args = false;
+  try {
+    strictOwCheck.isLoaded(152, 65, 0);
+  } catch (err) {
+    threw3Args = true;
+  }
+  assert(threw3Args, 'Atrapa Overworld rzuca błąd dla isLoaded(x, y, z) z trzema liczbami');
+
+  // B) Przygotowanie bloków na Wyspie-Rynku:
+  //    - (150, 65, 2) -> chunk (9, 0)
+  //    - (152, 65, 2) -> ten sam chunk (9, 0)
+  //    - (168, 65, 2) -> osobny chunk (10, 0)
+  const breadPrice = prices.sell_tiers.tier_1_start.items.find((x) => x.id === 'minecraft:bread').wholesale_gui;
+  const dock1Slots = [sandbox.Item.of('minecraft:bread', 16)];
+  const dock2Slots = [sandbox.Item.of('minecraft:bread', 4)];
+  const dock3Slots = [sandbox.Item.of('minecraft:bread', 8)];
+
+  const makeBlock = (x, y, z, slots) => ({
+    x,
+    y,
+    z,
+    id: 'minecraft:chest',
+    inventory: {
+      getContainerSize: () => slots.length,
+      getItem: (idx) => slots[idx],
+      setChanged: () => {}
+    }
+  });
+  const block1 = makeBlock(150, 65, 2, dock1Slots);
+  const block2 = makeBlock(152, 65, 2, dock2Slots);
+  const block3 = makeBlock(168, 65, 2, dock3Slots);
+  const blocksByKey = new Map([
+    ['150,65,2', block1],
+    ['152,65,2', block2],
+    ['168,65,2', block3]
+  ]);
+
+  const loadedChunks = new Set();
+  let throwOnBlock1 = false;
+  let exposeHasChunk = true;
+
+  const server = {
+    persistentData: makeCompound(),
+    tell: () => {},
+    runCommandSilent: (cmd) => ranCmds.push(String(cmd)),
+    overworld: () =>
+      makeStrictOverworldMock({
+        loadedChunks,
+        exposeHasChunk,
+        getBlock: (x, y, z) => {
+          if (throwOnBlock1 && x === 150 && y === 65 && z === 2) {
+            throw new Error('Symulowany błąd kontenera');
+          }
+          return blocksByKey.get(`${x},${y},${z}`) || null;
+        }
+      })
+  };
+
+  // Deterministyczny Boom na inny przedmiot (cookie)
+  const boomTag = server.persistentData.getCompound('halucynacje_market_boom');
+  boomTag.putString('itemId', 'minecraft:cookie');
+  boomTag.putInt('basePrice', 6);
+  boomTag.putInt('boostedPrice', 8);
+  boomTag.putInt('packSize', 1);
+  boomTag.putLong('expiresAtMs', Date.now() + 600_000);
+  server.persistentData.put('halucynacje_market_boom', boomTag);
+
+  const playerMsgs = [];
+  let aimedBlock = block1;
+  const player = {
+    username: 'DockTester',
+    x: 152,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld' },
+    tell: (t) => playerMsgs.push(t.s),
+    rayTrace: () => ({ block: aimedBlock })
+  };
+
+  // C) `/rynek_eksport dodaj` woła `forceload add` i informuje gracza o trzymaniu chunku w pamięci
+  assert(addDock(player, server) === 1, 'Dodano dok #1 (150, 65, 2)');
+  assert(
+    ranCmds.some((c) => c === 'execute in minecraft:overworld run forceload add 150 2'),
+    'dodaj wywołało forceload add 150 2 w Overworldzie'
+  );
+  assert(
+    playerMsgs.some((m) => m.includes('trzymany w pamięci') && m.includes('forceload')),
+    'Gracz otrzymał informację, że chunk doku jest trzymany w pamięci'
+  );
+
+  // D) Dok w niezaładowanym chunku (9, 0) jest pomijany bez wypłaty i bez ostrzeżeń
+  const resUnloaded = processDocks(server, Date.now());
+  assert(resUnloaded.itemsSold === 0 && resUnloaded.pendingAdded === 0, 'Niezaładowany chunk pominięty');
+  assert(dock1Slots[0].count === 16, 'Chleb pozostał w skrzyni w niezaładowanym chunku');
+  assert(warnings.length === 0, 'Brak ostrzeżeń dla niezaładowanego chunku');
+
+  // E) Po załadowaniu chunku (9, 0) dok wypłaca przez `hasChunk(9, 0)` (bez `isLoaded(x, y, z)`)
+  loadedChunks.add('9,0');
+  const resLoaded = processDocks(server, Date.now());
+  const expected16 = Math.round(breadPrice * 16 * 1.05);
+  assert(resLoaded.itemsSold === 16, `Dok w załadowanym chunku sprzedał 16x bread (było ${resLoaded.itemsSold})`);
+  assert(
+    resLoaded.pendingAdded === expected16,
+    `Wypłata doku za 16x bread wynosi ${expected16} monet (było ${resLoaded.pendingAdded})`
+  );
+  assert(dock1Slots[0].count === 0, 'Chleb został opróżniony ze skrzyni');
+  assert(warnings.length === 0, 'Zero błędów podczas poprawnej wypłaty');
+
+  // F) Ścieżka fallback `isLoaded(new BlockPos(x, y, z))` (gdy brak `hasChunk`) również działa
+  exposeHasChunk = false;
+  dock1Slots[0] = sandbox.Item.of('minecraft:bread', 4);
+  const resBlockPos = processDocks(server, Date.now());
+  assert(resBlockPos.itemsSold === 4, 'Ścieżka fallback isLoaded(BlockPos) sprzedała 4x bread');
+  exposeHasChunk = true;
+
+  // G) Dodanie 2. doku w tym samym chunku (9, 0) oraz 3. doku w chunku (10, 0)
+  aimedBlock = block2;
+  assert(addDock(player, server) === 1, 'Dodano dok #2 w tym samym chunku (9, 0)');
+  aimedBlock = block3;
+  assert(addDock(player, server) === 1, 'Dodano dok #3 w chunku (10, 0)');
+  assert(
+    ranCmds.some((c) => c === 'execute in minecraft:overworld run forceload add 168 2'),
+    'dodaj dla doku #3 wywołało forceload add 168 2'
+  );
+
+  // H) Wyjątek w doku #1 jest logowany przez `console.warn` ze współrzędnymi RAZ do restartu,
+  //    a pozostałe zdrowe doki (#2 w tym samym chunku) działają dalej bez przeszkód!
+  throwOnBlock1 = true;
+  const resWithErr1 = processDocks(server, Date.now());
+  assert(resWithErr1.itemsSold === 4, 'Zdrowy dok #2 wypłacił 4x bread mimo błędu doku #1');
+  assert(warnings.length === 1, `Błąd doku #1 zalogowany dokładnie raz (było ${warnings.length})`);
+  assert(
+    warnings[0].includes('(150, 65, 2)') && warnings[0].includes('Symulowany błąd kontenera'),
+    'Ostrzeżenie zawiera współrzędne doku i treść błędu'
+  );
+  // Kolejne 2 cykle co 30 s — brak spamu w logach!
+  processDocks(server, Date.now());
+  processDocks(server, Date.now());
+  assert(warnings.length === 1, 'Kolejne cykle błędnego doku nie spamują logu');
+  throwOnBlock1 = false;
+
+  // I) `syncExportDocksForceload` na starcie serwera deduplikuje chunki (3 doki w 2 chunkach -> 2 komendy)
+  ranCmds.length = 0;
+  const restored = syncForceload(server);
+  assert(restored === 2 && ranCmds.length === 2, `syncExportDocksForceload przywrócił 2 unikalne chunki (było ${restored})`);
+  assert(loadedHandlers.length >= 1, 'Zarejestrowano ServerEvents.loaded dla przywracania forceload');
+
+  // J) `/rynek_eksport usun`: NIE zdejmuje forceload, gdy w tym chunku jest inny dok; zdejmuje dopiero po usunięciu ostatniego!
+  ranCmds.length = 0;
+  assert(removeDock(player, server, 1) === 1, 'Usunięto dok #1 (150, 65, 2)');
+  assert(
+    !ranCmds.some((c) => c.includes('forceload remove')),
+    'NIE wywołano forceload remove, bo dok #2 nadal stoi w chunku (9, 0)'
+  );
+
+  assert(removeDock(player, server, 1) === 1, 'Usunięto dok #2 (152, 65, 2 — ostatni w chunku 9, 0)');
+  assert(
+    ranCmds.some((c) => c === 'execute in minecraft:overworld run forceload remove 152 2'),
+    'Wywołano forceload remove 152 2 po usunięciu ostatniego doku z chunku (9, 0)'
+  );
+
+  ranCmds.length = 0;
+  assert(removeDock(player, server, 1) === 1, 'Usunięto dok #3 (168, 65, 2 — jedyny w chunku 10, 0)');
+  assert(
+    ranCmds.some((c) => c === 'execute in minecraft:overworld run forceload remove 168 2'),
+    'Wywołano forceload remove 168 2 dla chunku (10, 0)'
   );
 });
 
