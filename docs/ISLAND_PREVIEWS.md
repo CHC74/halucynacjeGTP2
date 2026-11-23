@@ -44,11 +44,11 @@ Ten dokument zawiera **automatycznie wyrenderowane obrazy 3D** wygenerowane bezp
 
 ---
 
-## 3. Wyspa Startowa (`starter_island.nbt` — `15 × 13 × 15`, `389` bloków)
+## 3. Wyspa Startowa (`starter_island.nbt` — `15 × 13 × 15`, `393` bloków)
 
 - **Pozycja w świecie:** środek `(0, 64, 0)`, spawn `(0, 65, 0)` patrząc prosto na Wschód (wzdłuż Pirsu Wschodniego ku Wielkiej Wyspie-Rynkowi).
 - **Kluczowe elementy widoczne na renderach:**
-  - Naturalna latająca bryła skalna z dębem startowym, bezpieczną wnęką cobble-gen (blok lodu + kamienna niecka), skrzynią anty-softlock (11 pozycji) i stołem rzemieślniczym.
+  - Naturalna latająca bryła skalna z dębem startowym, gotowym wbudowanym generatorem bruku (woda + dołek + bruk + lawa z osłoną `stone_brick_slab` w kamiennej obudowie), skrzynią anty-softlock (12 pozycji, w tym `3× glass` na pierwszy `Mechanical Extruder`) i stołem rzemieślniczym.
   - **Pirs Wschodni** z latarniami wskazujący oś toru na Rynek oraz **znacznik łupkowy na Południu** wskazujący kierunek na Hutę Południową.
 
 ![Wyspa Startowa 3D](renders/starter_island_3d.png)

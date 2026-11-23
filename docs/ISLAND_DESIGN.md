@@ -37,8 +37,8 @@ Koordynaty podane są względem punktu początkowego wyspy drużyny (`origin = (
 | :--- | :--- | :--- | :--- |
 | **Wyspa Startowa — środek / spawn** | `(0, 64, 0)` | `15 × 13 × 15` (`offset [-7, -6, -7]`) | Punkt odrodzenia drużyny i startowa platforma Stage 0 |
 | Drzewo startowe (Dąb) | `(-4, 65, -4)` | 1 drzewo na bloku ziemi | Pierwsze drewno, sadzonki, jabłka |
-| Wnęka Cobble-Gen (Lód/Woda + Lawa) | `(-4, 64, +3)` | Niecka z `stone_bricks` + blok lodu | Bezpieczny generator bruku |
-| Skrzynia Startowa (anty-softlock) | `(-1, 65, -2)` | 11 pozycji startowych + stół rzemieślniczy | Lawa, 2× lód, sadzonki, trzcina, kaktus, wodorosty, nasiona |
+| Wbudowany Cobble-Gen (Woda + Dołek + Lawa) | `(-4..-1, 64, +3)` | Ustalony generator bruku z `stone_bricks` + osłona `stone_brick_slab` nad lawą | Gotowy do kopania na `(-2, 64, +3)` bez ryzyka obsydianu |
+| Skrzynia Startowa (anty-softlock) | `(-1, 65, -2)` | 12 pozycji startowych + stół rzemieślniczy | Lawa, 2× lód, **3× szkło** (na Extruder), sadzonki, trzcina, kaktus, wodorosty, nasiona |
 | **Pirs Logistyczny Wschodni (Startowa)** | `(+4..+7, 64, 0)` | Tor `Y=65`, latarnie kierunkowe | Wyrównany wylot na wschód ku Stacji Rynku |
 | **Wielka Wyspa-Rynek — centrum Rotundy** | `(152, 64, 0)` | `45 × 25 × 35` (`X: 130..174`, `Z: -17..+17`), `offset [152, 4, 0]` | Wiktoriańsko-steampunkowy hub handlowy: `Shoppers` NPC + `Lightman's Currency` |
 | **Wielka Hala Dworca Zachodniego (Rynek)** | `(130..138, 65, 0)` | Prześwit wjazdu `9 × 6` ze szklanym sklepieniem | Przyjazd pociągów ze Startowej (prosta oś `Z=0`, `Y=65`) |
@@ -64,8 +64,8 @@ Wyspa Startowa ma dawać przyjemny, czysty start w klimacie **pure-Create Skyblo
 - **Wymiary płyty:** ~`15 × 15` bloków (`X: -7..+7`, `Z: -7..+7`), górna warstwa trawy/ziemi na **`Y = 64`**, stożkowa podbudowa z kamienia, andezytu i deepslate'u schodząca do `Y = 58` (wygląd naturalnej latającej skały z industrialnym akcentem).
 - **Strefa surowców początkowych (Stage 0):**
   - **Drzewo startowe** (`(-4, 65, -4)`): klasyczny dąb (*Oak Tree*) z kilkoma blokami trawy wokół pod wczesną trawę/nasiona.
-  - **Wnęka Cobble-Gen** (`(-5, 64, +4)`): estetyczna kamienna niecka z **1 źródłem lawy** i **2 blokami lodu** (lub źródłem wody) gotowa do natychmiastowego uruchomienia bezpiecznego generatora bruku, a chwilę później — zamiany w `Create: Mechanical Extruder`.
-  - **Skrzynia startowa** (`(-2, 65, +2)`): opcjonalne zapasowe zasoby wyspy (2× `minecraft:oak_sapling`, 4× `minecraft:bone_meal`, 1× `minecraft:bucket`, 8× `minecraft:torch`, 1× `minecraft:red_bed`). Ekwipunek osobisty gracza definiuje [inventory.json5](../config/skyblockbuilder/inventory.json5).
+  - **Wbudowany Generator Bruku** (`(-4..-1, 64, +3)`): gotowy, w pełni obudowany `stone_bricks` układ w stanie ustalonym — źródło wody `(-4, 64, +3)` → płynąca woda `(-3, 64, +3)` nad dołkiem `(-3, 63, +3)` → regenerujący się bruk `(-2, 64, +3)` ← źródło lawy `(-1, 64, +3)` przykryte niepalną półpłytką `stone_brick_slab` na `(-1, 65, +3)`. Woda spada w dołek i nigdy nie dotyka źródła lawy (zero obsydianu, zero wycieków), a w promieniu `> 4` bloków od lawy brak jakichkolwiek bloków palnych.
+  - **Skrzynia startowa** (`(-1, 65, -2)`): 12 pozycji anty-softlock (`lava_bucket`, `2× ice`, **`3× glass`** dokładnie na pierwszy `Mechanical Extruder`, `4× oak_sapling`, `2× sweet_berries`, `2× sugar_cane`, `1× cactus`, `2× kelp`, `4× wheat_seeds`, `8× bone_meal`, `16× torch`, `16× cobblestone`) + stół rzemieślniczy obok. Ekwipunek osobisty gracza definiuje [inventory.json5](../config/skyblockbuilder/inventory.json5).
 - **Pirs Logistyczny Wschodni `(+8, 64, 0)`:**
   - Krótki, 3-blokowy wypust (`X: +8..+10`, `Z: -2..+2`) z cegieł kamiennych i obramowania z andezytu (*Andesite Casing* / *Polished Andesite*).
   - **Poziom torowiska `Y = 65`:** ułożone 2 demonstracyjne odcinki `create:track` na `(+8, 65, 0)` i `(+9, 65, 0)` wskazujące dokładnie prosto na Stację Zachodnią Wyspy-Rynku `(136, 65, 0)`.

@@ -36,7 +36,7 @@ const STAGE_TOKENS = [
     name: 'Żeton Etapu 4: High-Tech i End',
     rarity: 'epic',
     cost: '250 000 monet',
-    unlocks: 'Normalny End, pełny Applied Energistics 2 + Applied Kinetics, Mekanism & Generators'
+    unlocks: 'Normalny End, zakup Portalu Endu (limit 12) i diamentów (limit 16), skup Tier 5, +10 chunków, +8% premii i 6 Doków'
   },
   {
     id: 'stage_5_token',
