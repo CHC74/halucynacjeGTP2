@@ -57,7 +57,7 @@
 		{
 			dependencies: ["B000000000000001"]
 			description: [
-				"Na Wyspie Startowej znajdziesz przygotowaną wnękę generatora bruku na &b(-5, 64, +4)&r z wodą/lodem i lawą."
+				"Na Wyspie Startowej znajdziesz gotowy, wbudowany generator bruku na &b(-4..-1, 64, 3)&r (z osłoną nad lawą i bezpiecznym dołkiem na wodę — bruk odnawia się na &b(-2, 64, 3)&r bez ryzyka obsydianu), a w skrzyni startowej czekają &f3× Glass&r dokładnie na Twój pierwszy &bMechanical Extruder&r!"
 				""
 				"Jak najszybciej przejdź z ręcznego kopania na &bCreate: Mechanical Extruder&r — pojedynczy blok napędzany obrotami zastępuje lagujące farmy tłokowe i chroni TPS naszego serwera Exaroton!"
 				""
@@ -161,9 +161,9 @@
 				"Zamiast ręcznego przesiewania używamy &bBulk Washing&r — dmuchania przez wodę za pomocą &bEncased Fan&r!"
 				""
 				"&eKluczowe ścieżki płukania w Etapie 0:&r"
-				"• &fGravel&r -> &fIron Nuggets&r + &fFlint&r"
-				"• &fSand&r -> &fClay Balls&r"
+				"• &fGravel&r (z mielenia bruku w Millstone) -> &fIron Nuggets&r + &fFlint&r"
 				"• &fTuff&r (z Extrudera lub Compacting) -> &fZinc Nuggets&r + &fCopper Nuggets&r (receptura KubeJS)"
+				"• &7(Wskazówka: płukanie piasku na glinę odblokujesz od Etapu 1 razem z dripstone i sklepem gliny)&r"
 				""
 				"W nagrodę otrzymasz &bEngineer's Goggles&r oraz &6500 monet&r na startowe sadzonki i kelp w &f/sklep&r!"
 			]
@@ -216,7 +216,7 @@
 					id: "C000000000000403"
 					item: {
 						count: 1
-						id: "minecraft:clay_ball"
+						id: "minecraft:flint"
 					}
 					type: "item"
 				}

@@ -444,16 +444,30 @@ def build_starter_island() -> StructureBuilder:
         sb.set(x, 6, 13, "minecraft:polished_deepslate" if x == 7 else "minecraft:deepslate_bricks")
         sb.set(x, 5, 12, "minecraft:cobbled_deepslate")
 
-    # Bezpieczna wnęka pod generator bruku (SW: x=3..5, z=9..10)
-    for x in (3, 4, 5):
-        for z in (9, 10):
-            sb.set(x, 5, z, "minecraft:stone_bricks")
-    sb.set(3, 6, 10, "minecraft:ice")
-    sb.set(4, 6, 10, "minecraft:cobblestone")
-    sb.set(5, 6, 10, "minecraft:stone_bricks")
-    sb.set(3, 6, 9, "minecraft:stone_bricks")
-    sb.set(4, 6, 9, "minecraft:stone_bricks")
-    sb.set(5, 6, 9, "minecraft:stone_bricks")
+    # Wbudowany, ustalony generator bruku (rząd z=10; świat = x-7, y+58, z-7):
+    # - (3, 6, 10) [(-4, 64, 3)]: woda źródłowa (level=0)
+    # - (4, 6, 10) [(-3, 64, 3)]: woda płynąca (level=1) nad dołkiem
+    # - (4, 5, 10) [(-3, 63, 3)]: dołek z wodą spadającą (level=8), dno (4, 4, 10) = stone
+    # - (5, 6, 10) [(-2, 64, 3)]: odnawiający się bruk (cobblestone)
+    # - (6, 6, 10) [(-1, 64, 3)]: lawa źródłowa (level=0), bez styku z wodą (brak obsydianu)
+    # - (6, 7, 10) [(-1, 65, 3)]: niepalna osłona nad lawą (stone_brick_slab)
+    # Pełne, niepalne obramowanie boczne i spód (zero otwartych boków poza kanałem z=10)
+    for x in (3, 4, 5, 6):
+        sb.set(x, 6, 9, "minecraft:stone_bricks")
+        sb.set(x, 6, 11, "minecraft:stone_bricks")
+        sb.set(x, 5, 9, "minecraft:stone_bricks")
+        sb.set(x, 5, 11, "minecraft:stone_bricks")
+    sb.set(2, 6, 10, "minecraft:stone_bricks")
+    sb.set(7, 6, 10, "minecraft:stone_bricks")
+    for x in (3, 5, 6):
+        sb.set(x, 5, 10, "minecraft:stone_bricks")
+
+    sb.set(3, 6, 10, "minecraft:water", {"level": "0"})
+    sb.set(4, 6, 10, "minecraft:water", {"level": "1"})
+    sb.set(4, 5, 10, "minecraft:water", {"level": "8"})
+    sb.set(5, 6, 10, "minecraft:cobblestone")
+    sb.set(6, 6, 10, "minecraft:lava", {"level": "0"})
+    sb.set(6, 7, 10, "minecraft:stone_brick_slab", {"type": "bottom", "waterlogged": "false"})
 
     # Skrzynia startowa z pakietem anty-softlock (obok spawnu) + stół rzemieślniczy
     starter_chest_items = [
@@ -468,6 +482,7 @@ def build_starter_island() -> StructureBuilder:
         (8, "minecraft:bone_meal", 8),
         (9, "minecraft:torch", 16),
         (10, "minecraft:cobblestone", 16),
+        (11, "minecraft:glass", 3),
     ]
     sb.set(
         6,
@@ -1579,6 +1594,45 @@ def _index_blocks(
     return (sx, sy, sz), palette, blocks_map
 
 
+def _index_block_props(root: NbtCompound) -> dict[tuple[int, int, int], dict[str, str]]:
+    """Zwraca mapę właściwości blockstate (`Properties`) dla każdej pozycji z NBT."""
+    palette = root.entries["palette"].items
+    props_map: dict[tuple[int, int, int], dict[str, str]] = {}
+    for blk in root.entries["blocks"].items:
+        pos = tuple(c.value for c in blk.entries["pos"].items)
+        state = blk.entries["state"].value
+        p_entry = palette[state]
+        if "Properties" in p_entry.entries:
+            props_map[pos] = {k: v.value for k, v in p_entry.entries["Properties"].entries.items()}
+        else:
+            props_map[pos] = {}
+    return props_map
+
+
+_FLAMMABLE_SUBSTRINGS = (
+    "_log", "_wood", "_planks", "_leaves", "_wool", "_carpet",
+    "_fence", "_sign", "_bed", "_banner", "_sapling",
+    "chest", "crafting_table", "barrel", "bookshelf", "vine",
+    "hay_block", "scaffolding", "bamboo", "composter", "lectern",
+    "loom", "beehive", "bee_nest", "tnt", "short_grass", "tall_grass",
+    "oak_", "spruce_", "birch_", "jungle_", "acacia_", "dark_oak_",
+    "mangrove_", "cherry_",
+)
+
+
+def _is_flammable_block(name: str) -> bool:
+    short = name.split(":")[-1]
+    return any(tok in short for tok in _FLAMMABLE_SUBSTRINGS)
+
+
+def _is_solid_nonflammable_containment(name: str) -> bool:
+    if name in ("minecraft:air", "minecraft:water", "minecraft:lava", "minecraft:torch", "minecraft:lantern"):
+        return False
+    if any(tok in name for tok in ("slab", "wall", "stairs", "leaves", "pane", "bars")):
+        return False
+    return not _is_flammable_block(name)
+
+
 def verify_all(repo_root: Path) -> None:
     targets = {
         "starter": repo_root / "config/skyblockbuilder/templates/islands/starter_island.nbt",
@@ -1593,6 +1647,7 @@ def verify_all(repo_root: Path) -> None:
     # 1. starter_island.nbt (100% waniliowe bloki dla gwarancji czystego spawnu)
     s_root = decode_nbt_gzip(targets["starter"].read_bytes())
     s_size, s_pal, s_blocks = _index_blocks(s_root, vanilla_only=True)
+    s_props = _index_block_props(s_root)
     assert s_size == (15, 13, 15), f"starter_island size mismatch: {s_size}"
     ground_blk = s_blocks.get((7, 6, 7), ("minecraft:air", None))[0]
     spawn_0 = s_blocks.get((7, 7, 7), ("minecraft:air", None))[0]
@@ -1606,6 +1661,72 @@ def verify_all(repo_root: Path) -> None:
     chest_items = {it.entries["id"].value: it.entries["count"].value for it in chest_nbt.entries["Items"].items}
     for req_item in ("minecraft:lava_bucket", "minecraft:ice", "minecraft:oak_sapling", "minecraft:sugar_cane", "minecraft:cactus", "minecraft:kelp"):
         assert chest_items.get(req_item, 0) >= 1, f"Starter chest missing anti-softlock item: {req_item}"
+    assert chest_items.get("minecraft:glass", 0) >= 3, (
+        f"Starter chest must contain >= 3x minecraft:glass for Mechanical Extruder, got {chest_items.get('minecraft:glass', 0)}"
+    )
+
+    # Asercje wbudowanego generatora bruku (#88)
+    def _blk_name(pos: tuple[int, int, int]) -> str:
+        return s_blocks.get(pos, ("minecraft:air", None))[0]
+
+    assert _blk_name((3, 6, 10)) == "minecraft:water" and s_props.get((3, 6, 10), {}).get("level") == "0", (
+        f"Expected water source (level=0) at (3,6,10), got {_blk_name((3, 6, 10))} {s_props.get((3, 6, 10))}"
+    )
+    assert _blk_name((4, 6, 10)) == "minecraft:water" and s_props.get((4, 6, 10), {}).get("level") == "1", (
+        f"Expected flowing water (level=1) at (4,6,10), got {_blk_name((4, 6, 10))} {s_props.get((4, 6, 10))}"
+    )
+    assert _blk_name((4, 5, 10)) == "minecraft:water" and s_props.get((4, 5, 10), {}).get("level") == "8", (
+        f"Expected falling water (level=8) in pit (4,5,10), got {_blk_name((4, 5, 10))} {s_props.get((4, 5, 10))}"
+    )
+    assert _blk_name((4, 4, 10)) == "minecraft:stone", (
+        f"Expected solid stone bottom under water pit (4,4,10), got {_blk_name((4, 4, 10))}"
+    )
+    assert _blk_name((5, 6, 10)) == "minecraft:cobblestone", (
+        f"Expected cobblestone regen spot at (5,6,10), got {_blk_name((5, 6, 10))}"
+    )
+    assert _blk_name((5, 7, 10)) == "minecraft:air", (
+        f"Space above cobblestone regen spot (5,7,10) must be air, got {_blk_name((5, 7, 10))}"
+    )
+    lava_pos = (6, 6, 10)
+    assert _blk_name(lava_pos) == "minecraft:lava" and s_props.get(lava_pos, {}).get("level") == "0", (
+        f"Expected lava source (level=0) at {lava_pos}, got {_blk_name(lava_pos)} {s_props.get(lava_pos)}"
+    )
+    assert (
+        _blk_name((6, 7, 10)) == "minecraft:stone_brick_slab"
+        and s_props.get((6, 7, 10), {}).get("type") == "bottom"
+        and s_props.get((6, 7, 10), {}).get("waterlogged") == "false"
+    ), f"Expected non-flammable stone_brick_slab cover above lava at (6,7,10), got {_blk_name((6, 7, 10))} {s_props.get((6, 7, 10))}"
+
+    # Brak otwartych boków dla wody, dołka, punktu bruku i źródła lawy poza zaplanowanymi połączeniami
+    planned_open_neighbors: dict[tuple[int, int, int], set[tuple[int, int, int]]] = {
+        (3, 6, 10): {(4, 6, 10), (3, 7, 10)},
+        (4, 6, 10): {(3, 6, 10), (5, 6, 10), (4, 5, 10), (4, 7, 10)},
+        (4, 5, 10): {(4, 6, 10)},
+        (5, 6, 10): {(4, 6, 10), (6, 6, 10), (5, 7, 10)},
+        (6, 6, 10): {(5, 6, 10), (6, 7, 10)},
+    }
+    for cell, allowed in planned_open_neighbors.items():
+        cx_c, cy_c, cz_c = cell
+        for dx, dy, dz in ((-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)):
+            nb = (cx_c + dx, cy_c + dy, cz_c + dz)
+            if nb in allowed:
+                continue
+            nb_name = _blk_name(nb)
+            assert _is_solid_nonflammable_containment(nb_name), (
+                f"Cobble-gen cell {cell} has open/non-solid/flammable side at {nb}: {nb_name}"
+            )
+    # Źródło lawy nie może stykać się z wodą w żadnym z 6 kierunków (gwarancja braku obsydianu)
+    for dx, dy, dz in ((-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)):
+        nb = (lava_pos[0] + dx, lava_pos[1] + dy, lava_pos[2] + dz)
+        assert _blk_name(nb) != "minecraft:water", f"Lava source {lava_pos} touches water at {nb} (obsidian risk)!"
+    # Brak bloków palnych w promieniu <= 4 bloków od źródła lawy (6, 6, 10)
+    for pos, (bname, _) in s_blocks.items():
+        if _is_flammable_block(bname):
+            euc = math.dist(pos, lava_pos)
+            cheb = max(abs(pos[0] - lava_pos[0]), abs(pos[1] - lava_pos[1]), abs(pos[2] - lava_pos[2]))
+            assert euc > 4.0 and cheb > 4, (
+                f"Flammable block {bname} at {pos} is too close to lava {lava_pos} (dist={euc:.2f}, cheb={cheb} <= 4)"
+            )
 
     # 2. market_island.nbt (45 x 25 x 35, floor_y = 8 -> offset [152, 4, 0])
     m_root = decode_nbt_gzip(targets["market"].read_bytes())

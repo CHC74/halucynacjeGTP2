@@ -66,7 +66,9 @@ Wykonywane bezpośrednio na **Mac M2** po wejściu na serwer:
 Wszystkie 3 pliki `.nbt` są już wygenerowane przez `scripts/generate_island_nbt.py` (`DataVersion 3955`) i zweryfikowane pod kątem bloków `create`, `createdeco` oraz `lightmanscurrency`:
 
 - [ ] **`starter_island.nbt`** (`15×13×15`, środek `(0, 64, 0)`, spawn `(0, 65, 0)` patrząc na Wschód):
-  - [ ] Gracz spawnuje się bezpiecznie na trawie z widokiem na Pirs Wschodni i Wielką Wyspę-Rynek na horyzoncie, skrzynią anty-softlock (11 pozycji), stołem rzemieślniczym, dębem i niecką cobble-gen.
+  - [ ] Gracz spawnuje się bezpiecznie na trawie z widokiem na Pirs Wschodni i Wielką Wyspę-Rynek na horyzoncie, skrzynią anty-softlock (**12 pozycji**, w tym **`3× minecraft:glass`**), stołem rzemieślniczym, dębem i gotowym, wbudowanym generatorem bruku na `(-4..-1, 64, 3)` z osłoną `stone_brick_slab` nad lawą.
+  - [ ] **Test wbudowanego generatora bruku (#88):** wykop bruk na `(-2, 64, 3)` **20 razy pod rząd** — za każdym razem odnawia się w ~1.5–2 s, **nie powstaje obsydian**, a woda/lawa nigdzie nie wyciekają.
+  - [ ] **Test progresji Etapu 0 bez monet (#88):** z samej wyspy i skrzyni (bez wydawania monet) da się scraftować `Mechanical Extruder`, `2× Water Wheel` i `Millstone` (Questy 1–3), a po kupnie `Encased Fan` ukończyć Quest 4 (`Bulk Washing`: `16× iron_nugget` + `16× flint`).
 - [ ] **`market_island.nbt`** (**Wielka Wyspa-Rynek**, `45×25×35`, środek `(152, 64, 0)`, `offset: [152, 4, 0]`):
   - [ ] Płaski plac mozaikowy na `Y = 64` (bez przeszkód dla AI *Shoppers*), **3 działające bankomaty `lightmanscurrency:atm`** w kioskach, **Centralna Rotunda z miedzianą kopułą i działającym `lightmanscurrency:terminal`**, Zachodnia Hala Dworca z podkładami `Y=64`, 8 dwupiętrowych butików z szyldami i tylną estakadą `brass_catwalk`, wschodni ogród z fontanną.
 - [ ] **`industrial_island.nbt`** (**Huta Południowa**, `33×21×33`, środek `(0, 64, 152)`, `offset: [0, 4, 152]`):

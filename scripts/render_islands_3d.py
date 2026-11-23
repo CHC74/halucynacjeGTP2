@@ -45,6 +45,7 @@ BLOCK_COLORS: dict[str, tuple[int, int, int, int, float]] = {
     "minecraft:chiseled_tuff_bricks": (116, 118, 110, 255, 0.0),
     "minecraft:smooth_stone": (162, 164, 166, 255, 0.0),
     "minecraft:stone_bricks": (126, 128, 132, 255, 0.0),
+    "minecraft:stone_brick_slab": (132, 134, 138, 255, 0.0),
     "minecraft:chiseled_stone_bricks": (142, 144, 148, 255, 0.0),
     "minecraft:stone_brick_wall": (122, 124, 128, 255, 0.0),
     "minecraft:deepslate": (78, 80, 86, 255, 0.0),
@@ -59,6 +60,7 @@ BLOCK_COLORS: dict[str, tuple[int, int, int, int, float]] = {
     "minecraft:coal_ore": (96, 98, 102, 255, 0.0),
     "minecraft:iron_ore": (154, 138, 126, 255, 0.0),
     "minecraft:magma_block": (214, 92, 34, 255, 0.45),
+    "minecraft:lava": (246, 108, 28, 255, 0.75),
     "minecraft:ice": (144, 194, 245, 210, 0.0),
     "minecraft:water": (52, 132, 224, 185, 0.0),
     # Drewno, liście, cegły, wełna
