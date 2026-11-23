@@ -218,6 +218,15 @@ function grantStage(player, server, stageId) {
   // Zaliczenie taska w FTB Quests + idempotentna aktualizacja perków FTB Chunks
   completeFtbQuestStageTask(player, server, stageId);
   syncStageChunkPerksToPlayer(player, server);
+
+  // Automatyczny re-sync cen NPC Shoppers po zmianie Etapu (RFC #83)
+  if (typeof syncShoppersIfPricesChanged === 'function' && server) {
+    try {
+      syncShoppersIfPricesChanged(server);
+    } catch (errShoppers) {
+      console.warn(`[HalucynacjeGTP2] Błąd re-sync Shoppers po odblokowaniu ${stageId}: ${errShoppers}`);
+    }
+  }
 }
 
 /**
@@ -519,6 +528,13 @@ ServerEvents.commandRegistry((event) => {
             });
             syncedPlayers++;
           });
+        }
+        if (typeof syncShoppersIfPricesChanged === 'function' && server) {
+          try {
+            syncShoppersIfPricesChanged(server);
+          } catch (errShopSync) {
+            console.warn(`[HalucynacjeGTP2] Błąd re-sync Shoppers w /halucynacje_sync_stages: ${errShopSync}`);
+          }
         }
         sendCommandFeedback(
           ctx,

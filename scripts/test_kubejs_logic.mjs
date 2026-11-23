@@ -390,14 +390,17 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
       commandRegistry: () => {}
     },
     assert,
+    __makeCompound: makeCompound,
     __removed: removed,
     __customPrices: customPrices,
     __feedbackSent: feedbackSent
   };
+  const expectedTier1Count = (prices.sell_tiers.tier_1_start.items || []).length;
   const expectedSellCount = Object.values(prices.sell_tiers).reduce(
     (acc, t) => acc + (t.items || []).length,
     0
   );
+  const expectedStage0LockedCount = expectedSellCount - expectedTier1Count;
   const src =
     SHARED_ECONOMY_SRC +
     '\n;\n' +
@@ -407,20 +410,34 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
       assert(__removed.some((r) => r.output === 'lightmanscurrency:coinmint'), 'coinmint blocked');
       assert(!__removed.some((r) => r.output === 'lightmanscurrency:coin_mint'), 'no invalid coin_mint warning');
       assert(__removed.some((r) => r.output === 'lightmanscurrency:slot_machine'), 'slot_machine blocked');
-      const entries = loadShoppersPriceEntries();
-      const zeros = entries.filter((e) => e.worth === 0);
-      const positives = entries.filter((e) => e.worth > 0);
-      assert(zeros.length === ${prices.tier_0_blocked.length}, 'all Tier 0 zeroed');
-      assert(positives.length === ${expectedSellCount}, 'all Tier 1-5 items synced');
 
-      const mockServer = { overworld: () => ({ __isOverworld: true }), runCommandSilent: () => {} };
-      const syncRes = applyShoppersTier0ZeroWorth(mockServer);
-      assert(syncRes.viaJavaApi === true, 'uses ShoppersWorldData Java API');
-      assert(syncRes.tier0 === ${prices.tier_0_blocked.length}, 'all Tier 0 written as 0 via API');
-      assert(syncRes.npc === ${expectedSellCount}, 'all NPC prices written via API');
+      // Etap 0: tylko Tier 1 aktywny, Tier 2-5 zablokowane (0L) + Tier 0 (0L)
+      const entriesS0 = loadShoppersPriceEntries(false, 0);
+      const zerosS0 = entriesS0.filter((e) => e.worth === 0);
+      const positivesS0 = entriesS0.filter((e) => e.worth > 0);
+      assert(zerosS0.length === ${prices.tier_0_blocked.length + expectedStage0LockedCount}, 'Stage 0: Tier 0 + Tier 2-5 zeroed');
+      assert(positivesS0.length === ${expectedTier1Count}, 'Stage 0: only Tier 1 active in Shoppers');
+
+      const mockServer = { persistentData: __makeCompound(), overworld: () => ({ __isOverworld: true }), runCommandSilent: () => {} };
+      const syncResS0 = applyShoppersTier0ZeroWorth(mockServer);
+      assert(syncResS0.viaJavaApi === true, 'uses ShoppersWorldData Java API');
+      assert(syncResS0.tier0 === ${prices.tier_0_blocked.length}, 'all Tier 0 written as 0 via API');
+      assert(syncResS0.stageLocked === ${expectedStage0LockedCount}, 'Stage 0: Tier 2-5 locked as 0 via API');
+      assert(syncResS0.npc === ${expectedTier1Count}, 'Stage 0: Tier 1 NPC prices written via API');
       assert(__customPrices.get('minecraft:cobblestone') === 0, 'cobblestone worth === 0');
       assert(__customPrices.get('minecraft:ancient_debris') === 0, 'ancient_debris worth === 0');
       assert(__customPrices.get('mekanism:ingot_osmium') === 0, 'osmium worth === 0');
+      assert(__customPrices.get('create:blaze_cake') === 0, 'Stage 0: blaze_cake worth === 0 (sell_stage=2)');
+      assert(__customPrices.get('minecraft:bread') > 0, 'Stage 0: bread active in Shoppers');
+
+      // Etap 5: wszystkie 85 towarów Tier 1-5 aktywne, Tier 0 nadal 0L
+      const gs = mockServer.persistentData.getCompound('halucynacje_global_stages');
+      for (let s = 1; s <= 5; s++) gs.putBoolean('stage_' + s, true);
+      const syncResS5 = applyShoppersTier0ZeroWorth(mockServer);
+      assert(syncResS5.tier0 === ${prices.tier_0_blocked.length}, 'Stage 5: all Tier 0 still 0');
+      assert(syncResS5.stageLocked === 0, 'Stage 5: 0 stage-locked items');
+      assert(syncResS5.npc === ${expectedSellCount}, 'Stage 5: all Tier 1-5 NPC prices active');
+      assert(__customPrices.get('create:blaze_cake') > 0, 'Stage 5: blaze_cake active in Shoppers');
 
       const msgComp = Text.green('OK');
       sendCommandFeedback(
@@ -1071,10 +1088,10 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
   vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
   vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_contracts.js', 'utf8'), ctx);
 
-  // Przygotuj kontener na Wyspie-Rynku (150, 65, 2) z Tier 0 cobble (nie do ruszenia!) + 10x apple_pie (wholesale=100 -> 1000 bazowo)
+  // Przygotuj kontener na Wyspie-Rynku (150, 65, 2) z Tier 0 cobble (nie do ruszenia!) + 10x squid_ink_pasta (Tier 1, sell_stage=0)
   const dockSlots = [
     sandbox.Item.of('minecraft:cobblestone', 64),
-    sandbox.Item.of('farmersdelight:apple_pie', 10)
+    sandbox.Item.of('farmersdelight:squid_ink_pasta', 10)
   ];
   const dockBlock = {
     x: 150,
@@ -1098,7 +1115,7 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
     })
   };
 
-  // Ustaw deterministyczny Boom na inny przedmiot (żeby nie zaburzał wyliczeń apple_pie)
+  // Ustaw deterministyczny Boom na inny przedmiot (żeby nie zaburzał wyliczeń squid_ink_pasta)
   const boomTag = server.persistentData.getCompound('halucynacje_market_boom');
   boomTag.putString('itemId', 'minecraft:cookie');
   boomTag.putInt('basePrice', 6);
@@ -1124,7 +1141,7 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
   };
   const sumCoins = (arr) => arr.reduce((a, st) => a + (coinVals[st.id] || 0) * st.count, 0);
 
-  const applePiePrice = prices.sell_tiers.tier_2_kitchen.items.find((x) => x.id === 'farmersdelight:apple_pie').wholesale_gui;
+  const pastaPrice = prices.sell_tiers.tier_1_start.items.find((x) => x.id === 'farmersdelight:squid_ink_pasta').wholesale_gui;
 
   // A) Poza Wyspą-Rynkiem (0, 65, 0): /sprzedaj płaci 85%
   const remoteInv = [];
@@ -1134,7 +1151,7 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
     y: 65,
     z: 0,
     level: { dimension: 'minecraft:overworld' },
-    mainHandItem: sandbox.Item.of('farmersdelight:apple_pie', 1),
+    mainHandItem: sandbox.Item.of('farmersdelight:squid_ink_pasta', 1),
     inventory: { getContainerSize: () => remoteInv.length, getItem: (idx) => remoteInv[idx] },
     give: (st) => remoteInv.push(st),
     tell: () => {},
@@ -1142,8 +1159,8 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
   };
   assert(sellHand(remotePlayer, server) === 1, 'Zdalne /sprzedaj działa');
   assert(
-    sumCoins(remoteInv) === Math.round(applePiePrice * 0.85),
-    `Zdalne /sprzedaj płaci dokładnie 85% (${sumCoins(remoteInv)} === ${Math.round(applePiePrice * 0.85)})`
+    sumCoins(remoteInv) === Math.round(pastaPrice * 0.85),
+    `Zdalne /sprzedaj płaci dokładnie 85% (${sumCoins(remoteInv)} === ${Math.round(pastaPrice * 0.85)})`
   );
 
   // B) Na Wyspie-Rynku (152, 65, 0): /sprzedaj płaci 100%
@@ -1154,14 +1171,14 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
     y: 65,
     z: 0,
     level: { dimension: 'minecraft:overworld' },
-    mainHandItem: sandbox.Item.of('farmersdelight:apple_pie', 1),
+    mainHandItem: sandbox.Item.of('farmersdelight:squid_ink_pasta', 1),
     inventory: { getContainerSize: () => marketInv.length, getItem: (idx) => marketInv[idx] },
     give: (st) => marketInv.push(st),
     tell: () => {},
     rayTrace: () => ({ block: dockBlock })
   };
   assert(sellHand(marketPlayer, server) === 1, 'Na Rynku /sprzedaj działa');
-  assert(sumCoins(marketInv) === applePiePrice, `Na Rynku /sprzedaj płaci dokładnie 100% (${applePiePrice})`);
+  assert(sumCoins(marketInv) === pastaPrice, `Na Rynku /sprzedaj płaci dokładnie 100% (${pastaPrice})`);
 
   // C) /kontrakt oddaj: zablokowany na Wyspie Startowej, działa na Wyspie-Rynku
   const c = getContract(server);
@@ -1174,10 +1191,10 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
   assert(addDock(remotePlayer, server) === 0, 'Dok eksportowy zablokowany poza Wyspą-Rynkiem');
   assert(addDock(marketPlayer, server) === 1, 'Dok eksportowy zarejestrowany na Wyspie-Rynku (Item Vault)');
 
-  // E) Tick Doku Eksportowego: 10x apple_pie * 1.05 trafia do Team Bank #42, cobblestone nietknięty!
-  const expectedDock10 = Math.round(applePiePrice * 10 * 1.05);
+  // E) Tick Doku Eksportowego: 10x squid_ink_pasta * 1.05 trafia do Team Bank #42, cobblestone nietknięty!
+  const expectedDock10 = Math.round(pastaPrice * 10 * 1.05);
   const tickRes = processDocks(server, Date.now());
-  assert(tickRes.itemsSold === 10, 'Dok sprzedał dokładnie 10x apple_pie');
+  assert(tickRes.itemsSold === 10, 'Dok sprzedał dokładnie 10x squid_ink_pasta');
   assert(tickRes.deposited === expectedDock10, `Dok przelał ${expectedDock10} monet (+5% logistyka) do Team Bank #42`);
   assert(teamBankBalance === expectedDock10, `Saldo Team Bank #42 wzrosło dokładnie o ${expectedDock10}`);
   assert(dockSlots[0].count === 64, 'Surowiec Tier 0 (cobblestone) w Doku pozostał nietknięty');
@@ -1185,8 +1202,8 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
 
   // F) Fallback bez banku -> trafia do pending i daje się odebrać przez /rynek_eksport odbierz
   bankEnabled = false;
-  const expectedDock2 = Math.round(applePiePrice * 2 * 1.05);
-  dockSlots[1] = sandbox.Item.of('farmersdelight:apple_pie', 2);
+  const expectedDock2 = Math.round(pastaPrice * 2 * 1.05);
+  dockSlots[1] = sandbox.Item.of('farmersdelight:squid_ink_pasta', 2);
   const tickRes2 = processDocks(server, Date.now());
   assert(tickRes2.deposited === 0 && tickRes2.pendingAdded === expectedDock2, `Bez banku ${expectedDock2} monet trafia bezpiecznie do pending`);
   const claimInv = [];
@@ -1507,7 +1524,18 @@ test('economy_contracts.js + assets (#51 cz. 2): brak Creative Motor, tekstura T
   const reqs = vm.runInContext('ENDGAME_FINALE_REQUIREMENTS', ctx);
 
   const makeFullInv = () => reqs.map((r) => sandbox.Item.of(r.id, r.count));
-  const inv = makeFullInv();
+  // Sprawdź zaktualizowane wymagania Wielkiego Finału (RFC #83: 2x 256k, 16x Ruby Chocolate)
+  assert(
+    reqs.some((r) => r.id === 'ae2:cell_component_256k' && r.count === 2),
+    'Wielki Finał wymaga dokładnie 2x ae2:cell_component_256k (#83)'
+  );
+  assert(
+    reqs.some((r) => r.id === 'create_confectionery:bar_of_ruby_chocolate' && r.count === 16),
+    'Wielki Finał wymaga dokładnie 16x bar_of_ruby_chocolate (#83)'
+  );
+
+  let inv = makeFullInv();
+  const finaleMsgs = [];
   const player = {
     username: 'GrandTycoon',
     x: 152,
@@ -1516,7 +1544,7 @@ test('economy_contracts.js + assets (#51 cz. 2): brak Creative Motor, tekstura T
     level: { dimension: 'minecraft:overworld' },
     inventory: { getContainerSize: () => inv.length, getItem: (idx) => inv[idx] },
     give: (st) => inv.push(st),
-    tell: () => {}
+    tell: (t) => finaleMsgs.push(t.s)
   };
 
   assert(showFinale(player, server) === 1, '/kontrakt final wyświetla status');
@@ -1536,7 +1564,7 @@ test('economy_contracts.js + assets (#51 cz. 2): brak Creative Motor, tekstura T
   assert(inv[0].count === reqs[0].count, 'Atomowość: przy braku 1 składnika nic nie zostało zabrane');
   inv[4].count = reqs[4].count;
 
-  // 4) Komplet 5 filarów na Wyspie-Rynku na Stage 5 -> sukces: Trofeum + 500 000 monet + ogłoszenie!
+  // 4) Komplet 5 filarów na Wyspie-Rynku na Stage 5 -> sukces: Trofeum + 750 000 monet + ogłoszenie!
   assert(deliverFinale(player, server) === 1, '/kontrakt final oddaj udany');
   for (let k = 0; k < reqs.length; k++) {
     assert(inv[k].count === 0, `Pobrano cały wymóg ${reqs[k].id}`);
@@ -1551,8 +1579,32 @@ test('economy_contracts.js + assets (#51 cz. 2): brak Creative Motor, tekstura T
     'lightmanscurrency:coin_copper': 1
   };
   const coinsReceived = inv.reduce((acc, st) => acc + (coinVals[st.id] || 0) * st.count, 0);
-  assert(coinsReceived === 500000, `Wypłacono dokładnie 500 000 monet premii finałowej (jest ${coinsReceived})`);
+  assert(coinsReceived === 750000, `Wypłacono dokładnie 750 000 monet premii finałowej (jest ${coinsReceived})`);
   assert(broadcasts.some((m) => m.includes('WIELKI FINAŁ TYCOONA')), 'Wysłano serwerowe ogłoszenie Wielkiego Finału');
+
+  // 5) /kontrakt final pokazuje status ukończenia, a 2. oddanie zostaje odrzucone BEZ zabierania przedmiotów!
+  finaleMsgs.length = 0;
+  assert(showFinale(player, server) === 1, '/kontrakt final działa po ukończeniu');
+  assert(
+    finaleMsgs.some((m) => m.includes('Wielki Finał już ukończony')),
+    '/kontrakt final pokazuje status ukończenia'
+  );
+
+  inv = makeFullInv();
+  finaleMsgs.length = 0;
+  assert(deliverFinale(player, server) === 0, 'Drugie /kontrakt final oddaj musi być odrzucone (nagroda jednorazowa)');
+  assert(
+    finaleMsgs.some((m) => m.includes('Wielki Finał już ukończony')),
+    'Komunikat odmowy zawiera "Wielki Finał już ukończony"'
+  );
+  for (let k = 0; k < reqs.length; k++) {
+    assert(inv[k].count === reqs[k].count, `Przy odrzuceniu 2. oddania nic nie zabrano (${reqs[k].id})`);
+  }
+  assert(!inv.some((st) => st.id === 'kubejs:tycoon_empire_trophy'), 'Brak drugiego Trofeum przy ponownej próbie');
+  assert(
+    inv.reduce((acc, st) => acc + (coinVals[st.id] || 0) * st.count, 0) === 0,
+    'Brak wypłaty monet przy ponownej próbie Finału'
+  );
 });
 
 // 15. Issue #78: Co-op na wyspie Spawn — blokada /skyblock create i ostrzeżenie przy logowaniu w drużynie spoza Spawn
@@ -1775,6 +1827,543 @@ test('shared_economy.js + economy_market.js (#79): twardy cap premii x1.45, anty
   }
 });
 
-console.log(`🎉 Wszystkie ${passed}/17 pakietów testów KubeJS ZALICZONE!`);
+// 17. RFC #83 Część B (pkt 1 & 2): sell_stage w /sprzedaj, /sprzedaj all, Doku Eksportowym, Boomie Rynkowym i /cennik
+test('shared_economy.js + economy_market.js (#83 cz. B pkt 1-2): blokada sell_stage (/sprzedaj, all, Dok, Boom, /cennik)', () => {
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { commandRegistry: () => {}, tick: () => {} },
+    NativeEvents: { onEvent: () => {} },
+    Date,
+    Math,
+    assert
+  };
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const resolveSellStage = vm.runInContext('resolveItemSellStage', ctx);
+  assert(resolveSellStage({ sell_stage: 3 }, { sell_stage: 1 }, 1) === 3, 'resolveItemSellStage preferuje item.sell_stage');
+  assert(resolveSellStage({}, { sell_stage: 2 }, 1) === 2, 'resolveItemSellStage używa tier.sell_stage jako 2. fallback');
+  assert(resolveSellStage({}, {}, 4) === 3, 'resolveItemSellStage domyślnie zwraca tier - 1');
+
+  const handleSellHand = vm.runInContext('handleSellHand', ctx);
+  const handleSellAll = vm.runInContext('handleSellAll', ctx);
+  const handleShowPrices = vm.runInContext('handleShowPrices', ctx);
+  const handleAddExportDock = vm.runInContext('handleAddExportDock', ctx);
+  const processExportDocksTick = vm.runInContext('processExportDocksTick', ctx);
+  const rollMarketBoom = vm.runInContext('rollMarketBoom', ctx);
+  const getOrRollMarketBoom = vm.runInContext('getOrRollMarketBoom', ctx);
+  const getMarketCatalog = vm.runInContext('getMarketCatalog', ctx);
+  const cat = getMarketCatalog(true);
+
+  const dockSlots = [
+    sandbox.Item.of('minecraft:bread', 5), // Tier 1 (sell_stage 0)
+    sandbox.Item.of('create:blaze_cake', 4), // Tier 3 (sell_stage 2)
+    sandbox.Item.of('minecraft:cobblestone', 32) // Tier 0
+  ];
+  const dockBlock = {
+    x: 152,
+    y: 65,
+    z: 0,
+    id: 'create:item_vault',
+    inventory: {
+      getContainerSize: () => dockSlots.length,
+      getItem: (idx) => dockSlots[idx],
+      setChanged: () => {}
+    }
+  };
+  const server = {
+    persistentData: makeCompound(),
+    tell: () => {},
+    runCommandSilent: () => {},
+    overworld: () => ({
+      isLoaded: () => true,
+      getBlock: (x, y, z) => (x === 152 && y === 65 && z === 0 ? dockBlock : null)
+    })
+  };
+  // Etap 1 odblokowany
+  const gs = server.persistentData.getCompound('halucynacje_global_stages');
+  gs.putBoolean('stage_1', true);
+
+  const msgs = [];
+  const inv = [
+    sandbox.Item.of('minecraft:bread', 2), // Tier 1 (sell_stage 0)
+    sandbox.Item.of('farmersdelight:hamburger', 2), // Tier 2 (sell_stage 1)
+    sandbox.Item.of('create:blaze_cake', 3), // Tier 3 (sell_stage 2 -> zablokowane!)
+    sandbox.Item.of('minecraft:cobblestone', 16) // Tier 0
+  ];
+  const player = {
+    username: 'StageOneSeller',
+    x: 152,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld' },
+    persistentData: makeCompound(),
+    mainHandItem: sandbox.Item.of('create:blaze_cake', 5),
+    inventory: { getContainerSize: () => inv.length, getItem: (idx) => inv[idx] },
+    give: (st) => inv.push(st),
+    tell: (t) => msgs.push(t.s),
+    rayTrace: () => ({ block: dockBlock })
+  };
+
+  // A) /sprzedaj na Etapie 1 odmawia sprzedaży create:blaze_cake (Tier 3, sell_stage 2)
+  assert(handleSellHand(player, server) === 0, '/sprzedaj blaze_cake odrzucone na Etapie 1');
+  assert(player.mainHandItem.count === 5, 'Stos blaze_cake w ręce pozostał nietknięty');
+  assert(
+    msgs.some((m) => m.includes('Sprzedaż odblokujesz na Etapie 2')),
+    'Komunikat odmowy /sprzedaj zawiera "Sprzedaż odblokujesz na Etapie 2"'
+  );
+
+  // B) /sprzedaj all na Etapie 1 sprzedaje bread + hamburger, a blaze_cake i cobble zostawia nietknięte
+  const soldAll = handleSellAll(player, server);
+  assert(soldAll === 4, '/sprzedaj all sprzedało dokładnie 2 bread + 2 hamburger = 4 szt.');
+  assert(inv[0].count === 0 && inv[1].count === 0, 'Odblokowane towary sprzedane');
+  assert(inv[2].count === 3, 'Zablokowane create:blaze_cake pozostały nietknięte w ekwipunku');
+  assert(inv[3].count === 16, 'Surowiec Tier 0 pozostał nietknięty w ekwipunku');
+
+  // C) Dok Eksportowy na Etapie 1: sprzedaje bread, zostawia blaze_cake i cobble nietknięte
+  assert(handleAddExportDock(player, server) === 1, 'Dok zarejestrowany');
+  const dockTickS1 = processExportDocksTick(server, Date.now());
+  assert(dockTickS1.itemsSold === 5, 'Dok na Etapie 1 sprzedał wyłącznie 5x bread');
+  assert(dockSlots[0].count === 0, 'bread opróżnione z doku');
+  assert(dockSlots[1].count === 4, 'create:blaze_cake pozostało nietknięte w Doku na Etapie 1');
+  assert(dockSlots[2].count === 32, 'cobblestone pozostało nietknięte w Doku');
+
+  // D) /cennik 3 na Etapie 1 pokazuje kłódkę i Etap 2
+  msgs.length = 0;
+  handleShowPrices(player, 3, server);
+  assert(
+    msgs.some((m) => m.includes('🔒') && m.includes('Etap 2') && m.includes('create:blaze_cake')),
+    '/cennik 3 na Etapie 1 pokazuje kłódkę i Etap 2 dla create:blaze_cake'
+  );
+
+  // E) Boom Rynkowy losuje WYŁĄCZNIE spośród odblokowanych towarów (sell_stage <= teamStage)
+  const boomTag = server.persistentData.getCompound('halucynacje_market_boom');
+  boomTag.putString('itemId', 'create:blaze_cake');
+  boomTag.putInt('basePrice', 21);
+  boomTag.putInt('boostedPrice', 27);
+  boomTag.putInt('bonusPercent', 30);
+  boomTag.putInt('packSize', 1);
+  boomTag.putLong('expiresAtMs', Date.now() + 600_000);
+  server.persistentData.put('halucynacje_market_boom', boomTag);
+  const rerolledBoom = getOrRollMarketBoom(server, Date.now());
+  assert(
+    rerolledBoom && cat.sellById[rerolledBoom.itemId].sellStage <= 1,
+    'Zapisany zablokowany Boom zostaje natychmiast przelosowany na odblokowany towar'
+  );
+
+  for (let st = 0; st <= 5; st++) {
+    const testSrv = { persistentData: makeCompound(), tell: () => {} };
+    const tgs = testSrv.persistentData.getCompound('halucynacje_global_stages');
+    for (let k = 1; k <= st; k++) tgs.putBoolean('stage_' + k, true);
+    for (let roll = 0; roll < 50; roll++) {
+      const b = rollMarketBoom(testSrv, null, Date.now());
+      const def = cat.sellById[b.itemId];
+      assert(def && def.sellStage <= st, `Boom na Etapie ${st} wylosował zablokowany towar ${b.itemId} (sell_stage=${def?.sellStage})`);
+    }
+  }
+
+  // F) Po odblokowaniu Etapu 2: /sprzedaj, Dok i /cennik 3 akceptują create:blaze_cake!
+  gs.putBoolean('stage_2', true);
+  assert(handleSellHand(player, server) === 1, '/sprzedaj blaze_cake przyjęte na Etapie 2');
+  assert(player.mainHandItem.count === 0, 'Stos blaze_cake w ręce sprzedany na Etapie 2');
+  const dockTickS2 = processExportDocksTick(server, Date.now());
+  assert(dockTickS2.itemsSold === 4 && dockSlots[1].count === 0, 'Dok na Etapie 2 wyeksportował 4x blaze_cake');
+  msgs.length = 0;
+  handleShowPrices(player, 3, server);
+  assert(!msgs.some((m) => m.includes('🔒')), '/cennik 3 na Etapie 2 nie pokazuje kłódki');
+});
+
+// 18. RFC #83 Część B (pkt 3): NPC Shoppers (0L dla sell_stage > teamStage, Etap w hashu, auto re-sync po grantStage)
+test('economy_anti_exploit.js + dimension_gating.js (#83 cz. B pkt 3): Shoppers 0L przed Etapem, Etap w hashu i auto re-sync', () => {
+  let setCalls = 0;
+  const customPrices = new Map();
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    Java: {
+      loadClass: (cls) => {
+        if (cls === 'com.velesbh.shoppers.economy.ShoppersWorldData') {
+          return {
+            get: () => ({
+              setCustomPrice: (id, worth) => {
+                setCalls++;
+                customPrices.set(String(id), Number(worth));
+              }
+            })
+          };
+        }
+        return null;
+      }
+    },
+    ServerEvents: { recipes: () => {}, loaded: () => {}, commandRegistry: () => {} },
+    PlayerEvents: { loggedIn: () => {} },
+    ItemEvents: { rightClicked: () => {} },
+    NativeEvents: { onEvent: () => {} },
+    assert
+  };
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_anti_exploit.js', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/dimension_gating.js', 'utf8'), ctx);
+
+  const syncShoppers = vm.runInContext('syncShoppersIfPricesChanged', ctx);
+  const grantStage = vm.runInContext('grantStage', ctx);
+
+  const server = {
+    persistentData: makeCompound(),
+    players: [],
+    overworld: () => ({ __isOverworld: true }),
+    runCommandSilent: () => {}
+  };
+  const player = { username: 'ShoppersTester', persistentData: makeCompound(), tell: () => {} };
+  server.players.push(player);
+
+  // Etap 1: bread i hamburger aktywne, blaze_cake (sell_stage=2) = 0L
+  server.persistentData.getCompound('halucynacje_global_stages').putBoolean('stage_1', true);
+  const res1 = syncShoppers(server);
+  assert(!res1.skipped && res1.hash.endsWith('@s1'), 'Hash synchronizacji Shoppers zawiera @s1');
+  assert(customPrices.get('minecraft:bread') > 0, 'Etap 1: bread aktywny u NPC');
+  assert(customPrices.get('farmersdelight:hamburger') > 0, 'Etap 1: hamburger aktywny u NPC');
+  assert(customPrices.get('create:blaze_cake') === 0, 'Etap 1: blaze_cake = 0L u NPC (sell_stage=2)');
+
+  // Bez zmiany Etapu i prices.json -> pominięcie synchronizacji
+  setCalls = 0;
+  const resSkip = syncShoppers(server);
+  assert(resSkip.skipped === true && setCalls === 0, 'Ten sam Etap i hash pomija synchronizację');
+
+  // Odblokowanie Etapu 2 przez grantStage -> automatyczny re-sync Shoppers!
+  grantStage(player, server, 'stage_2');
+  assert(setCalls > 100, 'grantStage(stage_2) automatycznie wywołał re-sync Shoppers');
+  const savedHash = server.persistentData.getString('halucynacje_shoppers_prices_hash');
+  assert(savedHash.endsWith('@s2'), 'Zapisany hash zaktualizowany do @s2');
+  const blazeNpc = prices.sell_tiers.tier_3_luxury_bakery.items.find((x) => x.id === 'create:blaze_cake').npc_shoppers;
+  assert(customPrices.get('create:blaze_cake') === blazeNpc, `Etap 2: blaze_cake odblokowane u NPC (${blazeNpc})`);
+  assert(customPrices.get('ae2:cell_component_64k') === 0, 'Etap 2: Tier 5 nadal 0L u NPC');
+});
+
+// 19. RFC #83 Część B (pkt 4): /kup paczki count (dzielenie na stacki maxStackSize) i /sklep kategorie + rozmiar paczki
+test('economy_market.js (#83 cz. B pkt 4): /kup shaft (16 za 105), /kup deployer (gating S2), podział stacków i etykiety /sklep', () => {
+  const customMaxStacks = { 'minecraft:ender_pearl': 16, 'minecraft:lava_bucket': 1 };
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: {
+      of: (id, count = 1) => ({
+        id,
+        count,
+        maxStackSize: customMaxStacks[id] || 64,
+        getMaxStackSize() {
+          return this.maxStackSize;
+        },
+        isEmpty() {
+          return this.count <= 0;
+        },
+        shrink(n) {
+          this.count -= n;
+        }
+      })
+    },
+    Text: makeTextProxy(),
+    ServerEvents: { commandRegistry: () => {}, tick: () => {} },
+    NativeEvents: { onEvent: () => {} },
+    Date,
+    Math,
+    assert
+  };
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const handleBuy = vm.runInContext('handleBuy', ctx);
+  const handleShowShop = vm.runInContext('handleShowShop', ctx);
+  const getBuyCategoryLabel = vm.runInContext('getBuyCategoryLabel', ctx);
+  const giveItemStacksToPlayer = vm.runInContext('giveItemStacksToPlayer', ctx);
+  const getInventoryCoinBalance = vm.runInContext('getInventoryCoinBalance', ctx);
+
+  assert(getBuyCategoryLabel('machines') === 'Maszyny', 'Etykieta machines -> Maszyny');
+  assert(getBuyCategoryLabel('materials') === 'Surowce', 'Etykieta materials -> Surowce');
+  assert(getBuyCategoryLabel('decor') === 'Dekoracje', 'Etykieta decor -> Dekoracje');
+  assert(getBuyCategoryLabel('tools') === 'Narzędzia', 'Etykieta tools -> Narzędzia');
+
+  const server = { persistentData: makeCompound(), runCommandSilent: () => {} };
+  const inv = [sandbox.Item.of('lightmanscurrency:coin_diamond', 1)]; // 10 000 monet
+  const msgs = [];
+  const player = {
+    username: 'PackBuyer',
+    persistentData: makeCompound(),
+    inventory: { getContainerSize: () => inv.length, getItem: (idx) => inv[idx] },
+    give: (st) => inv.push(st),
+    tell: (t) => msgs.push(t.s)
+  };
+
+  // A) /kup shaft na Etapie 0 -> 16 szt. create:shaft za dokładnie 105 monet
+  assert(handleBuy(player, server, 'shaft', 1) === 1, '/kup shaft 1 udany na Etapie 0');
+  const shaftCount1 = inv.filter((s) => s.id === 'create:shaft').reduce((a, s) => a + s.count, 0);
+  assert(shaftCount1 === 16, '/kup shaft wydał dokładnie 16 wałów');
+  assert(getInventoryCoinBalance(player) === 10000 - 105, '/kup shaft pobrał dokładnie 105 monet');
+
+  // B) /kup shaft 5 -> 80 szt. podzielone na stacki <= 64 (64 + 16)
+  const beforeLen = inv.length;
+  assert(handleBuy(player, server, 'shaft', 5) === 5, '/kup shaft 5 udany');
+  const newShaftStacks = inv.slice(beforeLen).filter((s) => s.id === 'create:shaft');
+  assert(
+    newShaftStacks.length === 2 && newShaftStacks[0].count === 64 && newShaftStacks[1].count === 16,
+    '80 wałów rozbite na stacki [64, 16]'
+  );
+  assert(getInventoryCoinBalance(player) === 10000 - 105 - 525, 'Pobrano dokładnie 525 monet za 5 paczek shaft');
+
+  // C) Podział wg maxStackSize = 16 (np. ender_pearl: 40 -> 16 + 16 + 8)
+  const pearlStacks = [];
+  giveItemStacksToPlayer({ give: (st) => pearlStacks.push(st) }, 'minecraft:ender_pearl', 40);
+  assert(
+    pearlStacks.length === 3 &&
+      pearlStacks[0].count === 16 &&
+      pearlStacks[1].count === 16 &&
+      pearlStacks[2].count === 8,
+    'Item z maxStackSize=16 rozbity na [16, 16, 8]'
+  );
+
+  // D) /kup deployer: odmowa na Etapie 1, sprzedaż za 3 400 na Etapie 2
+  const gs = server.persistentData.getCompound('halucynacje_global_stages');
+  gs.putBoolean('stage_1', true);
+  const balBeforeDeployer = getInventoryCoinBalance(player);
+  assert(handleBuy(player, server, 'deployer', 1) === 0, '/kup deployer odrzucone na Etapie 1');
+  assert(getInventoryCoinBalance(player) === balBeforeDeployer, 'Brak pobrania monet przy odmowie deployer na S1');
+
+  gs.putBoolean('stage_2', true);
+  assert(handleBuy(player, server, 'deployer', 1) === 1, '/kup deployer przyjęte na Etapie 2');
+  assert(inv.some((s) => s.id === 'create:deployer' && s.count === 1), 'Wydano 1x create:deployer');
+  assert(getInventoryCoinBalance(player) === balBeforeDeployer - 3400, '/kup deployer pobrał dokładnie 3 400 monet');
+
+  // E) /sklep lista 0 pokazuje rozmiar paczki ("16 szt.") oraz kategorię "Maszyny"
+  msgs.length = 0;
+  handleShowShop(player, server, 0);
+  assert(
+    msgs.some((m) => m.includes('/kup shaft') && m.includes('16 szt.') && m.includes('Maszyny')),
+    '/sklep pokazuje paczkę "16 szt." i etykietę kategorii "Maszyny" dla shaft'
+  );
+});
+
+// 20. RFC #83 Część B (pkt 5): Gating Terminala Lightman's Currency (PreTradeEvent SALE/PURCHASE + PostTradeEvent team_limit)
+test('economy_market.js (#83 cz. B pkt 5): gating Terminala LC (SALE stage+team_limit, PURCHASE sell_stage, PostTradeEvent)', () => {
+  const nativeHandlers = {};
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { commandRegistry: () => {}, tick: () => {} },
+    NativeEvents: {
+      onEvent: (cls, cb) => {
+        nativeHandlers[cls] = cb;
+      }
+    },
+    Date,
+    Math,
+    assert
+  };
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+
+  const preCb = nativeHandlers['io.github.lightman314.lightmanscurrency.api.events.TradeEvent$PreTradeEvent'];
+  const postCb = nativeHandlers['io.github.lightman314.lightmanscurrency.api.events.TradeEvent$PostTradeEvent'];
+  assert(typeof preCb === 'function', 'Zarejestrowano TradeEvent$PreTradeEvent');
+  assert(typeof postCb === 'function', 'Zarejestrowano TradeEvent$PostTradeEvent');
+
+  const handleBuy = vm.runInContext('handleBuy', ctx);
+  const getTeamBuyCount = vm.runInContext('getTeamBuyCount', ctx);
+
+  const server = { persistentData: makeCompound(), runCommandSilent: () => {} };
+  const gs = server.persistentData.getCompound('halucynacje_global_stages');
+  gs.putBoolean('stage_1', true);
+
+  const inv = [sandbox.Item.of('lightmanscurrency:coin_netherite', 5)];
+  const playerMsgs = [];
+  const player = {
+    username: 'TerminalUser',
+    persistentData: makeCompound(),
+    server,
+    level: { isClientSide: () => false, server },
+    inventory: { getContainerSize: () => inv.length, getItem: (idx) => inv[idx] },
+    give: (st) => inv.push(st),
+    tell: (t) => playerMsgs.push(t.s)
+  };
+
+  const makeTradeEvent = (persistentId, direction, itemId, isPersistent = true) => {
+    const denials = [];
+    let canceled = false;
+    return {
+      denials,
+      isCanceled: () => canceled,
+      getTrader: () => ({
+        isClient: () => false,
+        isPersistent: () => isPersistent,
+        getPersistentID: () => persistentId
+      }),
+      getTrade: () => ({
+        isSale: () => direction === 'SALE',
+        isPurchase: () => direction === 'PURCHASE',
+        getSellItem: (slot) => (slot === 0 ? sandbox.Item.of(itemId, 1) : sandbox.Item.of('minecraft:air', 0))
+      }),
+      getContext: () => ({
+        isStorageMode: false,
+        hasPlayer: () => true,
+        getPlayer: () => player
+      }),
+      addDenial: (comp) => {
+        denials.push(comp.s);
+        canceled = true;
+      },
+      setCanceled: (v) => {
+        canceled = Boolean(v);
+      }
+    };
+  };
+
+  // A) PURCHASE na halucynacje_skup_03_cukiernia (create:blaze_cake, sell_stage=2) na Etapie 1 -> ODMOWA
+  const sellLockedEv = makeTradeEvent('halucynacje_skup_03_cukiernia', 'PURCHASE', 'create:blaze_cake');
+  preCb(sellLockedEv);
+  assert(sellLockedEv.isCanceled(), 'Terminal PURCHASE blaze_cake na Etapie 1 musi być odrzucony');
+  assert(
+    sellLockedEv.denials.some((d) => d.includes('Sprzedaż odblokujesz na Etapie 2')),
+    'Terminal PURCHASE zwraca komunikat "Sprzedaż odblokujesz na Etapie 2"'
+  );
+
+  // B) SALE na halucynacje_kup_01_etapy dla stage_3_token (required_stage = 2) na Etapie 1 -> ODMOWA
+  const tokenLockedEv = makeTradeEvent('halucynacje_kup_01_etapy', 'SALE', 'kubejs:stage_3_token');
+  preCb(tokenLockedEv);
+  assert(tokenLockedEv.isCanceled(), 'Terminal SALE stage_3_token na Etapie 1 musi być odrzucony (required_stage=2)');
+  assert(
+    tokenLockedEv.denials.some((d) => d.includes('Etapu 2')),
+    'Komunikat odmowy Żetonu Etapu wskazuje wymagany Etap 2'
+  );
+
+  // C) Po odblokowaniu Etapu 2: blaze_cake PURCHASE i stage_3_token SALE przechodzą!
+  gs.putBoolean('stage_2', true);
+  const sellOkEv = makeTradeEvent('halucynacje_skup_03_cukiernia', 'PURCHASE', 'create:blaze_cake');
+  preCb(sellOkEv);
+  assert(!sellOkEv.isCanceled(), 'Terminal PURCHASE blaze_cake na Etapie 2 musi przejść');
+  const tokenOkEv = makeTradeEvent('halucynacje_kup_01_etapy', 'SALE', 'kubejs:stage_3_token');
+  preCb(tokenOkEv);
+  assert(!tokenOkEv.isCanceled(), 'Terminal SALE stage_3_token na Etapie 2 musi przejść');
+
+  // D) SALE end_portal_frame na Etapie 3 -> ODMOWA; na Etapie 4 -> 12x OK, 13. zakup ODMOWA!
+  gs.putBoolean('stage_3', true);
+  const frameS3 = makeTradeEvent('halucynacje_kup_05_tech', 'SALE', 'minecraft:end_portal_frame');
+  preCb(frameS3);
+  assert(frameS3.isCanceled(), 'Terminal SALE end_portal_frame na Etapie 3 musi być odrzucony');
+  assert(
+    frameS3.denials.some((d) => d.includes('Etapu 4')),
+    'Odmowa end_portal_frame ma taki sam komunikat Etapu 4 jak /kup'
+  );
+
+  gs.putBoolean('stage_4', true);
+  for (let k = 1; k <= 12; k++) {
+    const ev = makeTradeEvent('halucynacje_kup_05_tech', 'SALE', 'minecraft:end_portal_frame');
+    preCb(ev);
+    assert(!ev.isCanceled(), `Zakup #${k} end_portal_frame w Terminalu na Etapie 4 musi przejść`);
+    postCb(ev);
+  }
+  assert(getTeamBuyCount(server, 'minecraft:end_portal_frame') === 12, 'PostTradeEvent zliczył 12 zakupów do wspólnego licznika');
+
+  const frame13 = makeTradeEvent('halucynacje_kup_05_tech', 'SALE', 'minecraft:end_portal_frame');
+  preCb(frame13);
+  assert(frame13.isCanceled(), '13. zakup end_portal_frame w Terminalu musi zostać odrzucony');
+  assert(
+    frame13.denials.some((d) => d.includes('Limit drużynowy') && d.includes('12')),
+    'Odmowa 13. zakupu ma komunikat limitu drużynowego identyczny z /kup'
+  );
+  // Wspólny licznik z /kup: 13. sztuka przez /kup też odrzucona!
+  assert(handleBuy(player, server, 'end_portal_frame', 1) === 0, 'Wspólny licznik blokuje 13. sztukę również w /kup');
+
+  // E) Sklep gracza (nie-persistent) NIE jest blokowany
+  const playerShopEv = makeTradeEvent('', 'SALE', 'minecraft:end_portal_frame', false);
+  preCb(playerShopEv);
+  assert(!playerShopEv.isCanceled(), 'Sklepy graczy (non-persistent) nie są blokowane przez gating Terminala');
+});
+
+// 21. RFC #83 Część B (pkt 6): Kontrakty targetValue (800..28000, bez minPacks, brak 256k/64k na Etapach 4-5) + /ekonomia 750 000
+test('economy_contracts.js + economy_market.js (#83 cz. B pkt 6): targetValue kontraktów, brak 256k/64k na S4-5 i napis 750 000', () => {
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    ServerEvents: { commandRegistry: () => {}, tick: () => {} },
+    NativeEvents: { onEvent: () => {} },
+    Date,
+    Math,
+    assert
+  };
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_contracts.js', 'utf8'), ctx);
+
+  const profile = vm.runInContext('STAGE_CONTRACT_PROFILE', ctx);
+  const rollNewContract = vm.runInContext('rollNewContract', ctx);
+  const loadContractPoolForStage = vm.runInContext('loadContractPoolForStage', ctx);
+  const handleShowEconomyStatus = vm.runInContext('handleShowEconomyStatus', ctx);
+
+  const expectedTargets = [800, 2300, 5500, 12500, 28000, 28000];
+  for (let s = 0; s <= 5; s++) {
+    assert(profile[s].targetValue === expectedTargets[s], `Stage ${s} targetValue === ${expectedTargets[s]}`);
+    assert(profile[s].minPacks === undefined, `Stage ${s} nie ma już pola minPacks`);
+  }
+
+  // Pula Etapu 4 i 5 nie może zawierać ae2:cell_component_64k ani ae2:cell_component_256k
+  for (const st of [4, 5]) {
+    const { pool } = loadContractPoolForStage(st);
+    assert(pool.length >= 3, `Pula kontraktów na Etapie ${st} jest niepusta (${pool.length})`);
+    assert(!pool.some((x) => x.id === 'ae2:cell_component_256k'), `Etap ${st}: 256k wykluczone z puli`);
+    assert(!pool.some((x) => x.id === 'ae2:cell_component_64k'), `Etap ${st}: 64k wykluczone z puli`);
+
+    const srv = { persistentData: makeCompound() };
+    const gs = srv.persistentData.getCompound('halucynacje_global_stages');
+    for (let k = 1; k <= st; k++) gs.putBoolean('stage_' + k, true);
+
+    for (let r = 0; r < 250; r++) {
+      const c = rollNewContract(srv, null);
+      assert(c && c.itemId !== 'ae2:cell_component_256k' && c.itemId !== 'ae2:cell_component_64k', `Etap ${st} nigdy nie losuje 64k/256k`);
+      assert(c.packs >= 1 && c.packs <= profile[st].maxPacks, `Etap ${st}: packs=${c.packs} w [1..${profile[st].maxPacks}]`);
+      const poolItem = pool.find((x) => x.id === c.itemId);
+      assert(poolItem && poolItem.sellStage <= st && poolItem.wholesale <= profile[st].targetValue, 'Wylosowany towar spełnia sell_stage <= stage i wholesale <= targetValue');
+      const minExpected = Math.max(1, Math.min(profile[st].maxPacks, Math.round((profile[st].targetValue * 0.75) / poolItem.wholesale)));
+      const maxExpected = Math.max(1, Math.min(profile[st].maxPacks, Math.round((profile[st].targetValue * 1.25) / poolItem.wholesale)));
+      assert(
+        c.packs >= minExpected && c.packs <= maxExpected,
+        `Etap ${st} ${c.itemId}: packs=${c.packs} w [${minExpected}..${maxExpected}]`
+      );
+      if (st === 5 && c.itemId === 'create_confectionery:bar_of_ruby_chocolate') {
+        assert(c.packs >= 8 && c.packs <= 13, `Ruby Chocolate na Etapie 5 daje 8..13 sztabek (jest ${c.packs})`);
+      }
+    }
+  }
+
+  // /ekonomia na Etapie 5 pokazuje 750 000 monet
+  const srv5 = { persistentData: makeCompound(), tell: () => {} };
+  for (let k = 1; k <= 5; k++) srv5.persistentData.getCompound('halucynacje_global_stages').putBoolean('stage_' + k, true);
+  const ecoMsgs = [];
+  const p5 = {
+    username: 'TycoonS5',
+    persistentData: makeCompound(),
+    inventory: { getContainerSize: () => 0, getItem: () => null },
+    tell: (t) => ecoMsgs.push(t.s)
+  };
+  handleShowEconomyStatus(p5, srv5);
+  assert(
+    ecoMsgs.some((m) => m.includes('750 000 monet')),
+    '/ekonomia na Etapie 5 pokazuje nagrodę Wielkiego Finału 750 000 monet'
+  );
+});
+
+console.log(`🎉 Wszystkie ${passed}/${passed} pakietów testów KubeJS ZALICZONE!`);
 
 

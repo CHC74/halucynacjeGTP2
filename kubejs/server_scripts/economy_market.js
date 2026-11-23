@@ -44,6 +44,7 @@ function getMarketCatalog(forceReload) {
     sellById: {},
     tiersList: [],
     buyByKey: {},
+    buyById: {},
     buyList: [],
     stageTokens: []
   };
@@ -58,12 +59,14 @@ function getMarketCatalog(forceReload) {
   var j = 0;
   var tierKey = '';
   var tierObj = null;
+  var tierSellStage = 0;
   var tierItems = null;
   var parsedItems = null;
   var it = null;
   var parsed = null;
   var tok = null;
   var b = null;
+  var buyCount = 1;
   var entry = null;
 
   try {
@@ -82,6 +85,7 @@ function getMarketCatalog(forceReload) {
       for (t = 0; t < tierKeys.length; t++) {
         tierKey = tierKeys[t];
         tierObj = sellTiers[tierKey];
+        tierSellStage = resolveItemSellStage(null, tierObj, t + 1);
         tierItems = (tierObj && tierObj.items) || [];
         parsedItems = [];
         for (j = 0; j < tierItems.length; j++) {
@@ -91,6 +95,7 @@ function getMarketCatalog(forceReload) {
             id: String(it.id),
             tierKey: tierKey,
             tierNum: t + 1,
+            sellStage: resolveItemSellStage(it, tierObj, t + 1),
             packSize: it.pack_size && Number(it.pack_size) > 1 ? Number(it.pack_size) : 1,
             wholesale: Number(it.wholesale_gui || 0),
             npc: Number(it.npc_shoppers || 0)
@@ -101,6 +106,7 @@ function getMarketCatalog(forceReload) {
         catalog.tiersList.push({
           tierNum: t + 1,
           key: tierKey,
+          sellStage: tierSellStage,
           description: String((tierObj && tierObj.description) || tierKey),
           items: parsedItems
         });
@@ -117,12 +123,14 @@ function getMarketCatalog(forceReload) {
           stage: Number(tok.required_stage != null ? tok.required_stage : Math.max(0, Number(tok.stage) - 1)),
           unlocksStage: Number(tok.stage || i + 1),
           buyPrice: Number(tok.buy_price || 0),
+          count: 1,
           teamLimit: 0,
           isStageToken: true,
           note: String(tok.name || tok.id)
         };
         catalog.stageTokens.push(entry);
         catalog.buyList.push(entry);
+        catalog.buyById[entry.id] = entry;
         catalog.buyByKey[entry.alias.toLowerCase()] = entry;
         catalog.buyByKey[entry.id.toLowerCase()] = entry;
       }
@@ -131,17 +139,20 @@ function getMarketCatalog(forceReload) {
       for (i = 0; i < buyItems.length; i++) {
         b = buyItems[i];
         if (!b || !b.id) continue;
+        buyCount = b.count != null && Number(b.count) > 1 ? Math.floor(Number(b.count)) : 1;
         entry = {
           id: String(b.id),
           alias: String(b.alias || String(b.id).split(':')[1] || b.id),
           category: String(b.category || 'inne'),
           stage: Number(b.stage || 0),
           buyPrice: Number(b.buy_price || 0),
+          count: buyCount,
           teamLimit: Number(b.team_limit || 0),
           isStageToken: false,
           note: String(b.note || '')
         };
         catalog.buyList.push(entry);
+        catalog.buyById[entry.id] = entry;
         catalog.buyByKey[entry.alias.toLowerCase()] = entry;
         catalog.buyByKey[entry.id.toLowerCase()] = entry;
       }
@@ -409,7 +420,24 @@ function addTeamBuyCount(server, itemId, delta) {
   server.persistentData.put(MARKET_TEAM_LIMITS_KEY, counts);
 }
 
-function sellSingleStack(stack, catalog) {
+function buildSellStageDeniedMessage(itemId, requiredStage, currentStage) {
+  return Text.red(`[Rynek] Sprzedaż odblokujesz na Etapie ${requiredStage} `)
+    .append(Text.gray(`(${itemId}; obecny etap drużyny: ${currentStage}).`));
+}
+
+function buildBuyStageDeniedMessage(entry, currentStage) {
+  return Text.red(
+    `[Sklep] Ten towar wymaga odblokowanego Etapu ${entry.stage} (obecny etap drużyny: ${currentStage}).`
+  );
+}
+
+function buildBuyLimitDeniedMessage(entry, bought) {
+  return Text.red(
+    `[Sklep] Limit drużynowy dla ${entry.alias} to ${entry.teamLimit} szt. (wykorzystano: ${bought}).`
+  );
+}
+
+function sellSingleStack(stack, catalog, currentStage) {
   if (!stack || stack.isEmpty()) {
     return { status: 'empty' };
   }
@@ -420,6 +448,14 @@ function sellSingleStack(stack, catalog) {
   const def = catalog.sellById[itemId];
   if (!def || def.wholesale <= 0) {
     return { status: 'not_buyable', itemId: itemId };
+  }
+  if (currentStage != null && def.sellStage > Number(currentStage)) {
+    return {
+      status: 'stage_locked',
+      itemId: itemId,
+      requiredStage: def.sellStage,
+      currentStage: Number(currentStage)
+    };
   }
 
   const packs = Math.floor(stack.count / def.packSize);
@@ -477,6 +513,7 @@ function getBoomEligibleItems(catalog, stage) {
   var i = 0;
   var t = null;
   var j = 0;
+  var item = null;
 
   if (stage <= 0) allowedTierNums = [1];
   else if (stage === 1) allowedTierNums = [1, 2];
@@ -488,7 +525,21 @@ function getBoomEligibleItems(catalog, stage) {
     t = catalog.tiersList[i];
     if (allowedTierNums.indexOf(t.tierNum) === -1) continue;
     for (j = 0; j < t.items.length; j++) {
-      pool.push(t.items[j]);
+      item = t.items[j];
+      if (item.sellStage > stage) continue;
+      pool.push(item);
+    }
+  }
+
+  if (pool.length === 0) {
+    for (i = 0; i < catalog.tiersList.length; i++) {
+      t = catalog.tiersList[i];
+      for (j = 0; j < t.items.length; j++) {
+        item = t.items[j];
+        if (item.sellStage <= stage) {
+          pool.push(item);
+        }
+      }
     }
   }
   return pool;
@@ -561,28 +612,34 @@ function getOrRollMarketBoom(server, nowMs) {
   var now = nowMs != null ? Number(nowMs) : Date.now();
   var bonusCfg = getMarketBonusesConfig(false);
   var defaultBoomPct = Number(bonusCfg.market_boom_bonus_percent || 30);
+  var catalog = getMarketCatalog(false);
+  var currentStage = getCurrentUnlockedStage(null, server);
   var tag = null;
   var itemId = '';
   var expiresAtMs = 0;
   var basePrice = 0;
   var storedPct = 0;
+  var storedDef = null;
 
   if (server && server.persistentData) {
     tag = server.persistentData.getCompound(MARKET_BOOM_KEY);
     itemId = tag ? String(tag.getString('itemId') || '') : '';
     expiresAtMs = tag ? Number(tag.getLong('expiresAtMs') || 0) : 0;
     if (itemId && expiresAtMs > now) {
-      basePrice = Number(tag.getInt('basePrice') || 0);
-      storedPct = Number(tag.getInt('bonusPercent') || 0);
-      return {
-        itemId: itemId,
-        tierKey: String(tag.getString('tierKey') || ''),
-        basePrice: basePrice,
-        boostedPrice: Math.round(basePrice * (1.0 + (storedPct > 0 ? storedPct : defaultBoomPct) / 100.0)),
-        bonusPercent: storedPct > 0 ? storedPct : defaultBoomPct,
-        packSize: Number(tag.getInt('packSize') || 1),
-        expiresAtMs: expiresAtMs
-      };
+      storedDef = catalog && catalog.sellById ? catalog.sellById[itemId] : null;
+      if (!storedDef || storedDef.sellStage <= currentStage) {
+        basePrice = Number(tag.getInt('basePrice') || 0);
+        storedPct = Number(tag.getInt('bonusPercent') || 0);
+        return {
+          itemId: itemId,
+          tierKey: String(tag.getString('tierKey') || ''),
+          basePrice: basePrice,
+          boostedPrice: Math.round(basePrice * (1.0 + (storedPct > 0 ? storedPct : defaultBoomPct) / 100.0)),
+          bonusPercent: storedPct > 0 ? storedPct : defaultBoomPct,
+          packSize: Number(tag.getInt('packSize') || 1),
+          expiresAtMs: expiresAtMs
+        };
+      }
     }
   }
 
@@ -852,8 +909,9 @@ function handleShowMarketBoom(player, server) {
 
 function handleSellHand(player, server) {
   const catalog = getMarketCatalog(false);
+  const currentStage = getCurrentUnlockedStage(player, server);
   const hand = player.mainHandItem;
-  const res = sellSingleStack(hand, catalog);
+  const res = sellSingleStack(hand, catalog, currentStage);
 
   if (res.status === 'empty') {
     player.tell(Text.yellow('[Rynek] Trzymaj w głównej ręce towar fabryczny (Tier 1–5) albo wpisz /sprzedaj all.'));
@@ -870,6 +928,10 @@ function handleSellHand(player, server) {
     player.tell(
       Text.yellow(`[Rynek] ${res.itemId} nie znajduje się na liście skupu hurtowego. Sprawdź /cennik [1-5].`)
     );
+    return 0;
+  }
+  if (res.status === 'stage_locked') {
+    player.tell(buildSellStageDeniedMessage(res.itemId, res.requiredStage, res.currentStage));
     return 0;
   }
   if (res.status === 'too_few') {
@@ -925,6 +987,7 @@ function handleSellHand(player, server) {
 
 function handleSellAll(player, server) {
   const catalog = getMarketCatalog(false);
+  const currentStage = getCurrentUnlockedStage(player, server);
   const inv = player.inventory;
   const size = typeof inv.getContainerSize === 'function' ? inv.getContainerSize() : 36;
 
@@ -933,11 +996,12 @@ function handleSellAll(player, server) {
   let totalItems = 0;
   let totalBonusPotential = 0;
   let blockedSkipped = 0;
+  let stageLockedSkipped = 0;
 
   for (let i = 0; i < size; i++) {
     const stack = inv.getItem(i);
     if (!stack || stack.isEmpty()) continue;
-    const res = sellSingleStack(stack, catalog);
+    const res = sellSingleStack(stack, catalog, currentStage);
     if (res.status === 'sold') {
       soldLines.push(res);
       diversityEntries.push({ itemId: res.itemId, value: res.payout });
@@ -945,13 +1009,19 @@ function handleSellAll(player, server) {
       totalBonusPotential += res.npcBonusPotential;
     } else if (res.status === 'blocked') {
       blockedSkipped++;
+    } else if (res.status === 'stage_locked') {
+      stageLockedSkipped++;
     }
   }
 
   if (soldLines.length === 0) {
+    const skipParts = [];
+    if (blockedSkipped > 0) skipParts.push('surowce Tier 0');
+    if (stageLockedSkipped > 0) skipParts.push('towary wymagające wyższego Etapu');
+    const skipNote = skipParts.length > 0 ? ` (pominięto: ${skipParts.join(' oraz ')})` : '';
     player.tell(
       Text.yellow(
-        `[Rynek Hurtowy] Brak przetworzonych towarów Tier 1–5 do sprzedaży w ekwipunku${blockedSkipped > 0 ? ' (surowce Tier 0 zostały pominięte)' : ''}. Sprawdź /cennik 1.`
+        `[Rynek Hurtowy] Brak odblokowanych towarów Tier 1–5 do sprzedaży w ekwipunku${skipNote}. Sprawdź /cennik 1.`
       )
     );
     return 0;
@@ -1014,6 +1084,40 @@ function handleSellAll(player, server) {
   return totalItems;
 }
 
+function getItemMaxStackSize(itemId) {
+  var probe = null;
+  var maxSz = 64;
+  try {
+    probe = Item.of(itemId, 1);
+    if (probe) {
+      if (typeof probe.getMaxStackSize === 'function') {
+        maxSz = Number(probe.getMaxStackSize() || 64);
+      } else if (typeof probe.maxStackSize === 'number') {
+        maxSz = Number(probe.maxStackSize || 64);
+      }
+    }
+  } catch (e) {
+    maxSz = 64;
+  }
+  if (!Number.isFinite(maxSz) || maxSz < 1) maxSz = 64;
+  return Math.min(64, Math.floor(maxSz));
+}
+
+function giveItemStacksToPlayer(player, itemId, totalCount) {
+  var remaining = Math.max(0, Math.floor(Number(totalCount) || 0));
+  var maxStack = getItemMaxStackSize(itemId);
+  var chunk = 0;
+  if (!player || typeof player.give !== 'function' || remaining <= 0) {
+    return 0;
+  }
+  while (remaining > 0) {
+    chunk = Math.min(maxStack, remaining);
+    player.give(Item.of(itemId, chunk));
+    remaining -= chunk;
+  }
+  return Math.max(0, Math.floor(Number(totalCount) || 0));
+}
+
 function handleBuy(player, server, rawKey, rawQty) {
   const catalog = getMarketCatalog(false);
   const key = String(rawKey || '').trim().toLowerCase();
@@ -1031,22 +1135,14 @@ function handleBuy(player, server, rawKey, rawQty) {
 
   const currentStage = getCurrentUnlockedStage(player, server);
   if (currentStage < entry.stage) {
-    player.tell(
-      Text.red(
-        `[Sklep] Ten towar wymaga odblokowanego Etapu ${entry.stage} (obecny etap drużyny: ${currentStage}).`
-      )
-    );
+    player.tell(buildBuyStageDeniedMessage(entry, currentStage));
     return 0;
   }
 
   if (entry.teamLimit > 0) {
     const bought = getTeamBuyCount(server, entry.id);
     if (bought + qty > entry.teamLimit) {
-      player.tell(
-        Text.red(
-          `[Sklep] Limit drużynowy dla ${entry.alias} to ${entry.teamLimit} szt. (wykorzystano: ${bought}).`
-        )
-      );
+      player.tell(buildBuyLimitDeniedMessage(entry, bought));
       return 0;
     }
   }
@@ -1068,7 +1164,9 @@ function handleBuy(player, server, rawKey, rawQty) {
     return 0;
   }
 
-  player.give(Item.of(entry.id, qty));
+  const packCount = entry.count && entry.count > 1 ? entry.count : 1;
+  const totalItems = qty * packCount;
+  giveItemStacksToPlayer(player, entry.id, totalItems);
   if (entry.teamLimit > 0) {
     addTeamBuyCount(server, entry.id, qty);
   }
@@ -1076,9 +1174,10 @@ function handleBuy(player, server, rawKey, rawQty) {
     syncPlayerTabBalance(player, server, true);
   }
 
+  const packSuffix = packCount > 1 ? ` (${totalItems} szt.)` : '';
   player.tell(
     Text.green(`[Sklep] Kupiono ${qty}x `)
-      .append(Text.aqua(entry.alias))
+      .append(Text.aqua(`${entry.alias}${packSuffix}`))
       .append(Text.green(' za '))
       .append(Text.gold(`${formatCoins(totalCost)} monet`))
       .append(Text.green('!'))
@@ -1214,6 +1313,10 @@ function getBuyCategoryLabel(category) {
   if (category === 'livestock') return 'Hodowla';
   if (category === 'skyblock') return 'Skyblock';
   if (category === 'tech') return 'Tech';
+  if (category === 'machines') return 'Maszyny';
+  if (category === 'materials') return 'Surowce';
+  if (category === 'decor') return 'Dekoracje';
+  if (category === 'tools') return 'Narzędzia';
   return 'Inne';
 }
 
@@ -1227,6 +1330,7 @@ function handleShowShop(player, server, requestedStage) {
   var catLabel = '';
   var prefix = '';
   var lockTag = null;
+  var packNote = '';
   var limitNote = '';
   var aliasStr = '';
   var noteStr = '';
@@ -1257,6 +1361,7 @@ function handleShowShop(player, server, requestedStage) {
           ? `[Wymaga S${entry.stage} • ${catLabel}] `
           : `[S${entry.stage} • ${catLabel}] `;
       lockTag = entry.stage > currentStage ? Text.red(prefix) : Text.green(prefix);
+      packNote = entry.count && entry.count > 1 ? ` (${entry.count} szt.)` : '';
       limitNote = entry.teamLimit > 0 ? ` (limit ${entry.teamLimit})` : '';
       aliasStr = String(entry.alias || entry.id || '?');
       noteStr = String(entry.note || '');
@@ -1264,7 +1369,7 @@ function handleShowShop(player, server, requestedStage) {
         player,
         lockTag
           .append(Text.aqua(`/kup ${aliasStr}`))
-          .append(Text.white(` — ${formatCoins(entry.buyPrice)} monet`))
+          .append(Text.white(`${packNote} — ${formatCoins(entry.buyPrice)} monet`))
           .append(Text.gray(` | ${noteStr}${limitNote}`))
       );
       shown++;
@@ -1279,8 +1384,9 @@ function handleShowShop(player, server, requestedStage) {
   }
 }
 
-function handleShowPrices(player, requestedTier) {
+function handleShowPrices(player, requestedTier, server) {
   const catalog = getMarketCatalog(false);
+  const currentStage = getCurrentUnlockedStage(player, server || (player && player.server));
   const tierNum = Math.max(1, Math.min(5, Number(requestedTier) || 1));
   const tier = catalog.tiersList[tierNum - 1];
 
@@ -1289,16 +1395,28 @@ function handleShowPrices(player, requestedTier) {
     return;
   }
 
-  player.tell(Text.gold(`=== Cennik Skupu — Tier ${tier.tierNum} (${tier.description}) ===`));
+  const tierLockedNote = tier.sellStage > currentStage ? ` 🔒 [Wymaga Etapu ${tier.sellStage}]` : '';
+  player.tell(Text.gold(`=== Cennik Skupu — Tier ${tier.tierNum} (${tier.description})${tierLockedNote} ===`));
   for (let i = 0; i < tier.items.length; i++) {
     const it = tier.items[i];
     const packLabel = it.packSize > 1 ? ` (pakiet x${it.packSize})` : '';
-    player.tell(
-      Text.white(`• ${it.id}${packLabel}: `)
-        .append(Text.yellow(`hurt ${formatCoins(it.wholesale)}`))
-        .append(Text.gray(' | '))
-        .append(Text.green(`Rynek NPC ~${formatCoins(it.npc)} (+20%)`))
-    );
+    const isLocked = it.sellStage > currentStage;
+    if (isLocked) {
+      player.tell(
+        Text.red(`🔒 [Etap ${it.sellStage}] `)
+          .append(Text.gray(`${it.id}${packLabel}: `))
+          .append(Text.yellow(`hurt ${formatCoins(it.wholesale)}`))
+          .append(Text.gray(' | '))
+          .append(Text.green(`Rynek NPC ~${formatCoins(it.npc)} (+20%)`))
+      );
+    } else {
+      player.tell(
+        Text.white(`• ${it.id}${packLabel}: `)
+          .append(Text.yellow(`hurt ${formatCoins(it.wholesale)}`))
+          .append(Text.gray(' | '))
+          .append(Text.green(`Rynek NPC ~${formatCoins(it.npc)} (+20%)`))
+      );
+    }
   }
   player.tell(Text.gray('Użyj /sprzedaj (ręka) lub /sprzedaj all (ekwipunek). Surowce Tier 0 = 0 monet.'));
 }
@@ -1373,7 +1491,7 @@ function handleShowEconomyStatus(player, server) {
     );
   } else {
     player.tell(
-      Text.gold('★ Osiągnięto Stage 5! Ostateczny cel survivalowy: /kontrakt final (Wielki Finał -> Trofeum Imperium + 500 000 monet)!')
+      Text.gold('★ Osiągnięto Stage 5! Ostateczny cel survivalowy: /kontrakt final (Wielki Finał -> Trofeum Imperium + 750 000 monet jednorazowo)!')
     );
   }
   player.tell(
@@ -1456,7 +1574,7 @@ ServerEvents.commandRegistry((event) => {
           .executes((ctx) => {
             const player = ctx.source.player;
             if (!player) return 0;
-            handleShowPrices(player, 1);
+            handleShowPrices(player, 1, ctx.source.server);
             return 1;
           })
           .then(
@@ -1464,7 +1582,7 @@ ServerEvents.commandRegistry((event) => {
               const player = ctx.source.player;
               if (!player) return 0;
               const tier = Arguments.INTEGER.getResult(ctx, 'tier');
-              handleShowPrices(player, tier);
+              handleShowPrices(player, tier, ctx.source.server);
               return 1;
             })
           )
@@ -1485,7 +1603,7 @@ ServerEvents.commandRegistry((event) => {
       .executes((ctx) => {
         const player = ctx.source.player;
         if (!player) return 0;
-        handleShowPrices(player, 1);
+        handleShowPrices(player, 1, ctx.source.server);
         return 1;
       })
       .then(
@@ -1493,7 +1611,7 @@ ServerEvents.commandRegistry((event) => {
           const player = ctx.source.player;
           if (!player) return 0;
           const tier = Arguments.INTEGER.getResult(ctx, 'tier');
-          handleShowPrices(player, tier);
+          handleShowPrices(player, tier, ctx.source.server);
           return 1;
         })
       )
@@ -1590,7 +1708,7 @@ ServerEvents.commandRegistry((event) => {
         var reloadRes = handleReloadEconomy(ctx.source.server);
         var shoppersNote = reloadRes.shoppers
           ? reloadRes.shoppers.viaJavaApi
-            ? ` | Shoppers: ${reloadRes.shoppers.total} cen (${reloadRes.shoppers.tier0} Tier 0 + ${reloadRes.shoppers.npc} NPC)`
+            ? ` | Shoppers: ${reloadRes.shoppers.total} cen (${reloadRes.shoppers.tier0} Tier 0 + ${reloadRes.shoppers.stageLocked || 0} zablok. Etapem + ${reloadRes.shoppers.npc} NPC)`
             : ` | Shoppers (fallback): ${reloadRes.shoppers.npc} cen NPC`
           : '';
         sendCommandFeedback(
@@ -1876,7 +1994,7 @@ function handleClaimExportPending(player, server) {
   return 1;
 }
 
-function extractExportFromInventory(inv, catalog) {
+function extractExportFromInventory(inv, catalog, currentStage) {
   var soldLines = [];
   var soldIds = [];
   var totalItems = 0;
@@ -1912,6 +2030,7 @@ function extractExportFromInventory(inv, catalog) {
     if (!itemId || catalog.tier0[itemId]) continue;
     entry = catalog.sellById[itemId];
     if (!entry) continue;
+    if (currentStage != null && entry.sellStage > Number(currentStage)) continue;
 
     have = Number(stack.count || 0);
     packs = Math.floor(have / entry.packSize);
@@ -1947,6 +2066,7 @@ function processExportDocksTick(server, nowMs) {
   var now = nowMs != null ? Number(nowMs) : Date.now();
   var overworld = null;
   var catalog = null;
+  var currentStage = 0;
   var boom = null;
   var totalDeposited = 0;
   var totalPendingAdded = 0;
@@ -1976,6 +2096,7 @@ function processExportDocksTick(server, nowMs) {
   }
 
   catalog = getMarketCatalog(false);
+  currentStage = getCurrentUnlockedStage(null, server);
   boom = getOrRollMarketBoom(server, now);
 
   for (i = 0; i < docks.length; i++) {
@@ -1989,7 +2110,7 @@ function processExportDocksTick(server, nowMs) {
       blk = overworld.getBlock(d.x, d.y, d.z);
       if (!blk || !blk.inventory) continue;
 
-      ex = extractExportFromInventory(blk.inventory, catalog);
+      ex = extractExportFromInventory(blk.inventory, catalog, currentStage);
       if (ex.totalItems <= 0) continue;
 
       var dockDiversityEntries = [];
@@ -2096,4 +2217,307 @@ function handleReloadEconomy(server) {
     marketTier0: Object.keys(cat.tier0).length,
     shoppers: shoppersRes
   };
+}
+
+// ----------------------------------------------------------------------------
+// Gating Terminala Lightman's Currency (RFC #83 Część B pkt 5)
+// Zweryfikowane w bajtkodzie `lightmanscurrency-1.21-2.3.0.6.jar`:
+// - `TradeEvent$PreTradeEvent` (ICancellableEvent): `addDenial(MutableComponent)`
+//   dodaje alert błędu i anuluje transakcję (`FAIL_TRADE_RULE_DENIAL`).
+// - `TradeEvent$PostTradeEvent`: inkrementuje wspólny licznik drużynowy
+//   `halucynacje_team_buy_counts` identyczny z `/kup`.
+// - `TraderData.isPersistent()` + `TraderData.getPersistentID()`: filtruje
+//   wyłącznie sklepy sieciowe `halucynacje_kup_*` i `halucynacje_skup_*`.
+// ----------------------------------------------------------------------------
+const TERMINAL_DENIAL_COOLDOWN_MS = 500;
+const TERMINAL_DENIAL_LAST_BY_PLAYER = {};
+
+function notifyTerminalDenial(player, component) {
+  var key = '';
+  var now = Date.now();
+  var prev = 0;
+  if (!player || typeof player.tell !== 'function' || !component) {
+    return;
+  }
+  key = String(player.username || 'player');
+  prev = Number(TERMINAL_DENIAL_LAST_BY_PLAYER[key] || 0);
+  if (prev > 0 && now - prev < TERMINAL_DENIAL_COOLDOWN_MS) {
+    return;
+  }
+  TERMINAL_DENIAL_LAST_BY_PLAYER[key] = now;
+  safeTellPlayer(player, component);
+}
+
+function getTerminalTraderPersistentId(trader) {
+  var pid = '';
+  if (!trader) return '';
+  try {
+    if (typeof trader.isPersistent === 'function' && !trader.isPersistent()) {
+      return '';
+    }
+    if (typeof trader.getPersistentID === 'function') {
+      pid = String(trader.getPersistentID() || '');
+    } else if (trader.persistentID != null) {
+      pid = String(trader.persistentID || '');
+    }
+  } catch (e) {
+    pid = '';
+  }
+  return pid;
+}
+
+function isTerminalTradeSale(trade) {
+  if (!trade) return false;
+  try {
+    if (typeof trade.isSale === 'function') return Boolean(trade.isSale());
+    if (typeof trade.getTradeDirection === 'function') return String(trade.getTradeDirection()) === 'SALE';
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
+
+function isTerminalTradePurchase(trade) {
+  if (!trade) return false;
+  try {
+    if (typeof trade.isPurchase === 'function') return Boolean(trade.isPurchase());
+    if (typeof trade.getTradeDirection === 'function') return String(trade.getTradeDirection()) === 'PURCHASE';
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
+
+function extractStackItemId(stack) {
+  var rawItem = null;
+  var builtIn = null;
+  var key = null;
+  if (!stack) return '';
+  try {
+    if (typeof stack.isEmpty === 'function' && stack.isEmpty()) return '';
+    if (stack.id) return String(stack.id);
+    if (typeof stack.getItem === 'function') {
+      rawItem = stack.getItem();
+      if (rawItem) {
+        if (rawItem.id) return String(rawItem.id);
+        if (typeof rawItem.kjs$getId === 'function') return String(rawItem.kjs$getId());
+        if (typeof Java !== 'undefined' && typeof Java.loadClass === 'function') {
+          builtIn = Java.loadClass('net.minecraft.core.registries.BuiltInRegistries');
+          if (builtIn && builtIn.ITEM && typeof builtIn.ITEM.getKey === 'function') {
+            key = builtIn.ITEM.getKey(rawItem);
+            if (key) return String(key);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    return '';
+  }
+  return '';
+}
+
+function getTerminalTradeItemId(trade) {
+  var stack = null;
+  var id = '';
+  if (!trade) return '';
+  try {
+    if (typeof trade.getSellItem === 'function') {
+      stack = trade.getSellItem(0);
+      id = extractStackItemId(stack);
+      if (id) return id;
+      stack = trade.getSellItem(1);
+      id = extractStackItemId(stack);
+      if (id) return id;
+    }
+  } catch (e) {
+    return '';
+  }
+  return '';
+}
+
+function resolveTradeEventContext(event) {
+  var context = null;
+  var player = null;
+  var server = null;
+  var hooks = null;
+  if (!event) return { context: null, player: null, server: null };
+  try {
+    context = typeof event.getContext === 'function' ? event.getContext() : event.context;
+    if (context) {
+      if (typeof context.hasPlayer === 'function') {
+        if (context.hasPlayer() && typeof context.getPlayer === 'function') {
+          player = context.getPlayer();
+        }
+      } else if (typeof context.getPlayer === 'function') {
+        player = context.getPlayer();
+      } else if (context.player) {
+        player = context.player;
+      }
+    }
+    if (player) {
+      server = player.server || (player.level && player.level.server) || null;
+    }
+    if (!server && event.server) {
+      server = event.server;
+    }
+    if (!server && typeof Java !== 'undefined' && typeof Java.loadClass === 'function') {
+      hooks = Java.loadClass('net.neoforged.neoforge.server.ServerLifecycleHooks');
+      if (hooks && typeof hooks.getCurrentServer === 'function') {
+        server = hooks.getCurrentServer();
+      }
+    }
+  } catch (e) {
+    // Bezpieczny fallback
+  }
+  return { context: context, player: player, server: server };
+}
+
+function applyTerminalTradeDenial(event, player, msg) {
+  if (event && typeof event.addDenial === 'function') {
+    event.addDenial(msg);
+  } else if (event && typeof event.setCanceled === 'function') {
+    event.setCanceled(true);
+  }
+  notifyTerminalDenial(player, msg);
+}
+
+function handleTerminalPreTrade(event) {
+  var trader = null;
+  var trade = null;
+  var pid = '';
+  var isBuyShop = false;
+  var isSellShop = false;
+  var resolved = null;
+  var context = null;
+  var player = null;
+  var server = null;
+  var itemId = '';
+  var catalog = null;
+  var currentStage = 0;
+  var buyEntry = null;
+  var bought = 0;
+  var sellDef = null;
+
+  if (!event) return false;
+  trader = typeof event.getTrader === 'function' ? event.getTrader() : event.trader;
+  if (!trader) return false;
+  if (typeof trader.isClient === 'function' && trader.isClient()) return false;
+
+  pid = getTerminalTraderPersistentId(trader);
+  if (!pid) return false;
+
+  isBuyShop = pid.indexOf('halucynacje_kup_') === 0;
+  isSellShop = pid.indexOf('halucynacje_skup_') === 0;
+  if (!isBuyShop && !isSellShop) return false;
+
+  trade = typeof event.getTrade === 'function' ? event.getTrade() : event.trade;
+  if (!trade) return false;
+
+  resolved = resolveTradeEventContext(event);
+  context = resolved.context;
+  player = resolved.player;
+  server = resolved.server;
+  if (context && context.isStorageMode) return false;
+  if (player && player.level && typeof player.level.isClientSide === 'function' && player.level.isClientSide()) {
+    return false;
+  }
+
+  itemId = getTerminalTradeItemId(trade);
+  if (!itemId) return false;
+
+  catalog = getMarketCatalog(false);
+  currentStage = getCurrentUnlockedStage(player, server);
+
+  if (isBuyShop && isTerminalTradeSale(trade)) {
+    buyEntry = catalog.buyById[itemId] || catalog.buyByKey[itemId.toLowerCase()];
+    if (!buyEntry) return false;
+    if (currentStage < buyEntry.stage) {
+      applyTerminalTradeDenial(event, player, buildBuyStageDeniedMessage(buyEntry, currentStage));
+      return true;
+    }
+    if (buyEntry.teamLimit > 0) {
+      bought = getTeamBuyCount(server, buyEntry.id);
+      if (bought + 1 > buyEntry.teamLimit) {
+        applyTerminalTradeDenial(event, player, buildBuyLimitDeniedMessage(buyEntry, bought));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  if (isSellShop && isTerminalTradePurchase(trade)) {
+    sellDef = catalog.sellById[itemId];
+    if (!sellDef) return false;
+    if (sellDef.sellStage > currentStage) {
+      applyTerminalTradeDenial(event, player, buildSellStageDeniedMessage(sellDef.id, sellDef.sellStage, currentStage));
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function handleTerminalPostTrade(event) {
+  var trader = null;
+  var trade = null;
+  var pid = '';
+  var resolved = null;
+  var player = null;
+  var server = null;
+  var itemId = '';
+  var catalog = null;
+  var buyEntry = null;
+
+  if (!event) return false;
+  trader = typeof event.getTrader === 'function' ? event.getTrader() : event.trader;
+  if (!trader) return false;
+  if (typeof trader.isClient === 'function' && trader.isClient()) return false;
+
+  pid = getTerminalTraderPersistentId(trader);
+  if (!pid || pid.indexOf('halucynacje_kup_') !== 0) return false;
+
+  trade = typeof event.getTrade === 'function' ? event.getTrade() : event.trade;
+  if (!trade || !isTerminalTradeSale(trade)) return false;
+
+  resolved = resolveTradeEventContext(event);
+  player = resolved.player;
+  server = resolved.server;
+  if (player && player.level && typeof player.level.isClientSide === 'function' && player.level.isClientSide()) {
+    return false;
+  }
+
+  itemId = getTerminalTradeItemId(trade);
+  if (!itemId) return false;
+
+  catalog = getMarketCatalog(false);
+  buyEntry = catalog.buyById[itemId] || catalog.buyByKey[itemId.toLowerCase()];
+  if (buyEntry && buyEntry.teamLimit > 0 && server) {
+    addTeamBuyCount(server, buyEntry.id, 1);
+  }
+  if (player && server && typeof syncPlayerTabBalance === 'function') {
+    syncPlayerTabBalance(player, server, true);
+  }
+  return true;
+}
+
+if (typeof NativeEvents !== 'undefined' && typeof NativeEvents.onEvent === 'function') {
+  try {
+    NativeEvents.onEvent(
+      'io.github.lightman314.lightmanscurrency.api.events.TradeEvent$PreTradeEvent',
+      function (event) {
+        handleTerminalPreTrade(event);
+      }
+    );
+    NativeEvents.onEvent(
+      'io.github.lightman314.lightmanscurrency.api.events.TradeEvent$PostTradeEvent',
+      function (event) {
+        handleTerminalPostTrade(event);
+      }
+    );
+    console.info(
+      '[HalucynacjeGTP2] Zarejestrowano gating Terminala Lightman\'s Currency (PreTradeEvent / PostTradeEvent).'
+    );
+  } catch (errTradeEvents) {
+    console.warn(`[HalucynacjeGTP2] Błąd rejestracji TradeEvent Lightman's Currency: ${errTradeEvents}`);
+  }
 }

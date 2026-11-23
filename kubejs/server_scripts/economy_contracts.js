@@ -36,41 +36,54 @@ function getCurrentContractStreak(server) {
   return Math.max(0, Number(stats ? stats.getInt('streak') || 0 : 0));
 }
 
-// Jakie Tiery z `prices.json` oraz ile pakietów losujemy dla każdego Etapu (0..5)
+// Jakie Tiery z `prices.json`, docelowa wartość (~15 min dochodu) oraz maks. pakietów dla Etapów (0..5) (#83)
 const STAGE_CONTRACT_PROFILE = {
-  0: { tiers: ['tier_1_start'], minPacks: 32, maxPacks: 64 },
-  1: { tiers: ['tier_1_start', 'tier_2_kitchen'], minPacks: 24, maxPacks: 48 },
-  2: { tiers: ['tier_2_kitchen', 'tier_3_luxury_bakery'], minPacks: 16, maxPacks: 32 },
-  3: { tiers: ['tier_3_luxury_bakery', 'tier_4_create_industry'], minPacks: 12, maxPacks: 24 },
-  4: { tiers: ['tier_4_create_industry', 'tier_5_hightech_export'], minPacks: 8, maxPacks: 16 },
-  5: { tiers: ['tier_5_hightech_export'], minPacks: 10, maxPacks: 20 }
+  0: { tiers: ['tier_1_start'], targetValue: 800, maxPacks: 64 },
+  1: { tiers: ['tier_1_start', 'tier_2_kitchen'], targetValue: 2300, maxPacks: 48 },
+  2: { tiers: ['tier_2_kitchen', 'tier_3_luxury_bakery'], targetValue: 5500, maxPacks: 32 },
+  3: { tiers: ['tier_3_luxury_bakery', 'tier_4_create_industry'], targetValue: 12500, maxPacks: 24 },
+  4: { tiers: ['tier_4_create_industry', 'tier_5_hightech_export'], targetValue: 28000, maxPacks: 16 },
+  5: { tiers: ['tier_5_hightech_export'], targetValue: 28000, maxPacks: 20 }
 };
 
 function loadContractPoolForStage(stage) {
   var profile = STAGE_CONTRACT_PROFILE[stage] || STAGE_CONTRACT_PROFILE[0];
   var pool = [];
   var parsedCfg = null;
+  var allTierKeys = null;
   var t = 0;
   var i = 0;
   var tierKey = '';
+  var tierIdx = -1;
+  var tierNum = 1;
   var tierObj = null;
   var tierItems = null;
   var it = null;
+  var itemSellStage = 0;
+  var wholesale = 0;
 
   try {
     parsedCfg = readPricesJson(false);
     if (parsedCfg && parsedCfg.sell_tiers) {
+      allTierKeys = Object.keys(parsedCfg.sell_tiers);
       for (t = 0; t < profile.tiers.length; t++) {
         tierKey = profile.tiers[t];
         tierObj = parsedCfg.sell_tiers[tierKey];
         tierItems = (tierObj && tierObj.items) || [];
+        tierIdx = allTierKeys.indexOf(tierKey);
+        tierNum = tierIdx >= 0 ? tierIdx + 1 : t + 1;
         for (i = 0; i < tierItems.length; i++) {
           it = tierItems[i];
           if (!it || !it.id || !(it.wholesale_gui > 0)) continue;
+          itemSellStage = resolveItemSellStage(it, tierObj, tierNum);
+          if (itemSellStage > stage) continue;
+          wholesale = Number(it.wholesale_gui);
+          if (wholesale > profile.targetValue) continue;
           pool.push({
             id: String(it.id),
             packSize: it.pack_size && Number(it.pack_size) > 1 ? Number(it.pack_size) : 1,
-            wholesale: Number(it.wholesale_gui),
+            wholesale: wholesale,
+            sellStage: itemSellStage,
             tierKey: tierKey
           });
         }
@@ -96,8 +109,9 @@ function rollNewContract(server, previousItemId) {
     : pool;
   const pick = filtered[Math.floor(Math.random() * filtered.length)];
 
-  const span = Math.max(1, profile.maxPacks - profile.minPacks + 1);
-  const packs = profile.minPacks + Math.floor(Math.random() * span);
+  const randFactor = 0.75 + Math.random() * 0.5;
+  const rawPacks = Math.round((profile.targetValue * randFactor) / pick.wholesale);
+  const packs = Math.max(1, Math.min(profile.maxPacks, rawPacks));
   const requiredCount = packs * pick.packSize;
   const baseValue = packs * pick.wholesale;
   const streak = getCurrentContractStreak(server);
@@ -349,17 +363,17 @@ function handleRerollContract(player, server) {
 }
 
 // ----------------------------------------------------------------------------
-// Wielki Finał Tycoona — Survivalowy Mega-Kontrakt Endgame (Stage 5, Issue #51)
+// Wielki Finał Tycoona — Survivalowy Mega-Kontrakt Endgame (Stage 5, Issue #51 + #83)
 // Zastępuje kupowanie Creative Motor: wymaga zautomatyzowanych dostaw ze
-// wszystkich 5 filarów paczki i nagradza Trofeum Imperium Tycoona + 500k monet!
+// wszystkich 5 filarów paczki i nagradza Trofeum Imperium Tycoona + 750 000 monet (jednorazowo)!
 // ----------------------------------------------------------------------------
 const ENDGAME_FINALE_TROPHY_ID = 'kubejs:tycoon_empire_trophy';
-const ENDGAME_FINALE_PAYOUT = 500000;
+const ENDGAME_FINALE_PAYOUT = 750000;
 const ENDGAME_FINALE_REQUIREMENTS = [
   { id: 'farmersdelight:hamburger', count: 64, label: 'Kuchnia (Farmer\'s Delight)' },
-  { id: 'create_confectionery:bar_of_ruby_chocolate', count: 64, label: 'Cukiernia (Confectionery)' },
+  { id: 'create_confectionery:bar_of_ruby_chocolate', count: 16, label: 'Cukiernia (Confectionery)' },
   { id: 'create:precision_mechanism', count: 32, label: 'Inżynieria (Create 6)' },
-  { id: 'ae2:cell_component_256k', count: 4, label: 'Cyfrowy Mózg (AE2)' },
+  { id: 'ae2:cell_component_256k', count: 2, label: 'Cyfrowy Mózg (AE2)' },
   { id: 'mekanism:pellet_polonium', count: 4, label: 'Energia Jądrowa (Mekanism)' }
 ];
 
@@ -373,7 +387,11 @@ function handleShowFinaleContract(player, server) {
   var readyAll = true;
 
   player.tell(Text.gold('=== 🏆 WIELKI FINAŁ TYCOONA — Mega-Kontrakt Endgame (Stage 5) ==='));
-  if (stage < 5) {
+  if (timesDone >= 1) {
+    player.tell(
+      Text.green('✔ Wielki Finał już ukończony! Nagroda jednorazowa została odebrana przez drużynę.')
+    );
+  } else if (stage < 5) {
     player.tell(
       Text.yellow(`• Wymagany odblokowany Etap 5: Imperium Tycoona (obecnie: Stage ${stage} / 5).`)
     );
@@ -383,23 +401,27 @@ function handleShowFinaleContract(player, server) {
     have = countItemInInventory(player, req.id);
     if (have < req.count) readyAll = false;
     player.tell(
-      (have >= req.count ? Text.green('  ✔ ') : Text.red('  ✘ '))
+      (timesDone >= 1 || have >= req.count ? Text.green('  ✔ ') : Text.red('  ✘ '))
         .append(Text.aqua(`${req.count}x ${req.id}`))
         .append(Text.gray(` [${req.label}] — masz: ${have}/${req.count}`))
     );
   }
   player.tell(
-    Text.white('• Nagroda: ')
+    Text.white('• Nagroda (jednorazowa): ')
       .append(Text.gold('Trofeum Imperium Tycoona'))
       .append(Text.white(' + '))
       .append(Text.gold(`${formatCoins(ENDGAME_FINALE_PAYOUT)} monet`))
-      .append(Text.gray(` (ukończono: ${timesDone}x)`))
+      .append(Text.gray(timesDone >= 1 ? ' (UKOŃCZONO)' : ' (do zdobycia 1x)'))
   );
-  player.tell(
-    readyAll && stage >= 5
-      ? Text.green('Wszystkie 5 filarów gotowe! Stań na Wyspie-Rynku (152,64,0) i wpisz /kontrakt final oddaj!')
-      : Text.gray('Dostarcz wszystkie 5 filarów na Wyspę-Rynek (152,64,0) i wpisz /kontrakt final oddaj.')
-  );
+  if (timesDone >= 1) {
+    player.tell(Text.green('Wielki Finał już ukończony — gratulacje dla całego Imperium Tycoona!'));
+  } else {
+    player.tell(
+      readyAll && stage >= 5
+        ? Text.green('Wszystkie 5 filarów gotowe! Stań na Wyspie-Rynku (152,64,0) i wpisz /kontrakt final oddaj!')
+        : Text.gray('Dostarcz wszystkie 5 filarów na Wyspę-Rynek (152,64,0) i wpisz /kontrakt final oddaj.')
+    );
+  }
   return 1;
 }
 
@@ -411,8 +433,18 @@ function handleDeliverFinaleContract(player, server) {
   var missing = [];
   var coinStacks = null;
   var cIdx = 0;
-  var stats = null;
+  var stats = server && server.persistentData ? server.persistentData.getCompound(CONTRACT_STATS_KEY) : null;
+  var alreadyDone = stats ? Number(stats.getInt('finale_completed') || 0) : 0;
   var doneCount = 1;
+
+  if (alreadyDone >= 1) {
+    player.tell(
+      Text.yellow(
+        '[Wielki Finał] Wielki Finał już ukończony! Nagroda jednorazowa (Trofeum + 750 000 monet) została już odebrana.'
+      )
+    );
+    return 0;
+  }
 
   if (stage < 5) {
     player.tell(
@@ -448,7 +480,7 @@ function handleDeliverFinaleContract(player, server) {
     return 0;
   }
 
-  // Faza 2: Pobranie wszystkich 5 stosów i wydanie Trofeum + 500 000 monet
+  // Faza 2: Pobranie wszystkich 5 stosów i wydanie Trofeum + jednorazowych 750 000 monet
   for (i = 0; i < ENDGAME_FINALE_REQUIREMENTS.length; i++) {
     req = ENDGAME_FINALE_REQUIREMENTS[i];
     removeItemFromInventory(player, req.id, req.count);

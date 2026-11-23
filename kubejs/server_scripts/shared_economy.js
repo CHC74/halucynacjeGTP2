@@ -697,6 +697,20 @@ function getCurrentUnlockedStage(player, server) {
   return highest;
 }
 
+/**
+ * Rozwiązuje wymagany Etap sprzedaży (`sell_stage`) towaru z `prices.json` (RFC #83).
+ * Kolejność: `itemObj.sell_stage` -> `tierObj.sell_stage` -> `tierNum - 1` (domyślnie `0`).
+ */
+function resolveItemSellStage(itemObj, tierObj, tierNum) {
+  if (itemObj && typeof itemObj.sell_stage === 'number' && Number.isFinite(itemObj.sell_stage)) {
+    return Math.max(0, Math.floor(itemObj.sell_stage));
+  }
+  if (tierObj && typeof tierObj.sell_stage === 'number' && Number.isFinite(tierObj.sell_stage)) {
+    return Math.max(0, Math.floor(tierObj.sell_stage));
+  }
+  return Math.max(0, Math.floor(Number(tierNum || 1)) - 1);
+}
+
 // ----------------------------------------------------------------------------
 // Centralna konfiguracja premii rynkowych (Issue #79) — wspólne źródło prawdy
 // z `config/halucynacje_economy/prices.json` i `scripts/validate_economy.mjs`.
