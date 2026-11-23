@@ -451,12 +451,16 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
     __customPrices: customPrices,
     __feedbackSent: feedbackSent
   };
-  const expectedTier1Count = (prices.sell_tiers.tier_1_start.items || []).length;
-  const expectedSellCount = Object.values(prices.sell_tiers).reduce(
-    (acc, t) => acc + (t.items || []).length,
+  const expectedTier1NpcCount = (prices.sell_tiers.tier_1_start.items || []).filter((x) => x.npc_shoppers > 0).length;
+  const expectedTotalNpcCount = Object.values(prices.sell_tiers).reduce(
+    (acc, t) => acc + (t.items || []).filter((x) => x.npc_shoppers > 0).length,
     0
   );
-  const expectedStage0LockedCount = expectedSellCount - expectedTier1Count;
+  const expectedNpcBlockedCount = Object.values(prices.sell_tiers).reduce(
+    (acc, t) => acc + (t.items || []).filter((x) => x.npc_shoppers === 0).length,
+    0
+  );
+  const expectedStage0LockedCount = expectedTotalNpcCount - expectedTier1NpcCount;
   const src =
     SHARED_ECONOMY_SRC +
     '\n;\n' +
@@ -467,32 +471,35 @@ test('economy_anti_exploit.js: blokada Coin Mint / Slot Machine, ShoppersWorldDa
       assert(!__removed.some((r) => r.output === 'lightmanscurrency:coin_mint'), 'no invalid coin_mint warning');
       assert(__removed.some((r) => r.output === 'lightmanscurrency:slot_machine'), 'slot_machine blocked');
 
-      // Etap 0: tylko Tier 1 aktywny, Tier 2-5 zablokowane (0L) + Tier 0 (0L)
+      // Etap 0: tylko Tier 1 z npc_shoppers > 0 aktywny, Tier 2-5 zablokowane (0L), pozycje bez NPC (bruk = 0L) + Tier 0 (0L)
       const entriesS0 = loadShoppersPriceEntries(false, 0);
       const zerosS0 = entriesS0.filter((e) => e.worth === 0);
       const positivesS0 = entriesS0.filter((e) => e.worth > 0);
-      assert(zerosS0.length === ${prices.tier_0_blocked.length + expectedStage0LockedCount}, 'Stage 0: Tier 0 + Tier 2-5 zeroed');
-      assert(positivesS0.length === ${expectedTier1Count}, 'Stage 0: only Tier 1 active in Shoppers');
+      assert(zerosS0.length === ${prices.tier_0_blocked.length + expectedNpcBlockedCount + expectedStage0LockedCount}, 'Stage 0: Tier 0 + bez NPC + Tier 2-5 zeroed');
+      assert(positivesS0.length === ${expectedTier1NpcCount}, 'Stage 0: only NPC-enabled Tier 1 active in Shoppers');
 
       const mockServer = { persistentData: __makeCompound(), overworld: () => ({ __isOverworld: true }), runCommandSilent: () => {} };
       const syncResS0 = applyShoppersTier0ZeroWorth(mockServer);
       assert(syncResS0.viaJavaApi === true, 'uses ShoppersWorldData Java API');
       assert(syncResS0.tier0 === ${prices.tier_0_blocked.length}, 'all Tier 0 written as 0 via API');
+      assert(syncResS0.npcBlocked === ${expectedNpcBlockedCount}, 'Stage 0: npc_shoppers=0 items tracked in npcBlocked');
       assert(syncResS0.stageLocked === ${expectedStage0LockedCount}, 'Stage 0: Tier 2-5 locked as 0 via API');
-      assert(syncResS0.npc === ${expectedTier1Count}, 'Stage 0: Tier 1 NPC prices written via API');
-      assert(__customPrices.get('minecraft:cobblestone') === 0, 'cobblestone worth === 0');
+      assert(syncResS0.npc === ${expectedTier1NpcCount}, 'Stage 0: Tier 1 NPC prices written via API');
+      assert(__customPrices.get('minecraft:cobblestone') === 0, 'cobblestone worth === 0 (never clamped to 1)');
       assert(__customPrices.get('minecraft:ancient_debris') === 0, 'ancient_debris worth === 0');
       assert(__customPrices.get('mekanism:ingot_osmium') === 0, 'osmium worth === 0');
       assert(__customPrices.get('create:blaze_cake') === 0, 'Stage 0: blaze_cake worth === 0 (sell_stage=2)');
       assert(__customPrices.get('minecraft:bread') > 0, 'Stage 0: bread active in Shoppers');
 
-      // Etap 5: wszystkie 85 towarów Tier 1-5 aktywne, Tier 0 nadal 0L
+      // Etap 5: wszystkie 85 towarów NPC Tier 1-5 aktywne, Tier 0 oraz pozycje bez NPC (bruk) nadal 0L
       const gs = mockServer.persistentData.getCompound('halucynacje_global_stages');
       for (let s = 1; s <= 5; s++) gs.putBoolean('stage_' + s, true);
       const syncResS5 = applyShoppersTier0ZeroWorth(mockServer);
       assert(syncResS5.tier0 === ${prices.tier_0_blocked.length}, 'Stage 5: all Tier 0 still 0');
+      assert(syncResS5.npcBlocked === ${expectedNpcBlockedCount}, 'Stage 5: npcBlocked still tracked separately');
       assert(syncResS5.stageLocked === 0, 'Stage 5: 0 stage-locked items');
-      assert(syncResS5.npc === ${expectedSellCount}, 'Stage 5: all Tier 1-5 NPC prices active');
+      assert(syncResS5.npc === ${expectedTotalNpcCount}, 'Stage 5: all NPC-enabled Tier 1-5 prices active');
+      assert(__customPrices.get('minecraft:cobblestone') === 0, 'Stage 5: cobblestone still 0 in Shoppers');
       assert(__customPrices.get('create:blaze_cake') > 0, 'Stage 5: blaze_cake active in Shoppers');
 
       const msgComp = Text.green('OK');
@@ -1254,7 +1261,7 @@ test('shared_economy.js + economy_market.js + economy_contracts.js (#48): marże
   assert(tickRes.itemsSold === 10, 'Dok sprzedał dokładnie 10x squid_ink_pasta');
   assert(tickRes.deposited === expectedDock10, `Dok przelał ${expectedDock10} monet (+5% logistyka) do Team Bank #42`);
   assert(teamBankBalance === expectedDock10, `Saldo Team Bank #42 wzrosło dokładnie o ${expectedDock10}`);
-  assert(dockSlots[0].count === 64, 'Surowiec Tier 0 (cobblestone) w Doku pozostał nietknięty');
+  assert(dockSlots[0].count === 64, 'Bruk z limitem godzinowym (cobblestone) w Doku pozostał nietknięty');
   assert(dockSlots[1].count === 0, 'Przetworzony towar został opróżniony z Doku');
 
   // F) Fallback bez banku -> trafia do pending i daje się odebrać przez /rynek_eksport odbierz
@@ -1868,7 +1875,7 @@ test('shared_economy.js + economy_market.js (#79): twardy cap premii x1.45, anty
     `Zdalna sprzedaż z aktywnym Boomem i Stage 5 daje sztywne 85% = ${expectedRemotePolonium} (jest ${received})`
   );
 
-  // E) Dla KAŻDEGO towaru w sell_tiers: zdalna sprzedaż z dowolnymi premiami < cena NPC!
+  // E) Dla KAŻDEGO towaru bez limitu godzinowego: zdalna sprzedaż < cena NPC; dla towarów z limitem: npc_shoppers === 0 i zero premii!
   for (const tierObj of Object.values(prices.sell_tiers)) {
     for (const item of tierObj.items) {
       const boomForItem = { itemId: item.id, basePrice: item.wholesale_gui, boostedPrice: Math.round(item.wholesale_gui * 1.3), bonusPercent: 30 };
@@ -1876,10 +1883,18 @@ test('shared_economy.js + economy_market.js (#79): twardy cap premii x1.45, anty
         onMarket: false,
         isExportDock: false
       });
-      assert(
-        remoteRes.finalPayout < item.npc_shoppers,
-        `Dla ${item.id}: zdalna (${remoteRes.finalPayout}) musi być < NPC (${item.npc_shoppers})`
-      );
+      if (item.hourly_cap_coins > 0) {
+        assert(item.npc_shoppers === 0, `Pozycja z limitem ${item.id} musi mieć npc_shoppers === 0`);
+        assert(
+          remoteRes.finalPayout === Math.round(item.wholesale_gui * 0.85) && remoteRes.totalBonusPercent === 0,
+          `Dla ${item.id}: zdalna sprzedaż = dokładnie 0.85x bez premii (${remoteRes.finalPayout})`
+        );
+      } else {
+        assert(
+          remoteRes.finalPayout < item.npc_shoppers,
+          `Dla ${item.id}: zdalna (${remoteRes.finalPayout}) musi być < NPC (${item.npc_shoppers})`
+        );
+      }
     }
   }
 });
@@ -1950,7 +1965,7 @@ test('shared_economy.js + economy_market.js (#83 cz. B pkt 1-2): blokada sell_st
     sandbox.Item.of('minecraft:bread', 2), // Tier 1 (sell_stage 0)
     sandbox.Item.of('farmersdelight:hamburger', 2), // Tier 2 (sell_stage 1)
     sandbox.Item.of('create:blaze_cake', 3), // Tier 3 (sell_stage 2 -> zablokowane!)
-    sandbox.Item.of('minecraft:cobblestone', 16) // Tier 0
+    sandbox.Item.of('minecraft:netherrack', 16) // Tier 0
   ];
   const player = {
     username: 'StageOneSeller',
@@ -2633,6 +2648,401 @@ test('economy_market.js (#89): ścisła atrapa Overworld, wypłata w załadowany
   );
 });
 
+// 24. Issue #94: Bruk z generatora od Etapu 0 (64 -> 32c Rynek / 27c zdalnie), limit 2 000 monet/h, reset po 60 min,
+//     bramka Terminala Pre/PostTrade, pomijanie w Dokach, zero premii/Boomu/Różnorodności/Kontraktów i 0 w Shoppers!
+test('shared_economy.js + economy_market.js + economy_contracts.js + economy_anti_exploit.js (#94): bruk 32c/64, limit 2 000/h, Terminal, Doki, Kontrakty i Shoppers=0', () => {
+  const nativeHandlers = {};
+  let tabSyncCalls = 0;
+  const shoppersPrices = new Map();
+
+  const sandbox = {
+    console: { info: () => {}, warn: () => {}, error: () => {} },
+    JsonIO: { readString: () => JSON.stringify(prices), read: () => prices },
+    Item: makeItemFactory(),
+    Text: makeTextProxy(),
+    Java: {
+      loadClass: (cls) => {
+        if (cls === 'com.velesbh.shoppers.economy.ShoppersWorldData') {
+          return {
+            get: () => ({
+              setCustomPrice: (id, worth) => shoppersPrices.set(String(id), Number(worth))
+            })
+          };
+        }
+        return null;
+      }
+    },
+    ServerEvents: { recipes: () => {}, loaded: () => {}, commandRegistry: () => {}, tick: () => {} },
+    NativeEvents: {
+      onEvent: (cls, cb) => {
+        nativeHandlers[cls] = cb;
+      }
+    },
+    syncPlayerTabBalance: () => {
+      tabSyncCalls++;
+    },
+    Date,
+    Math,
+    assert
+  };
+
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(SHARED_ECONOMY_SRC, ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_anti_exploit.js', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_market.js', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('kubejs/server_scripts/economy_contracts.js', 'utf8'), ctx);
+
+  const handleSellHand = vm.runInContext('handleSellHand', ctx);
+  const handleSellAll = vm.runInContext('handleSellAll', ctx);
+  const handleShowPrices = vm.runInContext('handleShowPrices', ctx);
+  const handleTerminalPreTrade = vm.runInContext('handleTerminalPreTrade', ctx);
+  const handleTerminalPostTrade = vm.runInContext('handleTerminalPostTrade', ctx);
+  const getHourlyCapStatus = vm.runInContext('getHourlyCapStatus', ctx);
+  const readDiversityMap = vm.runInContext('readDiversityMap', ctx);
+  const applyDynamicMarketBonuses = vm.runInContext('applyDynamicMarketBonuses', ctx);
+  const getBoomEligibleItems = vm.runInContext('getBoomEligibleItems', ctx);
+  const rollMarketBoom = vm.runInContext('rollMarketBoom', ctx);
+  const getMarketCatalog = vm.runInContext('getMarketCatalog', ctx);
+  const processExportDocksTick = vm.runInContext('processExportDocksTick', ctx);
+  const writeExportDocks = vm.runInContext('writeExportDocks', ctx);
+  const applyShoppersTier0ZeroWorth = vm.runInContext('applyShoppersTier0ZeroWorth', ctx);
+  const loadContractPoolForStage = vm.runInContext('loadContractPoolForStage', ctx);
+  const rollNewContract = vm.runInContext('rollNewContract', ctx);
+  const sellSingleStack = vm.runInContext('sellSingleStack', ctx);
+
+  const coinVals = {
+    'lightmanscurrency:coin_netherite': 100000,
+    'lightmanscurrency:coin_diamond': 10000,
+    'lightmanscurrency:coin_emerald': 1000,
+    'lightmanscurrency:coin_gold': 100,
+    'lightmanscurrency:coin_iron': 10,
+    'lightmanscurrency:coin_copper': 1
+  };
+  const sumCoins = (arr) => arr.reduce((a, st) => a + (coinVals[st.id] || 0) * st.count, 0);
+
+  const t0 = 1_750_000_000_000;
+  const cat = getMarketCatalog(true);
+  assert(
+    cat.sellById['minecraft:cobblestone'] &&
+      cat.sellById['minecraft:cobblestone'].packSize === 64 &&
+      cat.sellById['minecraft:cobblestone'].wholesale === 32 &&
+      cat.sellById['minecraft:cobblestone'].npc === 0 &&
+      cat.sellById['minecraft:cobblestone'].sellStage === 0 &&
+      cat.sellById['minecraft:cobblestone'].hourlyCapCoins === 2000,
+    'Katalog wczytał minecraft:cobblestone (x64, 32c, npc=0, sellStage=0, hourlyCapCoins=2000)'
+  );
+
+  // A) Na Wyspie-Rynku: 64 bruku = dokładnie 32 monety (nawet na Etapie 5 z Różnorodnością i fałszywym Boomem!),
+  //    brak ujemnego npcBonusPotential, brak zapisu do okna Różnorodności, brak mylącej podpowiedzi Dok/NPC
+  const serverA = {
+    persistentData: makeCompound(),
+    tell: () => {},
+    runCommandSilent: () => {}
+  };
+  // Odblokuj Stage 5 na serverA, żeby dowieść, że premia Etapu +10% NIE działa na bruk!
+  const gsA = serverA.persistentData.getCompound('halucynacje_global_stages');
+  for (let s = 1; s <= 5; s++) gsA.putBoolean('stage_' + s, true);
+
+  const fakeBoomCobble = { itemId: 'minecraft:cobblestone', basePrice: 32, boostedPrice: 42, bonusPercent: 30 };
+  const dynCobbleMarket = applyDynamicMarketBonuses(
+    serverA,
+    32,
+    'minecraft:cobblestone',
+    { uniqueCount: 7, bonusPercent: 15, multiplier: 1.15 },
+    fakeBoomCobble,
+    { onMarket: true, isExportDock: true }
+  );
+  assert(
+    dynCobbleMarket.finalPayout === 32 && dynCobbleMarket.totalBonusPercent === 0 && dynCobbleMarket.isBoom === false,
+    `Bruk na Rynku nie dostaje ŻADNYCH premii (jest ${dynCobbleMarket.finalPayout})`
+  );
+
+  const marketInv = [];
+  const marketMsgs = [];
+  const marketPlayer = {
+    username: 'CobbleMiner',
+    x: 152,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld', isClientSide: () => false },
+    persistentData: makeCompound(),
+    mainHandItem: sandbox.Item.of('minecraft:cobblestone', 64),
+    inventory: { getContainerSize: () => marketInv.length, getItem: (idx) => marketInv[idx] },
+    give: (st) => marketInv.push(st),
+    tell: (t) => marketMsgs.push(t.s)
+  };
+  assert(handleSellHand(marketPlayer, serverA, t0) === 1, '/sprzedaj 64 bruku na Rynku udane');
+  assert(sumCoins(marketInv) === 32, `64 bruku na Rynku daje dokładnie 32 monety (jest ${sumCoins(marketInv)})`);
+  assert(marketPlayer.mainHandItem.count === 0, 'Stack 64 bruku został sprzedany');
+  assert(
+    marketMsgs.some((m) => m.includes('Bruk: 32 / 2 000 monet w tej godzinie')),
+    'Komunikat po sprzedaży pokazuje stan limitu "Bruk: 32 / 2 000 monet w tej godzinie"'
+  );
+  assert(
+    !marketMsgs.some((m) => m.includes('Dok Eksportowy') || m.includes('sklepy NPC')),
+    'Komunikat sprzedaży bruku nie pokazuje mylącej podpowiedzi o Doku/NPC'
+  );
+  assert(
+    !readDiversityMap(serverA, t0)['minecraft:cobblestone'],
+    'Bruk nie trafia do okna Różnorodności'
+  );
+
+  // < 64 bruku -> too_few (0 monet, stack nietknięty)
+  marketPlayer.mainHandItem = sandbox.Item.of('minecraft:cobblestone', 63);
+  assert(handleSellHand(marketPlayer, serverA, t0 + 1000) === 0, '63 bruku za mało na pakiet 64');
+  assert(marketPlayer.mainHandItem.count === 63, '63 bruku nietknięte');
+
+  // npcBonusPotential >= 0 (nigdy ujemne -32!)
+  const probeStack = sandbox.Item.of('minecraft:cobblestone', 64);
+  const probeRes = sellSingleStack(probeStack, cat, 0, { onMarket: true });
+  assert(probeRes.npcBonusPotential === 0, `npcBonusPotential dla bruku === 0 (było ${probeRes.npcBonusPotential})`);
+
+  // B) Zdalnie (poza Wyspą-Rynkiem): 64 bruku = dokładnie 27 monet (0.85x), licznik rośnie o 27 (32 + 27 = 59)
+  const remoteInv = [];
+  const remoteMsgs = [];
+  const remotePlayer = {
+    username: 'RemoteMiner',
+    x: 0,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld', isClientSide: () => false },
+    persistentData: makeCompound(),
+    mainHandItem: sandbox.Item.of('minecraft:cobblestone', 64),
+    inventory: { getContainerSize: () => remoteInv.length, getItem: (idx) => remoteInv[idx] },
+    give: (st) => remoteInv.push(st),
+    tell: (t) => remoteMsgs.push(t.s)
+  };
+  assert(handleSellHand(remotePlayer, serverA, t0 + 2000) === 1, 'Zdalne /sprzedaj 64 bruku udane');
+  assert(sumCoins(remoteInv) === 27, `64 bruku zdalnie daje dokładnie 27 monet (jest ${sumCoins(remoteInv)})`);
+  assert(
+    getHourlyCapStatus(serverA, 'minecraft:cobblestone', 2000, t0 + 2000).spent === 59,
+    'Wspólny licznik godzinowy wzrósł o 27 do 59 monet'
+  );
+
+  // C) Częściowa sprzedaż przy limicie 2 000 monet/h (70 stacków w ekwipunku -> 62 sprzedane = 1 984c, 8 zostaje!)
+  const serverCap = { persistentData: makeCompound(), tell: () => {}, runCommandSilent: () => {} };
+  const capInv = [];
+  for (let s = 0; s < 70; s++) {
+    capInv.push(sandbox.Item.of('minecraft:cobblestone', 64));
+  }
+  const capMsgs = [];
+  const capPlayer = {
+    username: 'BulkMiner',
+    x: 152,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld', isClientSide: () => false },
+    persistentData: makeCompound(),
+    mainHandItem: sandbox.Item.of('minecraft:cobblestone', 64),
+    inventory: { getContainerSize: () => capInv.length, getItem: (idx) => capInv[idx] },
+    give: (st) => capInv.push(st),
+    tell: (t) => capMsgs.push(t.s)
+  };
+  const soldItemsCap = handleSellAll(capPlayer, serverCap, t0);
+  assert(soldItemsCap === 62 * 64, `Sprzedano dokładnie 62 stacki = ${62 * 64} bruku (było ${soldItemsCap})`);
+  assert(sumCoins(capInv) === 1984, `Wypłacono dokładnie 1 984 monet (było ${sumCoins(capInv)})`);
+  const cobbleLeftInInv = capInv
+    .filter((st) => st.id === 'minecraft:cobblestone')
+    .reduce((acc, st) => acc + st.count, 0);
+  assert(cobbleLeftInInv === 8 * 64, `Nadmiar 8 stacków (${8 * 64} szt.) pozostał w ekwipunku (było ${cobbleLeftInInv})`);
+  assert(
+    capMsgs.some((m) => m.includes('1 984 / 2 000') && m.includes('reset za')),
+    'Komunikat po osiągnięciu limitu pokazuje 1 984 / 2 000 i reset za N min'
+  );
+
+  // Kolejne /sprzedaj (ręka) i /sprzedaj all przy wyczerpanym limicie -> odmowa z czasem do resetu, bruk nietknięty!
+  capMsgs.length = 0;
+  assert(handleSellHand(capPlayer, serverCap, t0 + 5 * 60_000) === 0, '/sprzedaj z ręki odrzucone po limicie');
+  assert(capPlayer.mainHandItem.count === 64, 'Bruk w ręce pozostał nietknięty przy odmowie limitu');
+  assert(
+    capMsgs.some((m) => m.includes('1 984 / 2 000') && m.includes('reset za 55 min')),
+    'Odmowa po 5 min podaje dokładny czas do resetu (55 min)'
+  );
+
+  capMsgs.length = 0;
+  assert(handleSellAll(capPlayer, serverCap, t0 + 5 * 60_000) === 0, '/sprzedaj all odrzucone po limicie');
+  const cobbleAfterRetry = capInv
+    .filter((st) => st.id === 'minecraft:cobblestone')
+    .reduce((acc, st) => acc + st.count, 0);
+  assert(cobbleAfterRetry === 8 * 64, '8 stacków w ekwipunku nietknięte przy ponownym /sprzedaj all');
+
+  // Test zdalnego limitu (75 stacków * 27c = 2 025c -> sprzedaje 74 = 1 998c, 1 stack zostaje!)
+  const serverRemoteCap = { persistentData: makeCompound(), tell: () => {}, runCommandSilent: () => {} };
+  const remCapInv = [];
+  for (let s = 0; s < 75; s++) remCapInv.push(sandbox.Item.of('minecraft:cobblestone', 64));
+  const remCapPlayer = {
+    username: 'RemoteBulk',
+    x: 0,
+    y: 65,
+    z: 0,
+    level: { dimension: 'minecraft:overworld', isClientSide: () => false },
+    persistentData: makeCompound(),
+    inventory: { getContainerSize: () => remCapInv.length, getItem: (idx) => remCapInv[idx] },
+    give: (st) => remCapInv.push(st),
+    tell: () => {}
+  };
+  assert(handleSellAll(remCapPlayer, serverRemoteCap, t0) === 74 * 64, 'Zdalny limit sprzedaje 74 stacki (1 998c <= 2 000c)');
+  assert(sumCoins(remCapInv) === 1998, 'Zdalna wypłata przy limicie = dokładnie 1 998 monet');
+  assert(
+    remCapInv.filter((st) => st.id === 'minecraft:cobblestone').reduce((a, st) => a + st.count, 0) === 64,
+    '75. stack bruku pozostał nietknięty przy zdalnym limicie'
+  );
+
+  // D) Odnowienie limitu po 60 minutach (59 min -> nadal blokada; 60 min -> pełny reset!)
+  assert(handleSellHand(capPlayer, serverCap, t0 + 59 * 60_000) === 0, 'Po 59 min limit nadal blokuje');
+  assert(handleSellHand(capPlayer, serverCap, t0 + 60 * 60_000) === 1, 'Po dokładnie 60 min limit odnawia się i sprzedaż działa');
+  assert(capPlayer.mainHandItem.count === 0, 'Po odnowieniu limitu stack 64 bruku został sprzedany');
+  assert(
+    getHourlyCapStatus(serverCap, 'minecraft:cobblestone', 2000, t0 + 60 * 60_000).spent === 32,
+    'Nowe okno 60 min zaczęło się od 32 monet'
+  );
+
+  // E) Terminal Lightman's Currency ([SKUP] 1): PreTradeEvent i PostTradeEvent współdzielą licznik godzinowy
+  const serverTerm = { persistentData: makeCompound(), tell: () => {}, runCommandSilent: () => {} };
+  const termMsgs = [];
+  const termPlayer = {
+    username: 'TerminalMiner',
+    x: 152,
+    y: 65,
+    z: 0,
+    server: serverTerm,
+    level: { dimension: 'minecraft:overworld', isClientSide: () => false, server: serverTerm },
+    persistentData: makeCompound(),
+    mainHandItem: sandbox.Item.of('minecraft:cobblestone', 64),
+    inventory: { getContainerSize: () => 0, getItem: () => null },
+    give: () => {},
+    tell: (t) => termMsgs.push(t.s)
+  };
+  const makeCobbleTermEvent = () => {
+    const denials = [];
+    let canceled = false;
+    return {
+      denials,
+      isCanceled: () => canceled,
+      getTrader: () => ({
+        isClient: () => false,
+        isPersistent: () => true,
+        getPersistentID: () => 'halucynacje_skup_01_start'
+      }),
+      getTrade: () => ({
+        isSale: () => false,
+        isPurchase: () => true,
+        getSellItem: (slot) => (slot === 0 ? sandbox.Item.of('minecraft:cobblestone', 64) : sandbox.Item.of('minecraft:air', 0)),
+        getCost: () => ({ getCoreValue: () => 32 })
+      }),
+      getContext: () => ({
+        isStorageMode: false,
+        hasPlayer: () => true,
+        getPlayer: () => termPlayer
+      }),
+      addDenial: (comp) => {
+        denials.push(comp.s);
+        canceled = true;
+      },
+      setCanceled: (v) => {
+        canceled = Boolean(v);
+      }
+    };
+  };
+
+  tabSyncCalls = 0;
+  for (let k = 1; k <= 62; k++) {
+    const ev = makeCobbleTermEvent();
+    handleTerminalPreTrade(ev, t0);
+    assert(!ev.isCanceled(), `Terminal PURCHASE bruku #${k} dozwolony w limicie`);
+    assert(handleTerminalPostTrade(ev, t0) === true, `PostTradeEvent #${k} doliczył sprzedaż bruku`);
+  }
+  assert(tabSyncCalls === 62, `PostTradeEvent odświeżył TAB przy każdej sprzedaży w [SKUP] (${tabSyncCalls})`);
+  assert(
+    getHourlyCapStatus(serverTerm, 'minecraft:cobblestone', 2000, t0).spent === 1984,
+    'Terminal PostTradeEvent zliczył 62 * 32 = 1 984 monet'
+  );
+
+  // 63. transakcja w terminalu -> odmowa z komunikatem o resecie; /sprzedaj także zablokowane!
+  const ev63 = makeCobbleTermEvent();
+  handleTerminalPreTrade(ev63, t0 + 10 * 60_000);
+  assert(ev63.isCanceled(), '63. transakcja bruku w Terminalu musi zostać odrzucona (pozostało 16 < 32)');
+  assert(
+    ev63.denials.some((d) => d.includes('1 984 / 2 000') && d.includes('reset za 50 min')),
+    'Odmowa Terminala zawiera stan limitu i czas do resetu (50 min)'
+  );
+  assert(handleSellHand(termPlayer, serverTerm, t0 + 10 * 60_000) === 0, '/sprzedaj dzieli ten sam limit co Terminal');
+
+  // Po 60 minutach Terminal znów akceptuje bruk
+  const evAfterReset = makeCobbleTermEvent();
+  handleTerminalPreTrade(evAfterReset, t0 + 60 * 60_000);
+  assert(!evAfterReset.isCanceled(), 'Po 60 min Terminal znów pozwala na skup bruku');
+
+  // F) Dok Eksportowy pomija 64x minecraft:cobblestone (0 monet, 64 bruku zostaje w skrzyni!)
+  const dockSlots = [sandbox.Item.of('minecraft:cobblestone', 64)];
+  const dockBlk = {
+    x: 150,
+    y: 65,
+    z: 2,
+    id: 'minecraft:chest',
+    inventory: {
+      getContainerSize: () => dockSlots.length,
+      getItem: (idx) => dockSlots[idx],
+      setChanged: () => {}
+    }
+  };
+  const serverDock = {
+    persistentData: makeCompound(),
+    tell: () => {},
+    runCommandSilent: () => {},
+    overworld: () =>
+      makeStrictOverworldMock({
+        getBlock: (x, y, z) => (x === 150 && y === 65 && z === 2 ? dockBlk : null)
+      })
+  };
+  writeExportDocks(serverDock, [{ x: 150, y: 65, z: 2, blockId: 'minecraft:chest', owner: 'DockTester', teamId: -1 }]);
+  const dockTick = processExportDocksTick(serverDock, t0);
+  assert(
+    dockTick.itemsSold === 0 && dockTick.deposited === 0 && dockTick.pendingAdded === 0,
+    'Dok Eksportowy nie sprzedaje 64x cobblestone'
+  );
+  assert(dockSlots[0].count === 64, '64x cobblestone pozostało nietknięte w Doku Eksportowym');
+
+  // G) /cennik 1 pokazuje limit 2 000/h (bez NPC i Doków) zamiast mylącego Rynek NPC ~0
+  const priceMsgs = [];
+  handleShowPrices({ username: 'PriceViewer', persistentData: makeCompound(), tell: (t) => priceMsgs.push(t.s) }, 1, serverA);
+  const cobblePriceLine = priceMsgs.find((m) => m.includes('minecraft:cobblestone'));
+  assert(
+    cobblePriceLine && cobblePriceLine.includes('limit 2 000/h (bez NPC i Doków)') && !cobblePriceLine.includes('Rynek NPC ~0'),
+    `/cennik 1 poprawnie wyświetla limit godzinowy dla bruku: "${cobblePriceLine}"`
+  );
+
+  // H) Shoppers sync: 60 blokad Tier 0 + 1 bez NPC (minecraft:cobblestone = 0L, NIGDY 1L!)
+  const serverShoppers = {
+    persistentData: makeCompound(),
+    overworld: () => ({ __isOverworld: true }),
+    runCommandSilent: () => {}
+  };
+  const shS0 = applyShoppersTier0ZeroWorth(serverShoppers, true);
+  assert(shS0.tier0 === 60 && shS0.npcBlocked === 1 && shoppersPrices.get('minecraft:cobblestone') === 0, 'Shoppers S0: 60 Tier 0, 1 bez NPC, bruk = 0');
+  for (let s = 1; s <= 5; s++) serverShoppers.persistentData.getCompound('halucynacje_global_stages').putBoolean('stage_' + s, true);
+  const shS5 = applyShoppersTier0ZeroWorth(serverShoppers, true);
+  assert(shS5.stageLocked === 0 && shS5.npcBlocked === 1 && shoppersPrices.get('minecraft:cobblestone') === 0, 'Shoppers S5: stageLocked=0, bruk nadal = 0');
+
+  // I) /kontrakt i Market Boom NIGDY nie losują minecraft:cobblestone (Etap 0 i Etap 1)
+  for (const st of [0, 1]) {
+    const { pool } = loadContractPoolForStage(st);
+    assert(!pool.some((x) => x.id === 'minecraft:cobblestone'), `Pula /kontrakt na Etapie ${st} wyklucza minecraft:cobblestone`);
+    const boomPool = getBoomEligibleItems(cat, st);
+    assert(!boomPool.some((x) => x.id === 'minecraft:cobblestone'), `Pula Boomu na Etapie ${st} wyklucza minecraft:cobblestone`);
+
+    const srvRoll = { persistentData: makeCompound(), tell: () => {} };
+    if (st >= 1) srvRoll.persistentData.getCompound('halucynacje_global_stages').putBoolean('stage_1', true);
+    for (let r = 0; r < 100; r++) {
+      const c = rollNewContract(srvRoll, null);
+      assert(c && c.itemId !== 'minecraft:cobblestone', `/kontrakt na Etapie ${st} nigdy nie losuje bruku`);
+      const b = rollMarketBoom(srvRoll, null, t0);
+      assert(b && b.itemId !== 'minecraft:cobblestone', `Boom na Etapie ${st} nigdy nie losuje bruku`);
+    }
+  }
+});
+
 console.log(`🎉 Wszystkie ${passed}/${passed} pakietów testów KubeJS ZALICZONE!`);
+
 
 

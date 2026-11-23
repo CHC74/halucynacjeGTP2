@@ -113,12 +113,6 @@
   ],
   "tier_0_blocked": [
     {
-      "id": "minecraft:cobblestone",
-      "wholesale_gui": 0,
-      "npc_shoppers": 0,
-      "reason": "Surowiec kopalniany / ekstruder"
-    },
-    {
       "id": "minecraft:stone",
       "wholesale_gui": 0,
       "npc_shoppers": 0,
@@ -543,6 +537,14 @@
           "wholesale_gui": 31,
           "npc_shoppers": 37,
           "sell_stage": 0
+        },
+        {
+          "id": "minecraft:cobblestone",
+          "pack_size": 64,
+          "wholesale_gui": 32,
+          "npc_shoppers": 0,
+          "sell_stage": 0,
+          "hourly_cap_coins": 2000
         }
       ],
       "stage_range": "0-1",

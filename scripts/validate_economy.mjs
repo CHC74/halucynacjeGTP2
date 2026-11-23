@@ -96,6 +96,7 @@ for (const [tierKey, tierObj] of Object.entries(data.sell_tiers ?? {})) {
 
   let sumWholesale = 0;
   let sumNpc = 0;
+  let npcItemCount = 0;
   let minW = Infinity;
   let maxW = -Infinity;
 
@@ -114,7 +115,26 @@ for (const [tierKey, tierObj] of Object.entries(data.sell_tiers ?? {})) {
     if (item.pack_size != null && (!Number.isInteger(item.pack_size) || item.pack_size < 1 || item.pack_size > 64)) {
       errors.push(`${tierKey} -> "${item.id}": niepoprawne pack_size=${item.pack_size} (wymagane 1..64).`);
     }
-    if (!(item.wholesale_gui > 0) || !(item.npc_shoppers > 0)) {
+    const hasHourlyCap = item.hourly_cap_coins != null;
+    if (hasHourlyCap) {
+      if (!Number.isInteger(item.hourly_cap_coins) || item.hourly_cap_coins <= 0) {
+        errors.push(
+          `${tierKey} -> "${item.id}": hourly_cap_coins=${item.hourly_cap_coins} musi być dodatnią liczbą całkowitą.`
+        );
+      }
+      if (item.npc_shoppers !== 0) {
+        errors.push(
+          `${tierKey} -> "${item.id}": pozycja z hourly_cap_coins musi mieć npc_shoppers === 0 (Shoppers nie mają limitu godzinowego, jest ${item.npc_shoppers}).`
+        );
+      }
+    }
+    if (!(item.wholesale_gui > 0)) {
+      errors.push(`${tierKey} -> "${item.id}": cena hurtowa wholesale_gui musi być dodatnia.`);
+    } else if (hasHourlyCap) {
+      sumWholesale += item.wholesale_gui;
+      if (item.wholesale_gui < minW) minW = item.wholesale_gui;
+      if (item.wholesale_gui > maxW) maxW = item.wholesale_gui;
+    } else if (!(item.npc_shoppers > 0)) {
       errors.push(`${tierKey} -> "${item.id}": ceny sprzedaży muszą być dodatnie.`);
     } else {
       const ratio = item.npc_shoppers / item.wholesale_gui;
@@ -125,6 +145,7 @@ for (const [tierKey, tierObj] of Object.entries(data.sell_tiers ?? {})) {
       }
       sumWholesale += item.wholesale_gui;
       sumNpc += item.npc_shoppers;
+      npcItemCount++;
       if (item.wholesale_gui < minW) minW = item.wholesale_gui;
       if (item.wholesale_gui > maxW) maxW = item.wholesale_gui;
     }
@@ -137,7 +158,7 @@ for (const [tierKey, tierObj] of Object.entries(data.sell_tiers ?? {})) {
     minW,
     maxW,
     avgWholesale: sumWholesale / items.length,
-    avgNpc: sumNpc / items.length,
+    avgNpc: npcItemCount > 0 ? sumNpc / npcItemCount : 0,
     target: tierObj.next_stage_target ?? null
   });
 }
@@ -186,14 +207,26 @@ if (!mb || typeof mb !== 'object') {
   maxEffectiveMultiplier = 1.0 + maxCombinedPct / 100.0;
   maxRemoteMultiplier = allowRemoteBonuses ? maxEffectiveMultiplier * remoteMult : remoteMult;
 
-  // Kryterium akceptacji #79: dla KAŻDEGO towaru sprzedaż zdalna z dowolnymi premiami < cena NPC!
+  // Kryterium akceptacji #79: dla KAŻDEGO towaru bez limitu godzinowego sprzedaż zdalna z dowolnymi premiami < cena NPC!
   for (const [id, item] of sellById.entries()) {
+    if (item.hourly_cap_coins > 0) continue;
     const maxRemotePrice = Math.round(item.wholesale_gui * maxRemoteMultiplier);
     if (maxRemotePrice >= item.npc_shoppers) {
       errors.push(
         `Naruszenie marży Rynku (#79) dla "${id}": maks. sprzedaż zdalna (${maxRemotePrice}, mnożnik ×${maxRemoteMultiplier.toFixed(3)}) >= cena NPC (${item.npc_shoppers}).`
       );
     }
+  }
+}
+
+// 3d. Ochrona bruku z generatora (Issue #94): jeśli minecraft:cobblestone jest w sell_tiers, musi mieć hourly_cap_coins > 0 i npc_shoppers === 0
+const cobbleSell = sellById.get('minecraft:cobblestone');
+if (cobbleSell) {
+  if (!Number.isInteger(cobbleSell.hourly_cap_coins) || cobbleSell.hourly_cap_coins <= 0) {
+    errors.push('minecraft:cobblestone w sell_tiers musi mieć dodatnie hourly_cap_coins (Issue #94).');
+  }
+  if (cobbleSell.npc_shoppers !== 0) {
+    errors.push('minecraft:cobblestone w sell_tiers musi mieć npc_shoppers === 0 (Issue #94).');
   }
 }
 
@@ -331,11 +364,12 @@ for (const item of data.buy_catalog ?? []) {
     const buyCount = item.count != null ? Number(item.count) : 1;
     const buyUnitPrice = item.buy_price / buyCount;
     const sellPack = sell.pack_size && Number(sell.pack_size) > 1 ? Number(sell.pack_size) : 1;
+    const effMult = sell.hourly_cap_coins > 0 ? 1.0 : maxEffectiveMultiplier;
     const maxDirectSellUnit =
-      Math.max(Math.round(sell.wholesale_gui * maxEffectiveMultiplier), sell.npc_shoppers) / sellPack;
+      Math.max(Math.round(sell.wholesale_gui * effMult), sell.npc_shoppers) / sellPack;
     if (buyUnitPrice <= maxDirectSellUnit) {
       errors.push(
-        `Arbitraż bezpośredni dla "${item.id}": buy/szt.=${buyUnitPrice.toFixed(2)} (${item.buy_price}/${buyCount}) <= maks. sprzedaż/szt.=${maxDirectSellUnit.toFixed(2)} (×${maxEffectiveMultiplier.toFixed(2)}).`
+        `Arbitraż bezpośredni dla "${item.id}": buy/szt.=${buyUnitPrice.toFixed(2)} (${item.buy_price}/${buyCount}) <= maks. sprzedaż/szt.=${maxDirectSellUnit.toFixed(2)} (×${effMult.toFixed(2)}).`
       );
     }
   }
@@ -416,12 +450,13 @@ for (const check of data.anti_arbitrage_checks ?? []) {
     errors.push(`anti_arbitrage_checks (${check.name}): niepoprawne output_count=${check.output_count}.`);
     continue;
   }
-  const maxBoostedPack = Math.round(out.wholesale_gui * maxEffectiveMultiplier);
+  const effMult = out.hourly_cap_coins > 0 ? 1.0 : maxEffectiveMultiplier;
+  const maxBoostedPack = Math.round(out.wholesale_gui * effMult);
   const maxPackSell = Math.max(maxBoostedPack, out.npc_shoppers);
   const maxSell = (maxPackSell / sellPack) * outputUnits;
   if (inputCost <= maxSell) {
     errors.push(
-      `Ryzyko arbitrażu (${check.name}): koszt zakupu składników (${inputCost.toFixed(2)}) <= maks. sprzedaż ${outputUnits} szt. z premiami (${maxSell.toFixed(2)} przy ×${maxEffectiveMultiplier.toFixed(2)}) dla "${check.output_id}".`
+      `Ryzyko arbitrażu (${check.name}): koszt zakupu składników (${inputCost.toFixed(2)}) <= maks. sprzedaż ${outputUnits} szt. z premiami (${maxSell.toFixed(2)} przy ×${effMult.toFixed(2)}) dla "${check.output_id}".`
     );
   }
 }
@@ -434,8 +469,9 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
+const hourlyCappedCount = [...sellById.values()].filter((x) => x.hourly_cap_coins > 0).length;
 console.log(
-  `✅ Walidacja ekonomii OK: ${data.stage_tokens.length} Żetonów Etapów, ${tier0Set.size} blokad Tier 0, ${sellById.size} towarów Tier 1–5, ${buyById.size} pozycji Buy, ${COMPOSITION_CHECKS.length} par składania, ${(data.anti_arbitrage_checks ?? []).length} reguł anty-arbitrażowych (maks. mnożnik Rynku: ×${maxEffectiveMultiplier.toFixed(2)}, maks. zdalny: ×${maxRemoteMultiplier.toFixed(2)} < NPC).`
+  `✅ Walidacja ekonomii OK: ${data.stage_tokens.length} Żetonów Etapów, ${tier0Set.size} blokad Tier 0, ${sellById.size} towarów Tier 1–5 (w tym ${hourlyCappedCount} z limitem godzinowym), ${buyById.size} pozycji Buy, ${COMPOSITION_CHECKS.length} par składania, ${(data.anti_arbitrage_checks ?? []).length} reguł anty-arbitrażowych (maks. mnożnik Rynku: ×${maxEffectiveMultiplier.toFixed(2)}, maks. zdalny: ×${maxRemoteMultiplier.toFixed(2)} < NPC).`
 );
 console.log('📊 Symulacja tempa progresji (średnia cena hurt / NPC +20% -> cel kolejnego Etapu):');
 for (const st of tierStats) {

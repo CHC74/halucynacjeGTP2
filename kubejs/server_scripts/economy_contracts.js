@@ -75,6 +75,7 @@ function loadContractPoolForStage(stage) {
         for (i = 0; i < tierItems.length; i++) {
           it = tierItems[i];
           if (!it || !it.id || !(it.wholesale_gui > 0)) continue;
+          if (resolveItemHourlyCap(it) > 0) continue;
           itemSellStage = resolveItemSellStage(it, tierObj, tierNum);
           if (itemSellStage > stage) continue;
           wholesale = Number(it.wholesale_gui);
