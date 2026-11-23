@@ -205,7 +205,7 @@
 			description: [
 				"Zbuduj linię luksusowych słodyczy &bCreate&r i &bCreate: Confectionery&r (Tier 3)!"
 				""
-				"Tabliczki czekolady, &fSweet Rolls&r i wypieki premium osiągają ceny &e120–310 monet&r za sztukę na Wyspie-Rynku i są idealne do automatycznego pakowania w pudła (&fPackagers&r)."
+				"Tabliczki czekolady, &fSweet Rolls&r i wypieki premium to flagowe towary &eTier 3&r na Wyspie-Rynku (aktualne ceny sprawdzisz pod &f/cennik 3&r) — idealne do automatycznego pakowania w pudła (&fPackagers&r)."
 			]
 			id: "B200000000000005"
 			rewards: [

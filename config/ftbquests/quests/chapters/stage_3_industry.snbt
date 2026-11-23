@@ -73,7 +73,7 @@
 			description: [
 				"Zbuduj wieloetapową linię montażową (&fSequenced Assembly&r z &bDeployerami&r) dla &bPrecision Mechanisms&r oraz produkcję &bSturdy Sheets&r i torów kolejowych!"
 				""
-				"To flagowe towary &eTier 4&r (&e350 – 1 080 monet&r), które pozwolą Ci płynnie zgromadzić 250 000 monet na Etap 4 i odblokowanie Endu."
+				"To flagowe towary &eTier 4&r (aktualne ceny sprawdzisz pod &f/cennik 4&r), które pozwolą Ci płynnie zgromadzić 250 000 monet na Etap 4 i odblokowanie Endu."
 			]
 			id: "B300000000000002"
 			rewards: [

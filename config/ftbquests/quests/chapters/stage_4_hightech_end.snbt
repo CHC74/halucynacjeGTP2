@@ -72,8 +72,8 @@
 				"Zbierz drużynę, zbuduj własny Portal Endu i wyrusz do normalnego Endu pokonać &5Smoka Endu&r!"
 				""
 				"&eSkąd wziąć Portal Endu w świecie Skyblock (brak twierdz)?&r"
-				"• &bRamy Portalu Endu (12 szt.):&r po odblokowaniu Etapu 4 kup przez &a/kup end_portal_frame 12&r lub w GUI &a/sklep&r -> &f[KUP] 5. Maszyny i High-Tech&r (&e6 000 monet/szt.&r, twardy limit &c12 szt. na drużynę&r)."
-				"• &bOczy Endu (12 szt.):&r kup przez &a/kup ender_eye 12&r / &a/sklep&r (&e2 000 monet/szt.&r, limit &c12 szt. na drużynę&r) &alub scraftuj samemu&r z Pereł Endu (od kleryka-wieśniaka z Etapu 2) + proszku płomyka (Blaze Powder z Netheru)!"
+				"• &bRamy Portalu Endu (12 szt.):&r po odblokowaniu Etapu 4 kup przez &a/kup end_portal_frame 12&r lub w GUI &a/sklep&r -> &f[KUP] 5. Maszyny i High-Tech&r (aktualna cena w &a/sklep&r, twardy limit &c12 szt. na drużynę&r)."
+				"• &bOczy Endu (12 szt.):&r kup przez &a/kup ender_eye 12&r / &a/sklep&r (aktualna cena w &a/sklep&r, limit &c12 szt. na drużynę&r) &alub scraftuj samemu&r z Pereł Endu (od kleryka-wieśniaka z Etapu 2) + proszku płomyka (Blaze Powder z Netheru)!"
 				""
 				"&cWAŻNE — budowa portalu (ram nie da się wykopać ani przenieść Carry On!):&r"
 				"• Wybierz bezpieczną platformę (np. dedykowany taras przy &bWyspie-Rynku 152, 64, 0&r albo na &bHucie Południowej 0, 64, 152&r)."
@@ -204,7 +204,7 @@
 		{
 			dependencies: ["B400000000000004"]
 			description: [
-				"Zautomatyzuj eksport elektroniki &bAE2&r i obwodów &bMekanism&r (&eTier 5&r: &e2 500 – 14 500 monet&r za sztukę)!"
+				"Zautomatyzuj eksport komponentów i procesorów &bAE2&r (&f64k Storage Component&r, &fCalculation Processor&r) oraz izotopów &bMekanism&r (&fPolonium Pellet&r) — to flagowe towary &eTier 5&r (aktualne ceny sprawdzisz pod &f/cennik 5&r)!"
 				""
 				"Dostarczaj je na stoiska #6 i #7 Wyspy-Rynku lub do hurtowego Trading Terminalu — to najkrótsza i najprzyjemniejsza droga do &61 000 000 monet&r i finałowego Etapu 5."
 			]
@@ -219,11 +219,11 @@
 			subtitle: "Najbardziej dochodowy eksport na drodze do 1M monet"
 			tasks: [
 				{
-					count: 32L
+					count: 2L
 					id: "C400000000000501"
 					item: {
 						count: 1
-						id: "ae2:engineering_processor"
+						id: "ae2:cell_component_64k"
 					}
 					type: "item"
 				}
@@ -241,7 +241,7 @@
 					id: "C400000000000503"
 					item: {
 						count: 1
-						id: "mekanism:ultimate_control_circuit"
+						id: "mekanism:pellet_polonium"
 					}
 					type: "item"
 				}
