@@ -506,9 +506,16 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
       }
 
       const cat = getMarketCatalog(true);
-      const trackStack = Item.of('create:track', 35);
+      const trackDef = cat.sellById['create:track'];
+      const trackStack = Item.of('create:track', trackDef.packSize * 2 + 3);
       const sRes = sellSingleStack(trackStack, cat);
-      assert(sRes.status === 'sold' && sRes.soldItems === 32 && trackStack.count === 3 && sRes.payout === 760, 'pack_size sell');
+      assert(
+        sRes.status === 'sold' &&
+          sRes.soldItems === trackDef.packSize * 2 &&
+          trackStack.count === 3 &&
+          sRes.payout === trackDef.wholesale * 2,
+        'pack_size sell'
+      );
       assert(sellSingleStack(Item.of('minecraft:netherrack', 64), cat).status === 'blocked', 'Tier 0 blocked');
 
       const inv = [Item.of('lightmanscurrency:coin_diamond', 1)];
@@ -526,9 +533,11 @@ test('economy_market.js: nominały LC, pack_size, blokada Tier 0, dokładna resz
         runCommandSilent: (cmd) => __serverCmds.push(cmd)
       };
 
-      // Zakup Stage 0 (kelp za 250) -> reszta 9750
+      // Zakup Stage 0 (kelp wg prices.json) -> dokładna reszta z 10 000
+      const kelpPrice = cat.buyByKey['kelp'].buyPrice;
+      const expectedChange = 10000 - kelpPrice;
       assert(handleBuy(player, server, 'kelp', 1) === 1, 'buy kelp');
-      assert(getInventoryCoinBalance(player) === 9750, 'exact change 9750');
+      assert(getInventoryCoinBalance(player) === expectedChange, 'exact change ' + expectedChange);
 
       // Próba zakupu Stage 1 (cow) na Stage 0 -> zablokowane
       assert(handleBuy(player, server, 'cow', 1) === 0, 'stage 1 gated on stage 0');
@@ -702,7 +711,11 @@ test('shared_economy.js + economy_market.js (#61): portfel, coinblock, mieszanka
       const gs = server.persistentData.getCompound('halucynacje_global_stages');
       gs.putBoolean('stage_1', true);
 
-      // Przypadek A: TYLKO portfel LC (0 w ekwipunku, 1000 w portfelu) -> zakup kelp (250)
+      const cat = getMarketCatalog(true);
+      const kelpPrice = cat.buyByKey['kelp'].buyPrice;
+      const lavaPrice = cat.buyByKey['lava_bucket'].buyPrice;
+
+      // Przypadek A: TYLKO portfel LC (0 w ekwipunku, 1000 w portfelu) -> zakup kelp wg prices.json
       let inv = [];
       let msgs = [];
       const player = {
@@ -720,8 +733,11 @@ test('shared_economy.js + economy_market.js (#61): portfel, coinblock, mieszanka
       handleShowEconomyStatus(player, server);
       assert(msgs.some((m) => m.includes('1 000 monet')), '/ekonomia pokazuje dokładnie 1 000 monet (jak TAB)');
       assert(handleBuy(player, server, 'kelp', 1) === 1, '/kup z samego portfela udany');
-      assert(__wallet.getBalance() === 750, 'Z portfela pobrano dokładnie 250 -> zostało 750');
-      assert(computePlayerBalanceBreakdown(player).total === 750, 'Saldo po zakupie = 750');
+      assert(
+        __wallet.getBalance() === 1000 - kelpPrice,
+        'Z portfela pobrano dokładnie ' + kelpPrice + ' -> zostało ' + (1000 - kelpPrice)
+      );
+      assert(computePlayerBalanceBreakdown(player).total === 1000 - kelpPrice, 'Saldo po zakupie = ' + (1000 - kelpPrice));
 
       // Przypadek B: TYLKO coinblock_emerald w ekwipunku (dokładny przykład z Issue #61: 6x 36 000 = 216 000 -> /kup stage_2 za 50 000)
       inv = [Item.of('lightmanscurrency:coinblock_emerald', 6)];
@@ -732,28 +748,39 @@ test('shared_economy.js + economy_market.js (#61): portfel, coinblock, mieszanka
       assert(handleBuy(player, server, 'stage_2', 1) === 1, '/kup stage_2 z coinblock_emerald udany');
       assert(computePlayerBalanceBreakdown(player).total === 166000, 'Po zakupie za 50 000 z 216 000 zostaje dokładnie 166 000 (z resztą)');
 
-      // Przypadek C: Mieszanka źródeł (portfel 300 + bank osobisty 500 + bank drużyny 400 + coinpile_gold 900 w EQ = 2 100) -> zakup 1 500 (lava_bucket)
+      // Przypadek C: Mieszanka źródeł (portfel + bank osobisty + bank drużyny + coinpile_gold 900 w EQ) -> zakup lava_bucket
+      const wC = Math.floor(lavaPrice * 0.2);
+      const pbC = Math.floor(lavaPrice * 0.3);
+      const tbC = Math.floor(lavaPrice * 0.2);
+      const missingFromEq = lavaPrice - (wC + pbC + tbC);
+      const expectedEqLeft = 900 - missingFromEq;
       inv = [Item.of('lightmanscurrency:coinpile_gold', 1)];
-      __wallet.setBalance(300);
-      __personalBank.setBalance(500);
-      __teamBank.setBalance(400);
-      assert(computePlayerBalanceBreakdown(player).total === 2100, 'Mieszanka = 2 100');
+      __wallet.setBalance(wC);
+      __personalBank.setBalance(pbC);
+      __teamBank.setBalance(tbC);
+      assert(computePlayerBalanceBreakdown(player).total === wC + pbC + tbC + 900, 'Mieszanka źródeł zgodna');
       assert(handleBuy(player, server, 'lava_bucket', 1) === 1, '/kup z mieszanki źródeł udany');
       assert(__wallet.getBalance() === 0, 'Portfel wyczyszczony jako 1.');
       assert(__personalBank.getBalance() === 0, 'Bank osobisty wyczyszczony jako 2.');
       assert(__teamBank.getBalance() === 0, 'Bank drużyny wyczyszczony jako 3.');
-      assert(getInventoryCoinsCopper(player) === 600, 'Z coinpile_gold (900) pobrano brakujące 300 i wydano dokładnie 600 reszty');
-      assert(computePlayerBalanceBreakdown(player).total === 600, 'Łączne saldo po mieszanym zakupie = 600');
+      assert(
+        getInventoryCoinsCopper(player) === expectedEqLeft,
+        'Z coinpile_gold (900) pobrano brakujące ' + missingFromEq + ' i wydano dokładnie ' + expectedEqLeft + ' reszty'
+      );
+      assert(computePlayerBalanceBreakdown(player).total === expectedEqLeft, 'Łączne saldo po mieszanym zakupie = ' + expectedEqLeft);
 
-      // Przypadek D: Za mało pieniędzy (portfel 300 + bank 500 + EQ 400 = 1 200 < 1 500) -> ZERO pobranych monet!
-      inv = [Item.of('lightmanscurrency:coin_gold', 4)];
-      __wallet.setBalance(300);
-      __personalBank.setBalance(500);
+      // Przypadek D: Za mało pieniędzy (portfel + bank + EQ < koszt lava_bucket) -> ZERO pobranych monet!
+      const wD = Math.floor(lavaPrice * 0.2);
+      const pbD = Math.floor(lavaPrice * 0.3);
+      const eqGoldD = Math.max(1, Math.floor((lavaPrice - wD - pbD - 100) / 100));
+      inv = [Item.of('lightmanscurrency:coin_gold', eqGoldD)];
+      __wallet.setBalance(wD);
+      __personalBank.setBalance(pbD);
       __teamBank.setBalance(0);
       assert(handleBuy(player, server, 'lava_bucket', 1) === 0, '/kup przy braku środków odrzucone');
-      assert(__wallet.getBalance() === 300, 'Portfel nietknięty po nieudanym zakupie');
-      assert(__personalBank.getBalance() === 500, 'Bank nietknięty po nieudanym zakupie');
-      assert(getInventoryCoinsCopper(player) === 400, 'Ekwipunek nietknięty po nieudanym zakupie');
+      assert(__wallet.getBalance() === wD, 'Portfel nietknięty po nieudanym zakupie');
+      assert(__personalBank.getBalance() === pbD, 'Bank nietknięty po nieudanym zakupie');
+      assert(getInventoryCoinsCopper(player) === eqGoldD * 100, 'Ekwipunek nietknięty po nieudanym zakupie');
     })();
     `;
   vm.runInNewContext(src, sandbox);
@@ -1673,7 +1700,18 @@ test('shared_economy.js + economy_market.js (#79): twardy cap premii x1.45, anty
   );
 
   // C) Twardy cap z Boomem (+45% = x1.45): Dok (+5%) + Różnorodność (+15%) + Stage 5 (+10%) + Boom (+30%) -> przycięte do +45% (1450 z 1000)
-  const boomSame = { itemId: 'mekanism:pellet_polonium', basePrice: 12000, boostedPrice: 15600, bonusPercent: 30, expiresAtMs: t0 + 600_000 };
+  const poloniumEntry = prices.sell_tiers.tier_5_hightech_export.items.find(
+    (it) => it.id === 'mekanism:pellet_polonium'
+  );
+  const poloniumWholesale = poloniumEntry.wholesale_gui;
+  const poloniumBoosted = Math.round(poloniumWholesale * 1.3);
+  const boomSame = {
+    itemId: 'mekanism:pellet_polonium',
+    basePrice: poloniumWholesale,
+    boostedPrice: poloniumBoosted,
+    bonusPercent: 30,
+    expiresAtMs: t0 + 600_000
+  };
   const boomCapped = applyDyn(server, 1000, 'mekanism:pellet_polonium', divReal, boomSame, {
     onMarket: true,
     isExportDock: true
@@ -1686,8 +1724,8 @@ test('shared_economy.js + economy_market.js (#79): twardy cap premii x1.45, anty
   // D) Sprzedaż zdalna (poza Wyspą-Rynkiem) przy Stage 5 + aktywnym Boomie + 7 towarach Różnorodności = SZTYWNE 0.85x (< NPC!)
   const boomTag = server.persistentData.getCompound('halucynacje_market_boom');
   boomTag.putString('itemId', 'mekanism:pellet_polonium');
-  boomTag.putInt('basePrice', 12000);
-  boomTag.putInt('boostedPrice', 15600);
+  boomTag.putInt('basePrice', poloniumWholesale);
+  boomTag.putInt('boostedPrice', poloniumBoosted);
   boomTag.putInt('bonusPercent', 30);
   boomTag.putInt('packSize', 1);
   boomTag.putLong('expiresAtMs', Date.now() + 600_000);
@@ -1715,7 +1753,11 @@ test('shared_economy.js + economy_market.js (#79): twardy cap premii x1.45, anty
     'lightmanscurrency:coin_copper': 1
   };
   const received = remoteInv.reduce((acc, st) => acc + (coinVals[st.id] || 0) * st.count, 0);
-  assert(received === Math.round(12000 * 0.85), `Zdalna sprzedaż z aktywnym Boomem i Stage 5 daje sztywne 85% = 10 200 (jest ${received})`);
+  const expectedRemotePolonium = Math.round(poloniumWholesale * 0.85);
+  assert(
+    received === expectedRemotePolonium,
+    `Zdalna sprzedaż z aktywnym Boomem i Stage 5 daje sztywne 85% = ${expectedRemotePolonium} (jest ${received})`
+  );
 
   // E) Dla KAŻDEGO towaru w sell_tiers: zdalna sprzedaż z dowolnymi premiami < cena NPC!
   for (const tierObj of Object.values(prices.sell_tiers)) {
