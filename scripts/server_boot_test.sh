@@ -544,9 +544,9 @@ for expected_marker in \
   "Przeładowano prices.json" \
   "cen Shoppers z prices.json" \
   "Zsynchronizowano etapy co-op i taski FTB Quests" \
-  "Chunk [9, 0] in minecraft:overworld is marked for force loading" \
+  "Chunk at [9, 0] in Overworld is marked for force loading" \
   "[ExportDockTest] PASS: hasChunk=true" \
-  "Chunk [9, 0] in minecraft:overworld is not marked for force loading"
+  "Chunk at [9, 0] in Overworld is not marked for force loading"
 do
   if [ "${#SEARCH_LOGS[@]}" -gt 0 ] && grep -Fq "${expected_marker}" "${SEARCH_LOGS[@]}"; then
     pass_check "Potwierdzono wpis w logach: '${expected_marker}'."

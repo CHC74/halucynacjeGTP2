@@ -1953,6 +1953,41 @@ function findPlayerFirstTeamId(player) {
   return -1;
 }
 
+function resolveExportBlockInventory(blk) {
+  var inv = null;
+  if (!blk) return null;
+  try {
+    if (blk.inventory) {
+      inv = blk.inventory;
+    }
+  } catch (e1) {
+    inv = null;
+  }
+  if (!inv && typeof blk.getInventory === 'function') {
+    try {
+      inv = blk.getInventory();
+    } catch (e2) {
+      inv = null;
+    }
+    if (!inv) {
+      try {
+        inv = blk.getInventory(null);
+      } catch (e3) {
+        inv = null;
+      }
+    }
+  }
+  if (!inv && blk.entity) {
+    if (
+      (typeof blk.entity.getSlots === 'function' && typeof blk.entity.getStackInSlot === 'function') ||
+      (typeof blk.entity.getContainerSize === 'function' && typeof blk.entity.getItem === 'function')
+    ) {
+      inv = blk.entity;
+    }
+  }
+  return inv;
+}
+
 function resolveTargetExportContainer(player) {
   var hit = null;
   var blk = null;
@@ -1961,13 +1996,13 @@ function resolveTargetExportContainer(player) {
   try {
     if (typeof player.rayTrace === 'function') {
       hit = player.rayTrace(6);
-      if (hit && hit.block && hit.block.inventory) {
+      if (hit && hit.block && resolveExportBlockInventory(hit.block)) {
         blk = hit.block;
       }
     }
     if (!blk && player.level && typeof player.level.getBlock === 'function') {
       var under = player.level.getBlock(Math.floor(player.x), Math.floor(player.y) - 1, Math.floor(player.z));
-      if (under && under.inventory) {
+      if (under && resolveExportBlockInventory(under)) {
         blk = under;
       }
     }
@@ -2290,9 +2325,10 @@ function processExportDocksTick(server, nowMs) {
         continue;
       }
       blk = overworld.getBlock(d.x, d.y, d.z);
-      if (!blk || !blk.inventory) continue;
+      var dockInv = resolveExportBlockInventory(blk);
+      if (!dockInv) continue;
 
-      ex = extractExportFromInventory(blk.inventory, catalog, currentStage);
+      ex = extractExportFromInventory(dockInv, catalog, currentStage);
       if (ex.totalItems <= 0) continue;
 
       var dockDiversityEntries = [];
@@ -2436,36 +2472,43 @@ function handleRunExportDockSmokeTest(server) {
 
   try {
     // 1) Test skrzyni `minecraft:chest` na (152, 65, 0)
-    server.runCommandSilent('execute in minecraft:overworld run setblock 152 65 0 minecraft:chest replace');
-    server.runCommandSilent(
+    server.runCommand('execute in minecraft:overworld run setblock 152 65 0 minecraft:chest replace');
+    server.runCommand(
       'execute in minecraft:overworld run item replace block 152 65 0 container.0 with minecraft:bread 16'
     );
-    server.runCommandSilent(
+    server.runCommand(
       'execute in minecraft:overworld run item replace block 152 65 0 container.1 with minecraft:cobblestone 32'
     );
+
+    chestBlk = overworld.getBlock(152, 65, 0);
+    var chestInvBefore = resolveExportBlockInventory(chestBlk);
+    var chestDiag = `blkId=${chestBlk ? chestBlk.id : 'null'}, hasEntity=${Boolean(chestBlk && chestBlk.entity)}, hasPropInv=${Boolean(chestBlk && chestBlk.inventory)}, hasResolvedInv=${Boolean(chestInvBefore)}`;
 
     writeExportDocks(server, [
       { x: 152, y: 65, z: 0, blockId: 'minecraft:chest', owner: '__boot_test__', teamId: -1 }
     ]);
     chestRes = processExportDocksTick(server, Date.now());
     chestBlk = overworld.getBlock(152, 65, 0);
-    breadLeft = chestBlk && chestBlk.inventory ? countItemInExportInventory(chestBlk.inventory, 'minecraft:bread') : -1;
-    cobbleLeft =
-      chestBlk && chestBlk.inventory ? countItemInExportInventory(chestBlk.inventory, 'minecraft:cobblestone') : -1;
+    var chestInvAfter = resolveExportBlockInventory(chestBlk);
+    breadLeft = chestInvAfter ? countItemInExportInventory(chestInvAfter, 'minecraft:bread') : -1;
+    cobbleLeft = chestInvAfter ? countItemInExportInventory(chestInvAfter, 'minecraft:cobblestone') : -1;
 
     if (!chestRes || chestRes.itemsSold !== 16 || chestRes.pendingAdded <= 0 || breadLeft !== 0 || cobbleLeft !== 32) {
       return {
         ok: false,
-        error: `Test skrzyni nieudany: itemsSold=${chestRes && chestRes.itemsSold}, pendingAdded=${chestRes && chestRes.pendingAdded}, breadLeft=${breadLeft}, cobbleLeft=${cobbleLeft}`
+        error: `Test skrzyni nieudany: itemsSold=${chestRes && chestRes.itemsSold}, pendingAdded=${chestRes && chestRes.pendingAdded}, breadLeft=${breadLeft}, cobbleLeft=${cobbleLeft}, diag=(${chestDiag})`
       };
     }
 
     // 2) Test `create:item_vault` na (154, 65, 0) (ten sam chunk [9, 0])
-    server.runCommandSilent('execute in minecraft:overworld run setblock 154 65 0 create:item_vault replace');
+    server.runCommand('execute in minecraft:overworld run setblock 154 65 0 create:item_vault replace');
     vaultBlk = overworld.getBlock(154, 65, 0);
-    vaultInv = vaultBlk ? vaultBlk.inventory : null;
+    vaultInv = resolveExportBlockInventory(vaultBlk);
     if (!vaultInv || typeof vaultInv.insertItem !== 'function') {
-      return { ok: false, error: 'create:item_vault nie udostępnia blk.inventory z insertItem' };
+      return {
+        ok: false,
+        error: `create:item_vault nie udostępnia inventory z insertItem (blkId=${vaultBlk ? vaultBlk.id : 'null'}, hasEntity=${Boolean(vaultBlk && vaultBlk.entity)}, hasPropInv=${Boolean(vaultBlk && vaultBlk.inventory)}, hasResolvedInv=${Boolean(vaultInv)})`
+      };
     }
     vaultInv.insertItem(0, Item.of('minecraft:bread', 16), false);
 
@@ -2474,8 +2517,8 @@ function handleRunExportDockSmokeTest(server) {
     ]);
     vaultRes = processExportDocksTick(server, Date.now());
     vaultBlk = overworld.getBlock(154, 65, 0);
-    vaultBreadLeft =
-      vaultBlk && vaultBlk.inventory ? countItemInExportInventory(vaultBlk.inventory, 'minecraft:bread') : -1;
+    var vaultInvAfter = resolveExportBlockInventory(vaultBlk);
+    vaultBreadLeft = vaultInvAfter ? countItemInExportInventory(vaultInvAfter, 'minecraft:bread') : -1;
 
     if (!vaultRes || vaultRes.itemsSold !== 16 || vaultRes.pendingAdded <= 0 || vaultBreadLeft !== 0) {
       return {
@@ -2486,7 +2529,7 @@ function handleRunExportDockSmokeTest(server) {
 
     return {
       ok: true,
-      summary: `[HalucynacjeGTP2] [ExportDockTest] PASS: hasChunk=true, chestSold=${chestRes.itemsSold} (+${chestRes.pendingAdded} monet), vaultSold=${vaultRes.itemsSold} (+${vaultRes.pendingAdded} monet), cobbleUntouched=${cobbleLeft}, forceload=removed.`
+      summary: `[HalucynacjeGTP2] [ExportDockTest] PASS: hasChunk=true, chestSold=${chestRes.itemsSold} (+${chestRes.pendingAdded} monet), vaultSold=${vaultRes.itemsSold} (+${vaultRes.pendingAdded} monet), cobbleUntouched=${cobbleLeft}, forceload=removed (${chestDiag}).`
     };
   } catch (errTest) {
     return { ok: false, error: String(errTest) };
