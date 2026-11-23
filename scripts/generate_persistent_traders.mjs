@@ -125,6 +125,15 @@ function makeTrader(id, name, ownerName, iconItemId, trades) {
   };
 }
 
+function formatShortPrice(n) {
+  const v = Number(n || 0);
+  if (v >= 1000) {
+    const k = v / 1000;
+    return `${Number.isInteger(k) ? k : Number(k.toFixed(1))}k`;
+  }
+  return `${v}`;
+}
+
 function generatePersistentTraders(prices) {
   const blockedIds = new Set((prices.tier_0_blocked || []).map((x) => x.id));
   const traders = [];
@@ -138,7 +147,8 @@ function generatePersistentTraders(prices) {
     (item) => item.category === 'prestige' || (!item.category && item.stage >= 5)
   );
   for (const item of prestigeItems) {
-    stageAndPrestigeTrades.push(makeTrade('SALE', item.id, 1, item.buy_price, item.note || null));
+    const buyCount = item.count != null ? Number(item.count) : 1;
+    stageAndPrestigeTrades.push(makeTrade('SALE', item.id, buyCount, item.buy_price, item.note || null));
   }
   traders.push(
     makeTrader(
@@ -150,7 +160,7 @@ function generatePersistentTraders(prices) {
     )
   );
 
-  // 2..5. Cztery tematyczne sklepy zakupowe [KUP] z prices.json
+  // 2..9. Osiem tematycznych sklepów zakupowych [KUP] z prices.json (RFC #46 + #83)
   const buyCategories = [
     {
       key: 'plants',
@@ -170,7 +180,7 @@ function generatePersistentTraders(prices) {
       key: 'skyblock',
       id: 'halucynacje_kup_04_skyblock',
       name: '[KUP] 4. Skyblock i Bloki',
-      subtitle: 'Lawa, lód, mech i startery',
+      subtitle: 'Lawa, lód, redstone i startery',
       icon: 'minecraft:lava_bucket'
     },
     {
@@ -179,6 +189,34 @@ function generatePersistentTraders(prices) {
       name: '[KUP] 5. Maszyny i High-Tech',
       subtitle: 'Create, Waystone, AE2, Mekanism',
       icon: 'ae2:flawless_budding_quartz'
+    },
+    {
+      key: 'machines',
+      id: 'halucynacje_kup_06_maszyny',
+      name: '[KUP] 6. Maszyny Create',
+      subtitle: 'Kinetyka, przetwórstwo, logistyka, kolej',
+      icon: 'create:mechanical_press'
+    },
+    {
+      key: 'materials',
+      id: 'halucynacje_kup_07_surowce',
+      name: '[KUP] 7. Sztabki i Surowce',
+      subtitle: 'Sztabki, blachy, obudowy i półprodukty',
+      icon: 'create:brass_ingot'
+    },
+    {
+      key: 'decor',
+      id: 'halucynacje_kup_08_dekoracje',
+      name: '[KUP] 8. Bloki Dekoracyjne',
+      subtitle: 'Kamień Create, Create Deco, barwniki',
+      icon: 'create:cut_andesite_bricks'
+    },
+    {
+      key: 'tools',
+      id: 'halucynacje_kup_09_narzedzia',
+      name: '[KUP] 9. Narzędzia i Plecaki',
+      subtitle: 'Klucz, plecaki, magazyn i gadżety',
+      icon: 'create:wrench'
     }
   ];
 
@@ -194,7 +232,10 @@ function generatePersistentTraders(prices) {
         cat.name,
         cat.subtitle,
         cat.icon,
-        catItems.map((item) => makeTrade('SALE', item.id, 1, item.buy_price))
+        catItems.map((item) => {
+          const buyCount = item.count != null ? Number(item.count) : 1;
+          return makeTrade('SALE', item.id, buyCount, item.buy_price);
+        })
       )
     );
   }
@@ -208,49 +249,60 @@ function generatePersistentTraders(prices) {
     }
   }
 
-  // 6..10. [SKUP] 1..5 — Skup Hurtowy Tier 1–5 (TradeType = PURCHASE, cena bazowa 100% z prices.json)
+  // 10..14. [SKUP] 1..5 — Skup Hurtowy Tier 1–5 (TradeType = PURCHASE, cena bazowa 100% z prices.json)
+  // ID traderów zachowane bez zmian dla zgodności z blokadą Terminala LC (RFC #83 Część B).
   const tierMeta = {
     tier_1_start: {
       id: 'halucynacje_skup_01_start',
-      name: '[SKUP] 1. Wypieki i Start',
-      subtitle: 'Tier 1 | 4-22c -> Stage 1 (10k)',
+      num: 1,
+      fallbackTitle: 'Farma i Piekarnia',
       icon: 'minecraft:bread'
     },
     tier_2_kitchen: {
       id: 'halucynacje_skup_02_kuchnia',
-      name: '[SKUP] 2. Kuchnia i Obiady',
-      subtitle: 'Tier 2 | 36-100c -> Stage 2 (50k)',
+      num: 2,
+      fallbackTitle: 'Kuchnia i Cukiernia',
       icon: 'farmersdelight:hamburger'
     },
     tier_3_luxury_bakery: {
       id: 'halucynacje_skup_03_cukiernia',
-      name: '[SKUP] 3. Cukiernia i Słodycze',
-      subtitle: 'Tier 3 | 125-285c -> Stage 3 (100k)',
-      icon: 'create:sweet_roll'
+      num: 3,
+      fallbackTitle: 'Nether i Mosiądz',
+      icon: 'create:precision_mechanism'
     },
     tier_4_create_industry: {
       id: 'halucynacje_skup_04_przemysl',
-      name: '[SKUP] 4. Przemysł Create 6',
-      subtitle: 'Tier 4 | 340-1050c -> Stage 4 (250k)',
-      icon: 'create:precision_mechanism'
+      num: 4,
+      fallbackTitle: 'Przemysł Ciężki',
+      icon: 'mekanism:steel_casing'
     },
     tier_5_hightech_export: {
       id: 'halucynacje_skup_05_hightech',
-      name: '[SKUP] 5. Eksport High-Tech',
-      subtitle: 'Tier 5 | 2.4k-13.5k -> Stage 5 (1M)',
-      icon: 'ae2:engineering_processor'
+      num: 5,
+      fallbackTitle: 'High-Tech i End',
+      icon: 'ae2:cell_component_64k'
     }
   };
 
+  let fallbackNum = 0;
   for (const [tierKey, tierObj] of Object.entries(prices.sell_tiers || {})) {
+    fallbackNum++;
     const meta = tierMeta[tierKey] || {
       id: `halucynacje_skup_${tierKey}`,
-      name: `[SKUP] ${tierKey}`,
-      subtitle: OWNER_NAME,
+      num: fallbackNum,
+      fallbackTitle: tierKey,
       icon: 'lightmanscurrency:coin_gold'
     };
 
+    const shortTitle =
+      tierObj.description && String(tierObj.description).includes('—')
+        ? String(tierObj.description).split('—')[0].trim()
+        : meta.fallbackTitle;
+    const sellStage = Number.isInteger(tierObj.sell_stage) ? tierObj.sell_stage : meta.num - 1;
+
     const purchaseTrades = [];
+    let minW = Infinity;
+    let maxW = -Infinity;
     for (const item of tierObj.items || []) {
       if (blockedIds.has(item.id)) {
         throw new Error(
@@ -258,10 +310,20 @@ function generatePersistentTraders(prices) {
         );
       }
       const packSize = item.pack_size && Number(item.pack_size) > 1 ? Number(item.pack_size) : 1;
+      if (item.wholesale_gui < minW) minW = item.wholesale_gui;
+      if (item.wholesale_gui > maxW) maxW = item.wholesale_gui;
       purchaseTrades.push(makeTrade('PURCHASE', item.id, packSize, item.wholesale_gui));
     }
 
-    traders.push(makeTrader(meta.id, meta.name, meta.subtitle, meta.icon, purchaseTrades));
+    const rangeLabel =
+      Number.isFinite(minW) && Number.isFinite(maxW)
+        ? `${formatShortPrice(minW)}-${formatShortPrice(maxW)}${maxW < 1000 ? 'c' : ''}`
+        : '';
+    const subtitle = `Tier ${meta.num} (Etap ${sellStage}+)${rangeLabel ? ` | ${rangeLabel}` : ''}`;
+
+    traders.push(
+      makeTrader(meta.id, `[SKUP] ${meta.num}. ${shortTitle}`, subtitle, meta.icon, purchaseTrades)
+    );
   }
 
   return {
@@ -345,9 +407,12 @@ function validateGeneratedData(data, prices) {
     }
   }
   for (const item of prices.buy_catalog || []) {
+    const expectedCount = item.count != null ? Number(item.count) : 1;
     const found = seenSaleItems.get(item.id);
-    if (!found || found.price !== item.buy_price) {
-      errors.push(`Brak lub niezgodna cena towaru zakupowego ${item.id} w PersistentTraders.json.`);
+    if (!found || found.price !== item.buy_price || found.count !== expectedCount) {
+      errors.push(
+        `Brak lub niezgodna oferta zakupowa ${item.id} w PersistentTraders.json (oczekiwano x${expectedCount} za ${item.buy_price}).`
+      );
     }
   }
   let expectedPurchaseCount = 0;

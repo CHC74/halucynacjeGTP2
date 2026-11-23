@@ -43,28 +43,32 @@ Komendy rynku i zakupów obsługuje [kubejs/server_scripts/economy_market.js](..
 - **`/cennik [1-5]`** — tabela skupu hurtowego i docelowej ceny NPC `+20%` dla wybranego Tieru (1–5).
 - **`/sprzedaj`** — sprzedaje stack z głównej ręki (`100%` + premie na Wyspie-Rynku, sztywne `85%` poza nią bez premii) i wypłaca monety *Lightman's Currency*.
 - **`/sprzedaj all`** — sprzedaje hurtem wszystkie przetworzone towary Tier 1–5 z ekwipunku jednym kliknięciem.
-- **`/sklep`** (lub PPM na bloku `Trading Terminal` na Wyspie-Rynku — zalecamy `/sklep`, bo obsługuje przycisk **„Back to Network Terminal”**) — otwiera **prawdziwe, graficzne GUI Sklepu Sieciowego** (*Lightman's Currency*) zasilane z [config/lightmanscurrency/PersistentTraders.json](../config/lightmanscurrency/PersistentTraders.json) (**10 sklepów, 171 ofert**):
+- **`/sklep`** (lub PPM na bloku `Trading Terminal` na Wyspie-Rynku — zalecamy `/sklep`, bo obsługuje przycisk **„Back to Network Terminal”**) — otwiera **prawdziwe, graficzne GUI Sklepu Sieciowego** (*Lightman's Currency*) zasilane z [config/lightmanscurrency/PersistentTraders.json](../config/lightmanscurrency/PersistentTraders.json) (**14 sklepów, 450 ofert**):
   - **`[KUP] 1. Żetony Etapów`** (`kubejs:stage_1..5_token` za `10k/50k/100k/250k/1M` — czysto survivalowo, bez przedmiotów kreatywnych!),
   - **`[KUP] 2. Rośliny i Sadzonki`** (30 pozycji: wszystkie 8 drzew, nasiona Vanilla i FD, grzyby, kakao, jagody),
   - **`[KUP] 3. Zwierzęta i Hodowla`** (14 pozycji: zwierzęta farmowe, pszczoły/ule, ryby, kałamarnice, osadnik S2),
-  - **`[KUP] 4. Skyblock i Bloki`** (16 pozycji: grass, lód, mech, dripstone, lawa, **Soul Sand S1**, slime, budding amethyst),
-  - **`[KUP] 5. Maszyny i High-Tech`** (19 pozycji: Blaze Burner, Waystones, Terminal/ATM, AE2 Sky Stone + Budding Quartz + **4 matryce Inscriber Press**, Mekanism Osmium/Tin/Lead/Fluorite/Uranium, **Ramy i Oczy Portalu Endu S4**),
-  - **`[SKUP] 1..5`** (87 przetworzonych dóbr fabrycznych Tier 1–5 z ceną bazową `100%`, zero surowców Tier 0!).
+  - **`[KUP] 4. Skyblock i Bloki`** (17 pozycji: grass, lód, mech, dripstone, lawa, **Soul Sand S1**, **Redstone S1** limit `256` pod *Electron Tube* i *Crushing Wheels*, slime, budding amethyst),
+  - **`[KUP] 5. Maszyny i High-Tech`** (20 pozycji: Blaze Burner, Waystones, Terminal/ATM, AE2 Sky Stone + Budding Quartz + **4 matryce Inscriber Press**, Mekanism Osmium/Tin/Lead/Fluorite/Uranium, **Diamenty S4** limit `16`, **Ramy i Oczy Portalu Endu S4**),
+  - **`[KUP] 6. Maszyny Create`** (96 pozycji w paczkach: kinetyka, przetwórstwo, płyny, logistyka, kolej, elektryka, *Mechanical Extruder*),
+  - **`[KUP] 7. Sztabki i Surowce`** (46 pozycji w paczkach: sztabki, blachy, obudowy, `electron_tube`, `precision_mechanism`, surowce),
+  - **`[KUP] 8. Bloki Dekoracyjne`** (97 pozycji w paczkach: kamienie Create, *Create Deco*, *Copycats*, szkło, cegły, kwarc, lampy, 16 barwników),
+  - **`[KUP] 9. Narzędzia i Plecaki`** (40 pozycji: klucz, gogle, backtank, schematicannon, *Sophisticated Backpacks/Storage*, *Building Gadgets 2*),
+  - **`[SKUP] 1..5`** (85 przetworzonych dóbr fabrycznych Tier 1–5 odblokowywanych wraz z Etapami `sell_stage = Tier - 1`, zero surowców Tier 0!).
 - **`/sklep lista [0-5]`** (lub `/sklep <0-5>`) — tekstowy podgląd katalogu zakupowego z kategoriami i aliasami do szybkiego `/kup`.
 - **`/kup <alias> [ilość]`** — kupuje wybrany towar za monety z portfela, banku osobistego/drużynowego i ekwipunku (w tym `coinpile`/`coinblock`) i automatycznie wydaje resztę.
 - **`/kontrakt`** — pokazuje aktywny kontrakt fabryczny (towar, ilość, premię serii `+35%..+55%` i licznik serii).
 - **`/kontrakt oddaj`** — **na Wyspie-Rynku `(152, 64, 0)`** pobiera wymagane towary z ekwipunku, wypłaca premię serii (plus `+25%` co 5. kontrakt!) i automatycznie losuje nowe zlecenie dla Waszego Etapu.
 - **`/kontrakt nowy`** — losuje inny kontrakt na aktualnym Etapie (cooldown `5 minut`; uwaga: resetuje aktualną serię do `0`).
-- **`/kontrakt final`** / **`/kontrakt final oddaj`** — **Wielki Finał Tycoona (Stage 5)**: wielomodowy Mega-Kontrakt łączący wszystkie 5 filarów paczki (`64x Hamburger`, `64x Ruby Chocolate`, `32x Precision Mechanism`, `4x AE2 256k Component`, `4x Mekanism Polonium Pellet`) na Wyspie-Rynku -> nagradza **`kubejs:tycoon_empire_trophy`** + `500 000` monet!
+- **`/kontrakt final`** / **`/kontrakt final oddaj`** — **Wielki Finał Tycoona (Stage 5)**: wielomodowy Mega-Kontrakt łączący wszystkie 5 filarów paczki (`64x Hamburger`, `16x Ruby Chocolate`, `32x Precision Mechanism`, `2x AE2 256k Storage Component`, `4x Mekanism Polonium Pellet`) na Wyspie-Rynku -> nagradza **`kubejs:tycoon_empire_trophy`** + **jednorazową premią `750 000` monet** (tylko za pierwsze ukończenie)!
 
 ---
 
 ## 4. Tarcza anty-exploitowa (4 warstwy ochrony)
 
-1. **Zero zysku za surowiznę (55 blokad Tier 0):** wszystkie kamienie, rudy, sztabki (w tym surowe metale Mekanism i kryształy Certus Quartz), dropy mobów oraz bloki z Netheru i Endu mają cenę `0` monet zarówno w `/sprzedaj`, jak i w `Shoppers`.
+1. **Zero zysku za surowiznę (61 blokad Tier 0):** wszystkie kamienie, rudy, surowe sztabki (w tym surowe metale Mekanism i kryształy Certus Quartz), dropy mobów, diamenty, redstone oraz bloki z Netheru i Endu mają cenę `0` monet zarówno w `/sprzedaj`, jak i w `Shoppers`.
 2. **Wyłączony `Coin Mint` i `Slot Machines`:** receptury usunięte przez [economy_anti_exploit.js](../kubejs/server_scripts/economy_anti_exploit.js) oraz wyłączone w zweryfikowanych plikach `ConfigFile` moda *Lightman's Currency*: [lightmanscurrency-common.txt](../config/lightmanscurrency-common.txt) (`canCraftCoinMint=false`, `canMint=false`, `canMelt=false`) oraz [lightmanscurrency-server.txt](../config/lightmanscurrency-server.txt) (`lcterminalCommand=true`, `interest=0.0`).
 3. **Limit marży w `Shoppers` (`overpriceMultiplier = 1.25`):** skonfigurowane w [shoppers-common.toml](../config/shoppers-common.toml) — NPC odmawiają zakupu przedmiotów wystawionych powyżej +25% ich wartości rynkowej.
-4. **Automatyczna walidacja anty-arbitrażowa i spójności GUI w CI:** [scripts/validate_economy.mjs](../scripts/validate_economy.mjs) pilnuje anty-arbitrażu (16 reguł) oraz spójności cen ciast/kawałków, a [scripts/generate_persistent_traders.mjs](../scripts/generate_persistent_traders.mjs) (`--check`) gwarantuje 100% synchronizacji `PersistentTraders.json` z `prices.json`.
+4. **Automatyczna walidacja anty-arbitrażowa i spójności GUI w CI:** [scripts/validate_economy.mjs](../scripts/validate_economy.mjs) pilnuje anty-arbitrażu przy maksymalnym mnożniku `×1,45` (7 reguł zużywalnych materiałów + wszystkie nakładki Buy/Sell), spójności składania (`10` par `≥ 1,1×`), spójności `sell_stage` oraz zasady `zdalna ×0,85 < NPC`, a [scripts/generate_persistent_traders.mjs](../scripts/generate_persistent_traders.mjs) (`--check`) gwarantuje 100% synchronizacji `PersistentTraders.json` z `prices.json`.
 
 ---
 

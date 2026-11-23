@@ -75,15 +75,23 @@ if (tier0Set.size < 15) {
   errors.push('Lista `tier_0_blocked` jest podejrzanie krótka (<15 surowców).');
 }
 
-// 3. Walidacja Tier 1–5 (marża NPC ~+20%, monotoniczność i brak kolizji z Tier 0)
+// 3. Walidacja Tier 1–5 (sell_stage = Tier - 1, marża NPC ~+20%, monotoniczność i brak kolizji z Tier 0)
 const sellById = new Map();
 const tierStats = [];
 
+let tierIndex = 0;
 for (const [tierKey, tierObj] of Object.entries(data.sell_tiers ?? {})) {
+  const expectedSellStage = tierIndex;
+  tierIndex++;
   const items = tierObj.items ?? [];
   if (items.length === 0) {
     errors.push(`Pusty tier w sell_tiers: "${tierKey}".`);
     continue;
+  }
+  if (!Number.isInteger(tierObj.sell_stage) || tierObj.sell_stage !== expectedSellStage) {
+    errors.push(
+      `Tier "${tierKey}": sell_stage=${tierObj.sell_stage} niezgodne z numerem Tieru - 1 (oczekiwano ${expectedSellStage}).`
+    );
   }
 
   let sumWholesale = 0;
@@ -97,6 +105,14 @@ for (const [tierKey, tierObj] of Object.entries(data.sell_tiers ?? {})) {
     }
     if (sellById.has(item.id)) {
       errors.push(`Duplikat w sell_tiers: "${item.id}".`);
+    }
+    if (!Number.isInteger(item.sell_stage) || item.sell_stage !== expectedSellStage) {
+      errors.push(
+        `${tierKey} -> "${item.id}": sell_stage=${item.sell_stage} musi być równe numerowi Tieru - 1 (${expectedSellStage}).`
+      );
+    }
+    if (item.pack_size != null && (!Number.isInteger(item.pack_size) || item.pack_size < 1 || item.pack_size > 64)) {
+      errors.push(`${tierKey} -> "${item.id}": niepoprawne pack_size=${item.pack_size} (wymagane 1..64).`);
     }
     if (!(item.wholesale_gui > 0) || !(item.npc_shoppers > 0)) {
       errors.push(`${tierKey} -> "${item.id}": ceny sprzedaży muszą być dodatnie.`);
@@ -181,12 +197,119 @@ if (!mb || typeof mb !== 'object') {
   }
 }
 
-// 4. Walidacja katalogu Buy vs Sell (zero bezpośredniego arbitrażu buy <= sell przy maks. mnożniku, unikalne aliasy i poprawne kategorie)
-const ALLOWED_BUY_CATEGORIES = new Set(['plants', 'livestock', 'skyblock', 'tech', 'prestige']);
+// 3c. Sprawdzenie składania (RFC #83): towar złożony z innych towarów na liście płaci >= 1.1x ich sumy (cena za sztukę)
+const COMPOSITION_CHECKS = [
+  {
+    output_id: 'ae2:cell_component_4k',
+    parts: [
+      { id: 'ae2:cell_component_1k', count: 3 },
+      { id: 'ae2:calculation_processor', count: 1 }
+    ]
+  },
+  {
+    output_id: 'ae2:cell_component_16k',
+    parts: [
+      { id: 'ae2:cell_component_4k', count: 3 },
+      { id: 'ae2:calculation_processor', count: 1 }
+    ]
+  },
+  {
+    output_id: 'ae2:cell_component_64k',
+    parts: [
+      { id: 'ae2:cell_component_16k', count: 3 },
+      { id: 'ae2:calculation_processor', count: 1 }
+    ]
+  },
+  {
+    output_id: 'ae2:cell_component_256k',
+    parts: [
+      { id: 'ae2:cell_component_64k', count: 3 },
+      { id: 'ae2:calculation_processor', count: 1 }
+    ]
+  },
+  {
+    output_id: 'createaddition:servo_motor',
+    parts: [
+      { id: 'createaddition:electric_motor', count: 1 },
+      { id: 'create:electron_tube', count: 1 }
+    ]
+  },
+  {
+    output_id: 'create:mechanical_arm',
+    parts: [
+      { id: 'create:precision_mechanism', count: 1 },
+      { id: 'create:brass_casing', count: 1 }
+    ]
+  },
+  {
+    output_id: 'create:railway_casing',
+    parts: [{ id: 'create:brass_casing', count: 1 }]
+  },
+  {
+    output_id: 'createaddition:electric_motor',
+    parts: [{ id: 'createaddition:capacitor', count: 1 }]
+  },
+  {
+    output_id: 'mekanism:advanced_control_circuit',
+    parts: [{ id: 'mekanism:basic_control_circuit', count: 1 }]
+  },
+  {
+    output_id: 'mekanism:steel_casing',
+    parts: [{ id: 'mekanism:ingot_steel', count: 4 }]
+  }
+];
+
+function getSellUnitWholesale(item) {
+  const pack = item.pack_size && Number(item.pack_size) > 1 ? Number(item.pack_size) : 1;
+  return item.wholesale_gui / pack;
+}
+
+for (const comp of COMPOSITION_CHECKS) {
+  const out = sellById.get(comp.output_id);
+  if (!out) {
+    errors.push(`Sprawdzenie składania (#83): brak produktu "${comp.output_id}" w sell_tiers.`);
+    continue;
+  }
+  let partsSum = 0;
+  let missingPart = false;
+  for (const part of comp.parts) {
+    const pItem = sellById.get(part.id);
+    if (!pItem) {
+      errors.push(`Sprawdzenie składania (#83): brak składnika "${part.id}" dla "${comp.output_id}".`);
+      missingPart = true;
+      continue;
+    }
+    partsSum += getSellUnitWholesale(pItem) * part.count;
+  }
+  if (!missingPart) {
+    const outUnit = getSellUnitWholesale(out);
+    if (outUnit < partsSum * 1.1) {
+      errors.push(
+        `Naruszenie składania (#83) dla "${comp.output_id}": cena/szt. (${outUnit.toFixed(2)}) < 1.1× suma części (${(partsSum * 1.1).toFixed(2)}, bazowo ${partsSum.toFixed(2)}).`
+      );
+    }
+  }
+}
+
+// 4. Walidacja katalogu Buy vs Sell (zero bezpośredniego arbitrażu buy/count <= sell_unit przy maks. mnożniku, unikalne aliasy, count 1..64 i poprawne kategorie)
+const ALLOWED_BUY_CATEGORIES = new Set([
+  'plants',
+  'livestock',
+  'skyblock',
+  'tech',
+  'prestige',
+  'machines',
+  'materials',
+  'decor',
+  'tools'
+]);
 const buyById = new Map();
 for (const item of data.buy_catalog ?? []) {
   if (!(item.buy_price > 0)) {
     errors.push(`buy_catalog -> "${item.id}": buy_price musi być > 0.`);
+  }
+  if (item.count != null && (!Number.isInteger(item.count) || item.count < 1 || item.count > 64)) {
+    errors.push(`buy_catalog -> "${item.id}": count=${item.count} musi być liczbą całkowitą 1..64.`);
   }
   if (buyById.has(item.id)) {
     errors.push(`Duplikat w buy_catalog: "${item.id}".`);
@@ -204,17 +327,21 @@ for (const item of data.buy_catalog ?? []) {
   }
   buyById.set(item.id, item);
   const sell = sellById.get(item.id);
-  const maxDirectSell = sell
-    ? Math.max(Math.round(sell.wholesale_gui * maxEffectiveMultiplier), sell.npc_shoppers)
-    : 0;
-  if (sell && item.buy_price <= maxDirectSell) {
-    errors.push(
-      `Arbitraż bezpośredni dla "${item.id}": buy=${item.buy_price} <= maks. sprzedaż z premiami=${maxDirectSell} (×${maxEffectiveMultiplier.toFixed(2)}).`
-    );
+  if (sell) {
+    const buyCount = item.count != null ? Number(item.count) : 1;
+    const buyUnitPrice = item.buy_price / buyCount;
+    const sellPack = sell.pack_size && Number(sell.pack_size) > 1 ? Number(sell.pack_size) : 1;
+    const maxDirectSellUnit =
+      Math.max(Math.round(sell.wholesale_gui * maxEffectiveMultiplier), sell.npc_shoppers) / sellPack;
+    if (buyUnitPrice <= maxDirectSellUnit) {
+      errors.push(
+        `Arbitraż bezpośredni dla "${item.id}": buy/szt.=${buyUnitPrice.toFixed(2)} (${item.buy_price}/${buyCount}) <= maks. sprzedaż/szt.=${maxDirectSellUnit.toFixed(2)} (×${maxEffectiveMultiplier.toFixed(2)}).`
+      );
+    }
   }
 }
 
-// 4b. Spójność całych ciast Farmer's Delight względem 4 kawałków (1.0x..1.5x, brak anomalii 3.5x)
+// 4b. Spójność całych ciast Farmer's Delight względem 4 kawałków (jeśli kawałki są w skupie)
 const piePairs = [
   ['farmersdelight:apple_pie', 'farmersdelight:apple_pie_slice'],
   ['farmersdelight:sweet_berry_cheesecake', 'farmersdelight:sweet_berry_cheesecake_slice'],
@@ -265,7 +392,8 @@ for (const portalId of REQUIRED_END_PORTAL_ITEMS) {
   }
 }
 
-// 5. Walidacja zadeklarowanych reguł anty-arbitrażowych przy MAKSYMALNYM mnożniku premii (#79)
+// 5. Walidacja zadeklarowanych reguł anty-arbitrażowych przy MAKSYMALNYM mnożniku premii (#79, #83)
+//    Semantyka `output_count`: liczba sztuk produktu powstającego z podanych wejść; brak pola = 1 paczka (`pack_size` sztuk).
 for (const check of data.anti_arbitrage_checks ?? []) {
   const out = sellById.get(check.output_id);
   if (!out) {
@@ -279,13 +407,21 @@ for (const check of data.anti_arbitrage_checks ?? []) {
       errors.push(`anti_arbitrage_checks: brak składnika "${inp.id}" w buy_catalog.`);
       continue;
     }
-    inputCost += buyItem.buy_price * (inp.count ?? 1);
+    const buyCount = buyItem.count != null ? Number(buyItem.count) : 1;
+    inputCost += (buyItem.buy_price / buyCount) * (inp.count ?? 1);
   }
-  const maxBoostedWholesale = Math.round(out.wholesale_gui * maxEffectiveMultiplier);
-  const maxSell = Math.max(maxBoostedWholesale, out.npc_shoppers);
+  const sellPack = out.pack_size && Number(out.pack_size) > 1 ? Number(out.pack_size) : 1;
+  const outputUnits = check.output_count != null ? Number(check.output_count) : sellPack;
+  if (!(outputUnits > 0)) {
+    errors.push(`anti_arbitrage_checks (${check.name}): niepoprawne output_count=${check.output_count}.`);
+    continue;
+  }
+  const maxBoostedPack = Math.round(out.wholesale_gui * maxEffectiveMultiplier);
+  const maxPackSell = Math.max(maxBoostedPack, out.npc_shoppers);
+  const maxSell = (maxPackSell / sellPack) * outputUnits;
   if (inputCost <= maxSell) {
     errors.push(
-      `Ryzyko arbitrażu (${check.name}): koszt zakupu składników (${inputCost}) <= maks. sprzedaż z premiami (${maxSell} = hurt ${out.wholesale_gui} × ${maxEffectiveMultiplier.toFixed(2)} lub NPC ${out.npc_shoppers}) dla "${check.output_id}".`
+      `Ryzyko arbitrażu (${check.name}): koszt zakupu składników (${inputCost.toFixed(2)}) <= maks. sprzedaż ${outputUnits} szt. z premiami (${maxSell.toFixed(2)} przy ×${maxEffectiveMultiplier.toFixed(2)}) dla "${check.output_id}".`
     );
   }
 }
@@ -299,7 +435,7 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `✅ Walidacja ekonomii OK: ${data.stage_tokens.length} Żetonów Etapów, ${tier0Set.size} blokad Tier 0, ${sellById.size} towarów Tier 1–5, ${buyById.size} pozycji Buy, ${(data.anti_arbitrage_checks ?? []).length} reguł anty-arbitrażowych (maks. mnożnik Rynku: ×${maxEffectiveMultiplier.toFixed(2)}, maks. zdalny: ×${maxRemoteMultiplier.toFixed(2)} < NPC).`
+  `✅ Walidacja ekonomii OK: ${data.stage_tokens.length} Żetonów Etapów, ${tier0Set.size} blokad Tier 0, ${sellById.size} towarów Tier 1–5, ${buyById.size} pozycji Buy, ${COMPOSITION_CHECKS.length} par składania, ${(data.anti_arbitrage_checks ?? []).length} reguł anty-arbitrażowych (maks. mnożnik Rynku: ×${maxEffectiveMultiplier.toFixed(2)}, maks. zdalny: ×${maxRemoteMultiplier.toFixed(2)} < NPC).`
 );
 console.log('📊 Symulacja tempa progresji (średnia cena hurt / NPC +20% -> cel kolejnego Etapu):');
 for (const st of tierStats) {

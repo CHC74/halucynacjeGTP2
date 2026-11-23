@@ -5,12 +5,36 @@
     "base_unit": "copper_coin",
     "npc_margin_target": 0.2,
     "denominations": [
-      { "id": "lightmanscurrency:coin_netherite", "value": 100000, "label": "Moneta Netherytowa" },
-      { "id": "lightmanscurrency:coin_diamond", "value": 10000, "label": "Moneta Diamentowa" },
-      { "id": "lightmanscurrency:coin_emerald", "value": 1000, "label": "Moneta Szmaragdowa" },
-      { "id": "lightmanscurrency:coin_gold", "value": 100, "label": "Moneta Złota" },
-      { "id": "lightmanscurrency:coin_iron", "value": 10, "label": "Moneta Żelazna" },
-      { "id": "lightmanscurrency:coin_copper", "value": 1, "label": "Moneta Miedziana" }
+      {
+        "id": "lightmanscurrency:coin_netherite",
+        "value": 100000,
+        "label": "Moneta Netherytowa"
+      },
+      {
+        "id": "lightmanscurrency:coin_diamond",
+        "value": 10000,
+        "label": "Moneta Diamentowa"
+      },
+      {
+        "id": "lightmanscurrency:coin_emerald",
+        "value": 1000,
+        "label": "Moneta Szmaragdowa"
+      },
+      {
+        "id": "lightmanscurrency:coin_gold",
+        "value": 100,
+        "label": "Moneta Złota"
+      },
+      {
+        "id": "lightmanscurrency:coin_iron",
+        "value": 10,
+        "label": "Moneta Żelazna"
+      },
+      {
+        "id": "lightmanscurrency:coin_copper",
+        "value": 1,
+        "label": "Moneta Miedziana"
+      }
     ],
     "notes": "Jedna spójna waluta Lightman's Currency (RFC #5, przebudowa sklepu RFC #46). 1 moneta bazowa = 1 lightmanscurrency:coin_copper. Fizyczne sklepy NPC na Wyspie-Rynku dają +20% marży względem hurtu (/sprzedaj i Trading Terminal)."
   },
@@ -21,11 +45,27 @@
     "market_boom_bonus_percent": 30,
     "diversity_min_item_value": 250,
     "diversity_tiers": [
-      { "min_items": 3, "bonus_percent": 5 },
-      { "min_items": 5, "bonus_percent": 10 },
-      { "min_items": 7, "bonus_percent": 15 }
+      {
+        "min_items": 3,
+        "bonus_percent": 5
+      },
+      {
+        "min_items": 5,
+        "bonus_percent": 10
+      },
+      {
+        "min_items": 7,
+        "bonus_percent": 15
+      }
     ],
-    "stage_trade_bonus_percents": [0, 2, 4, 6, 8, 10],
+    "stage_trade_bonus_percents": [
+      0,
+      2,
+      4,
+      6,
+      8,
+      10
+    ],
     "max_non_boom_bonus_percent": 25,
     "max_combined_bonus_percent": 45
   },
@@ -72,369 +112,4068 @@
     }
   ],
   "tier_0_blocked": [
-    { "id": "minecraft:cobblestone", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec kopalniany / ekstruder" },
-    { "id": "minecraft:stone", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec kopalniany / ekstruder" },
-    { "id": "minecraft:deepslate", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec kopalniany" },
-    { "id": "minecraft:andesite", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec bazowy Create / ekstruder" },
-    { "id": "minecraft:tuff", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec bazowy Create / ekstruder" },
-    { "id": "minecraft:basalt", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec bazowy / Nether" },
-    { "id": "minecraft:dirt", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec podstawowy" },
-    { "id": "minecraft:gravel", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec bazowy Create" },
-    { "id": "minecraft:sand", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec bazowy Create" },
-    { "id": "minecraft:red_sand", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec bazowy Create" },
-    { "id": "minecraft:flint", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Produkt uboczny płukania" },
-    { "id": "minecraft:clay_ball", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Produkt uboczny płukania" },
-    { "id": "minecraft:netherrack", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru (FTB Ultimine)" },
-    { "id": "minecraft:blackstone", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru" },
-    { "id": "minecraft:soul_sand", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru" },
-    { "id": "minecraft:quartz", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru (Fortune III)" },
-    { "id": "minecraft:glowstone_dust", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru" },
-    { "id": "minecraft:blaze_rod", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop ze spawnera Netheru" },
-    { "id": "minecraft:obsidian", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec z lawy / Netheru" },
-    { "id": "minecraft:crying_obsidian", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru" },
-    { "id": "minecraft:ancient_debris", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru" },
-    { "id": "minecraft:netherite_scrap", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru" },
-    { "id": "minecraft:netherite_ingot", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Netheru" },
-    { "id": "minecraft:raw_iron", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa ruda" },
-    { "id": "minecraft:iron_ingot", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona przed farmami żelaza Create" },
-    { "id": "minecraft:iron_nugget", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona przed farmami żelaza Create" },
-    { "id": "minecraft:raw_gold", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa ruda" },
-    { "id": "minecraft:gold_ingot", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona przed farmami złota i Netherem" },
-    { "id": "minecraft:gold_nugget", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona przed farmami złota i Netherem" },
-    { "id": "minecraft:raw_copper", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa ruda" },
-    { "id": "minecraft:copper_ingot", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona przed surowymi sztabkami" },
-    { "id": "create:raw_zinc", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa ruda Create" },
-    { "id": "create:zinc_ingot", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa sztabka Create" },
-    { "id": "minecraft:coal", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowy opał" },
-    { "id": "minecraft:charcoal", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowy opał z farmy drzew" },
-    { "id": "minecraft:redstone", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowy minerał" },
-    { "id": "minecraft:lapis_lazuli", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowy minerał" },
-    { "id": "minecraft:diamond", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowiec kopalniany / loot" },
-    { "id": "minecraft:emerald", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona przed handlem wieśniaków" },
-    { "id": "minecraft:amethyst_shard", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona przed farmą geody z Budding Amethyst" },
-    { "id": "minecraft:end_stone", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Endu (FTB Ultimine)" },
-    { "id": "minecraft:chorus_fruit", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Endu" },
-    { "id": "minecraft:shulker_shell", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona ekonomii Endu" },
-    { "id": "minecraft:ender_pearl", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop mobów Endu" },
-    { "id": "minecraft:end_portal_frame", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Element portalu Endu (wyłącznie zakup w Stage 4, brak skupu)" },
-    { "id": "minecraft:ender_eye", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Element portalu Endu (wyłącznie zakup w Stage 4 lub crafting, brak skupu)" },
-    { "id": "minecraft:rotten_flesh", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop z mobgrinderów" },
-    { "id": "minecraft:bone", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop z mobgrinderów" },
-    { "id": "minecraft:string", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop z mobgrinderów" },
-    { "id": "minecraft:gunpowder", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Drop z mobgrinderów" },
-    { "id": "mekanism:raw_osmium", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa ruda Mekanism (odnawialna z Create — do przetopu/przerobu)" },
-    { "id": "mekanism:raw_tin", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa ruda Mekanism (odnawialna z Create — do przetopu/przerobu)" },
-    { "id": "mekanism:raw_lead", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa ruda Mekanism (odnawialna z Create — do przetopu/przerobu)" },
-    { "id": "mekanism:raw_uranium", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa ruda Mekanism (odnawialna z Create — do przetopu/przerobu)" },
-    { "id": "mekanism:ingot_osmium", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa sztabka Mekanism (tylko starter w sklepie)" },
-    { "id": "mekanism:ingot_tin", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa sztabka Mekanism (tylko starter w sklepie)" },
-    { "id": "mekanism:ingot_lead", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa sztabka Mekanism (tylko starter w sklepie)" },
-    { "id": "mekanism:ingot_uranium", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowa sztabka Mekanism (tylko starter w sklepie)" },
-    { "id": "mekanism:fluorite_gem", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowy minerał Mekanism (tylko starter w sklepie)" },
-    { "id": "ae2:certus_quartz_crystal", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Ochrona przed sprzedażą surowych kryształów z Budding Quartz" },
-    { "id": "ae2:sky_stone_block", "wholesale_gui": 0, "npc_shoppers": 0, "reason": "Surowy blok AE2" }
+    {
+      "id": "minecraft:cobblestone",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec kopalniany / ekstruder"
+    },
+    {
+      "id": "minecraft:stone",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec kopalniany / ekstruder"
+    },
+    {
+      "id": "minecraft:deepslate",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec kopalniany"
+    },
+    {
+      "id": "minecraft:andesite",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec bazowy Create / ekstruder"
+    },
+    {
+      "id": "minecraft:tuff",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec bazowy Create / ekstruder"
+    },
+    {
+      "id": "minecraft:basalt",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec bazowy / Nether"
+    },
+    {
+      "id": "minecraft:dirt",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec podstawowy"
+    },
+    {
+      "id": "minecraft:gravel",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec bazowy Create"
+    },
+    {
+      "id": "minecraft:sand",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec bazowy Create"
+    },
+    {
+      "id": "minecraft:red_sand",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec bazowy Create"
+    },
+    {
+      "id": "minecraft:flint",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Produkt uboczny płukania"
+    },
+    {
+      "id": "minecraft:clay_ball",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Produkt uboczny płukania"
+    },
+    {
+      "id": "minecraft:netherrack",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru (FTB Ultimine)"
+    },
+    {
+      "id": "minecraft:blackstone",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru"
+    },
+    {
+      "id": "minecraft:soul_sand",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru"
+    },
+    {
+      "id": "minecraft:quartz",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru (Fortune III)"
+    },
+    {
+      "id": "minecraft:glowstone_dust",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru"
+    },
+    {
+      "id": "minecraft:blaze_rod",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Drop ze spawnera Netheru"
+    },
+    {
+      "id": "minecraft:obsidian",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec z lawy / Netheru"
+    },
+    {
+      "id": "minecraft:crying_obsidian",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru"
+    },
+    {
+      "id": "minecraft:ancient_debris",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru"
+    },
+    {
+      "id": "minecraft:netherite_scrap",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru"
+    },
+    {
+      "id": "minecraft:netherite_ingot",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Netheru"
+    },
+    {
+      "id": "minecraft:raw_iron",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa ruda"
+    },
+    {
+      "id": "minecraft:iron_ingot",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona przed farmami żelaza Create"
+    },
+    {
+      "id": "minecraft:iron_nugget",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona przed farmami żelaza Create"
+    },
+    {
+      "id": "minecraft:raw_gold",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa ruda"
+    },
+    {
+      "id": "minecraft:gold_ingot",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona przed farmami złota i Netherem"
+    },
+    {
+      "id": "minecraft:gold_nugget",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona przed farmami złota i Netherem"
+    },
+    {
+      "id": "minecraft:raw_copper",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa ruda"
+    },
+    {
+      "id": "minecraft:copper_ingot",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona przed surowymi sztabkami"
+    },
+    {
+      "id": "create:raw_zinc",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa ruda Create"
+    },
+    {
+      "id": "create:zinc_ingot",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa sztabka Create"
+    },
+    {
+      "id": "minecraft:coal",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowy opał"
+    },
+    {
+      "id": "minecraft:charcoal",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowy opał z farmy drzew"
+    },
+    {
+      "id": "minecraft:redstone",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowy minerał"
+    },
+    {
+      "id": "minecraft:lapis_lazuli",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowy minerał"
+    },
+    {
+      "id": "minecraft:diamond",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowiec kopalniany / loot"
+    },
+    {
+      "id": "minecraft:emerald",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona przed handlem wieśniaków"
+    },
+    {
+      "id": "minecraft:amethyst_shard",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona przed farmą geody z Budding Amethyst"
+    },
+    {
+      "id": "minecraft:end_stone",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Endu (FTB Ultimine)"
+    },
+    {
+      "id": "minecraft:chorus_fruit",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Endu"
+    },
+    {
+      "id": "minecraft:shulker_shell",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona ekonomii Endu"
+    },
+    {
+      "id": "minecraft:ender_pearl",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Drop mobów Endu"
+    },
+    {
+      "id": "minecraft:end_portal_frame",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Element portalu Endu (wyłącznie zakup w Stage 4, brak skupu)"
+    },
+    {
+      "id": "minecraft:ender_eye",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Element portalu Endu (wyłącznie zakup w Stage 4 lub crafting, brak skupu)"
+    },
+    {
+      "id": "minecraft:rotten_flesh",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Drop z mobgrinderów"
+    },
+    {
+      "id": "minecraft:bone",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Drop z mobgrinderów"
+    },
+    {
+      "id": "minecraft:string",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Drop z mobgrinderów"
+    },
+    {
+      "id": "minecraft:gunpowder",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Drop z mobgrinderów"
+    },
+    {
+      "id": "mekanism:raw_osmium",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa ruda Mekanism (odnawialna z Create — do przetopu/przerobu)"
+    },
+    {
+      "id": "mekanism:raw_tin",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa ruda Mekanism (odnawialna z Create — do przetopu/przerobu)"
+    },
+    {
+      "id": "mekanism:raw_lead",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa ruda Mekanism (odnawialna z Create — do przetopu/przerobu)"
+    },
+    {
+      "id": "mekanism:raw_uranium",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa ruda Mekanism (odnawialna z Create — do przetopu/przerobu)"
+    },
+    {
+      "id": "mekanism:ingot_osmium",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa sztabka Mekanism (tylko starter w sklepie)"
+    },
+    {
+      "id": "mekanism:ingot_tin",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa sztabka Mekanism (tylko starter w sklepie)"
+    },
+    {
+      "id": "mekanism:ingot_lead",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa sztabka Mekanism (tylko starter w sklepie)"
+    },
+    {
+      "id": "mekanism:ingot_uranium",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowa sztabka Mekanism (tylko starter w sklepie)"
+    },
+    {
+      "id": "mekanism:fluorite_gem",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowy minerał Mekanism (tylko starter w sklepie)"
+    },
+    {
+      "id": "ae2:certus_quartz_crystal",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Ochrona przed sprzedażą surowych kryształów z Budding Quartz"
+    },
+    {
+      "id": "ae2:sky_stone_block",
+      "wholesale_gui": 0,
+      "npc_shoppers": 0,
+      "reason": "Surowy blok AE2"
+    }
   ],
   "sell_tiers": {
     "tier_1_start": {
-      "stage_range": "0-1",
-      "next_stage_target": 10000,
-      "description": "Podstawowe wypieki, napoje i wczesne przetwory gastronomiczne (Stage 0-1 -> cel 10k)",
+      "description": "Farma i Piekarnia — dania z samych upraw (sprzedaż od Etapu 0)",
+      "sell_stage": 0,
       "items": [
-        { "id": "minecraft:bread", "wholesale_gui": 4, "npc_shoppers": 5 },
-        { "id": "createfood:toast_slice", "wholesale_gui": 5, "npc_shoppers": 6 },
-        { "id": "farmersdelight:fried_egg", "wholesale_gui": 5, "npc_shoppers": 6 },
-        { "id": "farmersdelight:cooked_bacon", "wholesale_gui": 6, "npc_shoppers": 7 },
-        { "id": "createfood:butter", "wholesale_gui": 8, "npc_shoppers": 10 },
-        { "id": "createfood:cheese_slice", "wholesale_gui": 9, "npc_shoppers": 11 },
-        { "id": "farmersdelight:melon_popsicle", "wholesale_gui": 10, "npc_shoppers": 12 },
-        { "id": "farmersdelight:apple_pie_slice", "wholesale_gui": 12, "npc_shoppers": 14 },
-        { "id": "farmersdelight:sweet_berry_cheesecake_slice", "wholesale_gui": 14, "npc_shoppers": 17 },
-        { "id": "farmersdelight:chocolate_pie_slice", "wholesale_gui": 16, "npc_shoppers": 19 },
-        { "id": "createfood:grilled_cheese_sandwich", "wholesale_gui": 17, "npc_shoppers": 20 },
-        { "id": "farmersdelight:apple_cider", "wholesale_gui": 18, "npc_shoppers": 22 },
-        { "id": "farmersdelight:chicken_soup", "wholesale_gui": 20, "npc_shoppers": 24 },
-        { "id": "farmersdelight:fish_stew", "wholesale_gui": 20, "npc_shoppers": 24 },
-        { "id": "farmersdelight:fried_rice", "wholesale_gui": 22, "npc_shoppers": 26 }
-      ]
+        {
+          "id": "minecraft:bread",
+          "wholesale_gui": 4,
+          "npc_shoppers": 5,
+          "sell_stage": 0
+        },
+        {
+          "id": "createfood:toast_slice",
+          "wholesale_gui": 4,
+          "npc_shoppers": 5,
+          "sell_stage": 0
+        },
+        {
+          "id": "farmersdelight:cabbage_rolls",
+          "wholesale_gui": 7,
+          "npc_shoppers": 9,
+          "sell_stage": 0
+        },
+        {
+          "id": "farmersdelight:mixed_salad",
+          "wholesale_gui": 11,
+          "npc_shoppers": 13,
+          "sell_stage": 0
+        },
+        {
+          "id": "farmersdelight:vegetable_soup",
+          "wholesale_gui": 12,
+          "npc_shoppers": 14,
+          "sell_stage": 0
+        },
+        {
+          "id": "farmersdelight:ratatouille",
+          "wholesale_gui": 12,
+          "npc_shoppers": 14,
+          "sell_stage": 0
+        },
+        {
+          "id": "farmersdelight:apple_cider",
+          "wholesale_gui": 15,
+          "npc_shoppers": 18,
+          "sell_stage": 0
+        },
+        {
+          "id": "farmersdelight:melon_popsicle",
+          "wholesale_gui": 18,
+          "npc_shoppers": 22,
+          "sell_stage": 0
+        },
+        {
+          "id": "farmersdelight:fish_stew",
+          "wholesale_gui": 26,
+          "npc_shoppers": 31,
+          "sell_stage": 0
+        },
+        {
+          "id": "farmersdelight:squid_ink_pasta",
+          "wholesale_gui": 31,
+          "npc_shoppers": 37,
+          "sell_stage": 0
+        }
+      ],
+      "stage_range": "0-1",
+      "next_stage_target": 10000
     },
     "tier_2_kitchen": {
-      "stage_range": "1-2",
-      "next_stage_target": 50000,
-      "description": "Złożone dania obiadowe i całe wypieki Farmer's Delight & Create: Food (Slice & Dice + Central Kitchen -> cel 50k)",
+      "description": "Kuchnia i Cukiernia — zwierzęta, miód, kakao i podgrzewany Mixing (sprzedaż od Etapu 1)",
+      "sell_stage": 1,
       "items": [
-        { "id": "farmersdelight:bacon_and_eggs", "wholesale_gui": 36, "npc_shoppers": 43 },
-        { "id": "createfood:bacon_sandwich", "wholesale_gui": 38, "npc_shoppers": 46 },
-        { "id": "farmersdelight:hamburger", "wholesale_gui": 42, "npc_shoppers": 50 },
-        { "id": "farmersdelight:mutton_wrap", "wholesale_gui": 44, "npc_shoppers": 53 },
-        { "id": "farmersdelight:ratatouille", "wholesale_gui": 46, "npc_shoppers": 55 },
-        { "id": "createfood:cheeseburger", "wholesale_gui": 50, "npc_shoppers": 60 },
-        { "id": "farmersdelight:steak_and_potatoes", "wholesale_gui": 52, "npc_shoppers": 62 },
-        { "id": "createfood:cheese_pizza_slice", "wholesale_gui": 54, "npc_shoppers": 65 },
-        { "id": "farmersdelight:vegetable_noodles", "wholesale_gui": 56, "npc_shoppers": 67 },
-        { "id": "farmersdelight:pasta_with_meatballs", "wholesale_gui": 58, "npc_shoppers": 70 },
-        { "id": "farmersdelight:apple_pie", "wholesale_gui": 60, "npc_shoppers": 72 },
-        { "id": "createfood:bacon_pizza_slice", "wholesale_gui": 62, "npc_shoppers": 74 },
-        { "id": "createfood:sausage_pizza_slice", "wholesale_gui": 64, "npc_shoppers": 77 },
-        { "id": "farmersdelight:grilled_salmon", "wholesale_gui": 66, "npc_shoppers": 79 },
-        { "id": "farmersdelight:sweet_berry_cheesecake", "wholesale_gui": 70, "npc_shoppers": 84 },
-        { "id": "farmersdelight:squid_ink_pasta", "wholesale_gui": 72, "npc_shoppers": 86 },
-        { "id": "farmersdelight:chocolate_pie", "wholesale_gui": 80, "npc_shoppers": 96 },
-        { "id": "farmersdelight:roast_chicken", "wholesale_gui": 82, "npc_shoppers": 98 },
-        { "id": "farmersdelight:shepherds_pie", "wholesale_gui": 88, "npc_shoppers": 106 },
-        { "id": "farmersdelight:stuffed_pumpkin", "wholesale_gui": 92, "npc_shoppers": 110 },
-        { "id": "farmersdelight:honey_glazed_ham", "wholesale_gui": 100, "npc_shoppers": 120 }
-      ]
+        {
+          "id": "createfood:cheese_pizza_slice",
+          "wholesale_gui": 6,
+          "npc_shoppers": 7,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:sausage_pizza_slice",
+          "wholesale_gui": 8,
+          "npc_shoppers": 10,
+          "sell_stage": 1
+        },
+        {
+          "id": "create_confectionery:bar_of_caramel",
+          "wholesale_gui": 9,
+          "npc_shoppers": 11,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:stuffed_pumpkin",
+          "wholesale_gui": 10,
+          "npc_shoppers": 12,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:bacon_pizza_slice",
+          "wholesale_gui": 11,
+          "npc_shoppers": 13,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:roast_chicken",
+          "wholesale_gui": 14,
+          "npc_shoppers": 17,
+          "sell_stage": 1
+        },
+        {
+          "id": "create_confectionery:caramel_glazed_berries",
+          "wholesale_gui": 14,
+          "npc_shoppers": 17,
+          "sell_stage": 1
+        },
+        {
+          "id": "create:sweet_roll",
+          "wholesale_gui": 15,
+          "npc_shoppers": 18,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:vegetable_noodles",
+          "wholesale_gui": 16,
+          "npc_shoppers": 19,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:bacon_sandwich",
+          "wholesale_gui": 17,
+          "npc_shoppers": 20,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:shepherds_pie",
+          "wholesale_gui": 17,
+          "npc_shoppers": 20,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:fried_rice",
+          "wholesale_gui": 19,
+          "npc_shoppers": 23,
+          "sell_stage": 1
+        },
+        {
+          "id": "create:chocolate_glazed_berries",
+          "wholesale_gui": 21,
+          "npc_shoppers": 25,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:chicken_soup",
+          "wholesale_gui": 22,
+          "npc_shoppers": 26,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:pasta_with_meatballs",
+          "wholesale_gui": 26,
+          "npc_shoppers": 31,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:mutton_wrap",
+          "wholesale_gui": 28,
+          "npc_shoppers": 34,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:cheeseburger",
+          "wholesale_gui": 30,
+          "npc_shoppers": 36,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:steak_and_potatoes",
+          "wholesale_gui": 30,
+          "npc_shoppers": 36,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:hamburger",
+          "wholesale_gui": 31,
+          "npc_shoppers": 37,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:apple_ice_cream_cone",
+          "wholesale_gui": 33,
+          "npc_shoppers": 40,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:grilled_salmon",
+          "wholesale_gui": 34,
+          "npc_shoppers": 41,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:honey_glazed_ham",
+          "wholesale_gui": 34,
+          "npc_shoppers": 41,
+          "sell_stage": 1
+        },
+        {
+          "id": "create:honeyed_apple",
+          "wholesale_gui": 45,
+          "npc_shoppers": 54,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:berry_milkshake_bottle",
+          "wholesale_gui": 49,
+          "npc_shoppers": 59,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:apple_pie",
+          "wholesale_gui": 50,
+          "npc_shoppers": 60,
+          "sell_stage": 1
+        },
+        {
+          "id": "createaddition:chocolate_cake",
+          "wholesale_gui": 53,
+          "npc_shoppers": 64,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:chocolate_pie",
+          "wholesale_gui": 55,
+          "npc_shoppers": 66,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:bacon_and_eggs",
+          "wholesale_gui": 72,
+          "npc_shoppers": 86,
+          "sell_stage": 1
+        },
+        {
+          "id": "farmersdelight:sweet_berry_cheesecake",
+          "wholesale_gui": 72,
+          "npc_shoppers": 86,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:apple_cream_chocolate_sweet_roll",
+          "wholesale_gui": 75,
+          "npc_shoppers": 90,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:berry_cream_chocolate_sweet_roll",
+          "wholesale_gui": 75,
+          "npc_shoppers": 90,
+          "sell_stage": 1
+        },
+        {
+          "id": "createaddition:honey_cake",
+          "wholesale_gui": 96,
+          "npc_shoppers": 115,
+          "sell_stage": 1
+        },
+        {
+          "id": "createfood:apple_cream_chocolate_donut",
+          "wholesale_gui": 115,
+          "npc_shoppers": 138,
+          "sell_stage": 1
+        }
+      ],
+      "stage_range": "1-2",
+      "next_stage_target": 50000
     },
     "tier_3_luxury_bakery": {
-      "stage_range": "2-3",
-      "next_stage_target": 100000,
-      "description": "Słodycze premium, torty, lody, shake'i i cukiernia Create / Confectionery / Create: Food (-> cel 100k)",
+      "description": "Nether i Mosiądz — słodycze z Netheru, mechanizmy, kolej, logistyka i elektryka Create (sprzedaż od Etapu 2)",
+      "sell_stage": 2,
       "items": [
-        { "id": "create:sweet_roll", "wholesale_gui": 125, "npc_shoppers": 150 },
-        { "id": "create:honeyed_apple", "wholesale_gui": 135, "npc_shoppers": 162 },
-        { "id": "create:chocolate_glazed_berries", "wholesale_gui": 140, "npc_shoppers": 168 },
-        { "id": "create_confectionery:bar_of_caramel", "wholesale_gui": 165, "npc_shoppers": 198 },
-        { "id": "create_confectionery:caramel_glazed_berries", "wholesale_gui": 170, "npc_shoppers": 204 },
-        { "id": "create_confectionery:bar_of_black_chocolate", "wholesale_gui": 180, "npc_shoppers": 216 },
-        { "id": "create_confectionery:bar_of_white_chocolate", "wholesale_gui": 185, "npc_shoppers": 222 },
-        { "id": "create_confectionery:hot_chocolate_bottle", "wholesale_gui": 190, "npc_shoppers": 228 },
-        { "id": "create_confectionery:bar_of_ruby_chocolate", "wholesale_gui": 200, "npc_shoppers": 240 },
-        { "id": "createaddition:honey_cake", "wholesale_gui": 205, "npc_shoppers": 246 },
-        { "id": "createaddition:chocolate_cake", "wholesale_gui": 215, "npc_shoppers": 258 },
-        { "id": "create_confectionery:gingerbread_man", "wholesale_gui": 220, "npc_shoppers": 264 },
-        { "id": "createfood:berry_milkshake_bottle", "wholesale_gui": 225, "npc_shoppers": 270 },
-        { "id": "createfood:apple_ice_cream_cone", "wholesale_gui": 235, "npc_shoppers": 282 },
-        { "id": "createfood:apple_cream_chocolate_sweet_roll", "wholesale_gui": 245, "npc_shoppers": 294 },
-        { "id": "createfood:berry_cream_chocolate_sweet_roll", "wholesale_gui": 255, "npc_shoppers": 306 },
-        { "id": "createfood:apple_cream_chocolate_donut", "wholesale_gui": 265, "npc_shoppers": 318 },
-        { "id": "create:blaze_cake", "wholesale_gui": 285, "npc_shoppers": 342 }
-      ]
+        {
+          "id": "create_hypertube:hypertube",
+          "wholesale_gui": 125,
+          "npc_shoppers": 150,
+          "pack_size": 16,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:track",
+          "wholesale_gui": 200,
+          "npc_shoppers": 240,
+          "pack_size": 16,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:blaze_cake",
+          "wholesale_gui": 21,
+          "npc_shoppers": 25,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:sturdy_sheet",
+          "wholesale_gui": 42,
+          "npc_shoppers": 50,
+          "pack_size": 2,
+          "sell_stage": 2
+        },
+        {
+          "id": "create_confectionery:bar_of_white_chocolate",
+          "wholesale_gui": 33,
+          "npc_shoppers": 40,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:brass_casing",
+          "wholesale_gui": 155,
+          "npc_shoppers": 186,
+          "pack_size": 4,
+          "sell_stage": 2
+        },
+        {
+          "id": "create_confectionery:hot_chocolate_bottle",
+          "wholesale_gui": 45,
+          "npc_shoppers": 54,
+          "sell_stage": 2
+        },
+        {
+          "id": "create_confectionery:bar_of_black_chocolate",
+          "wholesale_gui": 47,
+          "npc_shoppers": 56,
+          "sell_stage": 2
+        },
+        {
+          "id": "create_confectionery:gingerbread_man",
+          "wholesale_gui": 57,
+          "npc_shoppers": 68,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:railway_casing",
+          "wholesale_gui": 125,
+          "npc_shoppers": 150,
+          "pack_size": 2,
+          "sell_stage": 2
+        },
+        {
+          "id": "createaddition:electrum_ingot",
+          "wholesale_gui": 380,
+          "npc_shoppers": 456,
+          "pack_size": 4,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:electron_tube",
+          "wholesale_gui": 415,
+          "npc_shoppers": 498,
+          "pack_size": 4,
+          "sell_stage": 2
+        },
+        {
+          "id": "createaddition:capacitor",
+          "wholesale_gui": 420,
+          "npc_shoppers": 504,
+          "pack_size": 4,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:package_frogport",
+          "wholesale_gui": 115,
+          "npc_shoppers": 138,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:stock_link",
+          "wholesale_gui": 190,
+          "npc_shoppers": 228,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:packager",
+          "wholesale_gui": 215,
+          "npc_shoppers": 258,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:steam_engine",
+          "wholesale_gui": 220,
+          "npc_shoppers": 264,
+          "sell_stage": 2
+        },
+        {
+          "id": "createaddition:bioethanol_bucket",
+          "wholesale_gui": 240,
+          "npc_shoppers": 288,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:precision_mechanism",
+          "wholesale_gui": 260,
+          "npc_shoppers": 312,
+          "sell_stage": 2
+        },
+        {
+          "id": "createaddition:alternator",
+          "wholesale_gui": 325,
+          "npc_shoppers": 390,
+          "sell_stage": 2
+        },
+        {
+          "id": "create:mechanical_arm",
+          "wholesale_gui": 400,
+          "npc_shoppers": 480,
+          "sell_stage": 2
+        },
+        {
+          "id": "createaddition:electric_motor",
+          "wholesale_gui": 420,
+          "npc_shoppers": 504,
+          "sell_stage": 2
+        },
+        {
+          "id": "createaddition:servo_motor",
+          "wholesale_gui": 580,
+          "npc_shoppers": 696,
+          "sell_stage": 2
+        }
+      ],
+      "stage_range": "2-3",
+      "next_stage_target": 100000
     },
     "tier_4_create_industry": {
-      "stage_range": "2-4",
-      "next_stage_target": 250000,
-      "description": "Zaawansowane komponenty Create 6, kolej, Hypertubes, logistyka paczek i elektryka Crafts & Additions (-> cel 250k)",
+      "description": "Przemysł Ciężki — procesory i komponenty AE2 oraz podstawy Mekanism (sprzedaż od Etapu 3)",
+      "sell_stage": 3,
       "items": [
-        { "id": "create:brass_casing", "pack_size": 4, "wholesale_gui": 340, "npc_shoppers": 408 },
-        { "id": "create:sturdy_sheet", "pack_size": 2, "wholesale_gui": 380, "npc_shoppers": 456 },
-        { "id": "create:track", "pack_size": 16, "wholesale_gui": 380, "npc_shoppers": 456 },
-        { "id": "create:railway_casing", "pack_size": 2, "wholesale_gui": 430, "npc_shoppers": 516 },
-        { "id": "create:electron_tube", "pack_size": 8, "wholesale_gui": 440, "npc_shoppers": 528 },
-        { "id": "createaddition:capacitor", "pack_size": 4, "wholesale_gui": 460, "npc_shoppers": 552 },
-        { "id": "create:precision_mechanism", "wholesale_gui": 520, "npc_shoppers": 624 },
-        { "id": "createaddition:electrum_ingot", "pack_size": 4, "wholesale_gui": 540, "npc_shoppers": 648 },
-        { "id": "create_hypertube:hypertube", "pack_size": 16, "wholesale_gui": 560, "npc_shoppers": 672 },
-        { "id": "create:packager", "wholesale_gui": 580, "npc_shoppers": 696 },
-        { "id": "create:package_frogport", "wholesale_gui": 620, "npc_shoppers": 744 },
-        { "id": "create:stock_link", "wholesale_gui": 640, "npc_shoppers": 768 },
-        { "id": "create:steam_engine", "wholesale_gui": 720, "npc_shoppers": 864 },
-        { "id": "createaddition:bioethanol_bucket", "wholesale_gui": 780, "npc_shoppers": 936 },
-        { "id": "createaddition:alternator", "wholesale_gui": 880, "npc_shoppers": 1056 },
-        { "id": "createaddition:electric_motor", "wholesale_gui": 940, "npc_shoppers": 1128 },
-        { "id": "create:mechanical_arm", "wholesale_gui": 980, "npc_shoppers": 1176 },
-        { "id": "createaddition:servo_motor", "wholesale_gui": 1050, "npc_shoppers": 1260 }
-      ]
+        {
+          "id": "mekanism:ingot_refined_glowstone",
+          "wholesale_gui": 555,
+          "npc_shoppers": 666,
+          "pack_size": 16,
+          "sell_stage": 3
+        },
+        {
+          "id": "mekanism:ingot_steel",
+          "wholesale_gui": 565,
+          "npc_shoppers": 678,
+          "pack_size": 16,
+          "sell_stage": 3
+        },
+        {
+          "id": "mekanism:basic_control_circuit",
+          "wholesale_gui": 425,
+          "npc_shoppers": 510,
+          "pack_size": 8,
+          "sell_stage": 3
+        },
+        {
+          "id": "ae2:fluix_crystal",
+          "wholesale_gui": 1400,
+          "npc_shoppers": 1680,
+          "pack_size": 16,
+          "sell_stage": 3
+        },
+        {
+          "id": "mekanism:advanced_control_circuit",
+          "wholesale_gui": 95,
+          "npc_shoppers": 114,
+          "sell_stage": 3
+        },
+        {
+          "id": "ae2:calculation_processor",
+          "wholesale_gui": 160,
+          "npc_shoppers": 192,
+          "sell_stage": 3
+        },
+        {
+          "id": "ae2:logic_processor",
+          "wholesale_gui": 170,
+          "npc_shoppers": 204,
+          "sell_stage": 3
+        },
+        {
+          "id": "mekanism:steel_casing",
+          "wholesale_gui": 190,
+          "npc_shoppers": 228,
+          "sell_stage": 3
+        },
+        {
+          "id": "mekanism:hdpe_sheet",
+          "wholesale_gui": 870,
+          "npc_shoppers": 1044,
+          "pack_size": 4,
+          "sell_stage": 3
+        },
+        {
+          "id": "mekanism:energy_tablet",
+          "wholesale_gui": 565,
+          "npc_shoppers": 678,
+          "sell_stage": 3
+        },
+        {
+          "id": "ae2:cell_component_1k",
+          "wholesale_gui": 750,
+          "npc_shoppers": 900,
+          "sell_stage": 3
+        },
+        {
+          "id": "ae2:fluix_pearl",
+          "wholesale_gui": 4200,
+          "npc_shoppers": 5040,
+          "pack_size": 4,
+          "sell_stage": 3
+        },
+        {
+          "id": "ae2:cell_component_4k",
+          "wholesale_gui": 2700,
+          "npc_shoppers": 3240,
+          "sell_stage": 3
+        },
+        {
+          "id": "ae2:cell_component_16k",
+          "wholesale_gui": 9100,
+          "npc_shoppers": 10920,
+          "sell_stage": 3
+        }
+      ],
+      "stage_range": "2-4",
+      "next_stage_target": 250000
     },
     "tier_5_hightech_export": {
-      "stage_range": "4-5",
-      "next_stage_target": 1000000,
-      "description": "Eksport high-tech AE2 i Mekanism (droga do 1M oraz Wielkiego Finału Tycoona /kontrakt final)",
+      "description": "High-Tech i End — duże komponenty AE2, paliwo jądrowe Mekanism i rubinowa czekolada (sprzedaż od Etapu 4)",
+      "sell_stage": 4,
       "items": [
-        { "id": "ae2:logic_processor", "wholesale_gui": 2400, "npc_shoppers": 2880 },
-        { "id": "ae2:calculation_processor", "wholesale_gui": 2500, "npc_shoppers": 3000 },
-        { "id": "ae2:engineering_processor", "wholesale_gui": 3200, "npc_shoppers": 3840 },
-        { "id": "mekanism:advanced_control_circuit", "wholesale_gui": 2600, "npc_shoppers": 3120 },
-        { "id": "ae2:fluix_pearl", "pack_size": 4, "wholesale_gui": 3600, "npc_shoppers": 4320 },
-        { "id": "mekanism:hdpe_sheet", "pack_size": 4, "wholesale_gui": 4200, "npc_shoppers": 5040 },
-        { "id": "mekanism:elite_control_circuit", "wholesale_gui": 4800, "npc_shoppers": 5760 },
-        { "id": "mekanism:alloy_atomic", "pack_size": 2, "wholesale_gui": 5400, "npc_shoppers": 6480 },
-        { "id": "ae2:cell_component_16k", "wholesale_gui": 6200, "npc_shoppers": 7440 },
-        { "id": "mekanism:teleportation_core", "wholesale_gui": 7200, "npc_shoppers": 8640 },
-        { "id": "mekanism:ultimate_control_circuit", "wholesale_gui": 8500, "npc_shoppers": 10200 },
-        { "id": "ae2:cell_component_64k", "wholesale_gui": 9800, "npc_shoppers": 11760 },
-        { "id": "mekanism:pellet_plutonium", "wholesale_gui": 11000, "npc_shoppers": 13200 },
-        { "id": "ae2:cell_component_256k", "wholesale_gui": 12000, "npc_shoppers": 14400 },
-        { "id": "mekanism:pellet_polonium", "wholesale_gui": 12000, "npc_shoppers": 14400 }
-      ]
+        {
+          "id": "mekanism:pellet_plutonium",
+          "wholesale_gui": 1200,
+          "npc_shoppers": 1440,
+          "sell_stage": 4
+        },
+        {
+          "id": "mekanism:pellet_polonium",
+          "wholesale_gui": 1600,
+          "npc_shoppers": 1920,
+          "sell_stage": 4
+        },
+        {
+          "id": "create_confectionery:bar_of_ruby_chocolate",
+          "wholesale_gui": 2700,
+          "npc_shoppers": 3240,
+          "sell_stage": 4
+        },
+        {
+          "id": "ae2:cell_component_64k",
+          "wholesale_gui": 31000,
+          "npc_shoppers": 37200,
+          "sell_stage": 4
+        },
+        {
+          "id": "ae2:cell_component_256k",
+          "wholesale_gui": 110000,
+          "npc_shoppers": 132000,
+          "sell_stage": 4
+        }
+      ],
+      "stage_range": "4-5",
+      "next_stage_target": 1000000
     }
   },
   "buy_catalog": [
-    { "id": "minecraft:oak_sapling", "alias": "oak_sapling", "category": "plants", "stage": 0, "buy_price": 100, "note": "Zapasowa sadzonka dębu" },
-    { "id": "minecraft:spruce_sapling", "alias": "spruce_sapling", "category": "plants", "stage": 0, "buy_price": 150, "note": "Drewno świerkowe" },
-    { "id": "minecraft:birch_sapling", "alias": "birch_sapling", "category": "plants", "stage": 0, "buy_price": 150, "note": "Drewno brzozowe" },
-    { "id": "minecraft:acacia_sapling", "alias": "acacia_sapling", "category": "plants", "stage": 0, "buy_price": 200, "note": "Drewno akacjowe" },
-    { "id": "minecraft:jungle_sapling", "alias": "jungle_sapling", "category": "plants", "stage": 0, "buy_price": 250, "note": "Drewno dżunglowe (pod kakao)" },
-    { "id": "minecraft:dark_oak_sapling", "alias": "dark_oak_sapling", "category": "plants", "stage": 0, "buy_price": 250, "note": "Drewno ciemnego dębu" },
-    { "id": "minecraft:cherry_sapling", "alias": "cherry_sapling", "category": "plants", "stage": 0, "buy_price": 300, "note": "Drewno wiśniowe" },
-    { "id": "minecraft:mangrove_propagule", "alias": "mangrove_propagule", "category": "plants", "stage": 0, "buy_price": 300, "note": "Sadzonka namorzynów" },
-    { "id": "minecraft:wheat_seeds", "alias": "wheat_seeds", "category": "plants", "stage": 0, "buy_price": 100, "note": "Zapasowe nasiona pszenicy" },
-    { "id": "minecraft:sugar_cane", "alias": "sugar_cane", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter trzciny cukrowej" },
-    { "id": "minecraft:kelp", "alias": "kelp", "category": "plants", "stage": 0, "buy_price": 250, "note": "Starter pod Mechanical Belts" },
-    { "id": "minecraft:bamboo", "alias": "bamboo", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter bambusa i rusztowań" },
-    { "id": "minecraft:cactus", "alias": "cactus", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter kaktusa i zielonego barwnika" },
-    { "id": "minecraft:potato", "alias": "potato", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter ziemniaków pod FD" },
-    { "id": "minecraft:carrot", "alias": "carrot", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter marchewek pod FD" },
-    { "id": "minecraft:beetroot_seeds", "alias": "beetroot_seeds", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter buraków i czerwonego barwnika" },
-    { "id": "minecraft:pumpkin_seeds", "alias": "pumpkin_seeds", "category": "plants", "stage": 0, "buy_price": 250, "note": "Starter dyń pod Stuffed Pumpkin" },
-    { "id": "minecraft:melon_seeds", "alias": "melon_seeds", "category": "plants", "stage": 0, "buy_price": 250, "note": "Starter arbuzów pod Melon Popsicle" },
-    { "id": "minecraft:vine", "alias": "vine", "category": "plants", "stage": 0, "buy_price": 150, "note": "Pnącza pod dekoracje i mossy cobble" },
-    { "id": "minecraft:lily_pad", "alias": "lily_pad", "category": "plants", "stage": 0, "buy_price": 150, "note": "Lilie wodne pod stawy i farmy" },
-    { "id": "farmersdelight:tomato_seeds", "alias": "tomato_seeds", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter pomidorów FD" },
-    { "id": "farmersdelight:cabbage_seeds", "alias": "cabbage_seeds", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter kapusty FD" },
-    { "id": "farmersdelight:onion", "alias": "onion", "category": "plants", "stage": 0, "buy_price": 200, "note": "Starter cebuli FD" },
-    { "id": "farmersdelight:rice", "alias": "rice", "category": "plants", "stage": 0, "buy_price": 250, "note": "Starter ryżu FD" },
-    { "id": "minecraft:brown_mushroom", "alias": "brown_mushroom", "category": "plants", "stage": 1, "buy_price": 250, "note": "Grzyby pod dania FD i fermentację" },
-    { "id": "minecraft:red_mushroom", "alias": "red_mushroom", "category": "plants", "stage": 1, "buy_price": 250, "note": "Grzyby pod farmę i zupy FD" },
-    { "id": "minecraft:sea_pickle", "alias": "sea_pickle", "category": "plants", "stage": 1, "buy_price": 300, "note": "Podwodne światło i limonkowy barwnik" },
-    { "id": "minecraft:sweet_berries", "alias": "sweet_berries", "category": "plants", "stage": 1, "buy_price": 350, "note": "Starter słodkich jagód" },
-    { "id": "minecraft:glow_berries", "alias": "glow_berries", "category": "plants", "stage": 1, "buy_price": 350, "note": "Świecące jagody pod cukiernię i wystrój" },
-    { "id": "minecraft:cocoa_beans", "alias": "cocoa_beans", "category": "plants", "stage": 1, "buy_price": 400, "note": "Starter pod czekoladę i cukiernię" },
-
-    { "id": "minecraft:chicken_spawn_egg", "alias": "chicken", "category": "livestock", "stage": 1, "buy_price": 800, "note": "Starter hodowli kur (jajka, drób, pióra)" },
-    { "id": "minecraft:rabbit_spawn_egg", "alias": "rabbit", "category": "livestock", "stage": 1, "buy_price": 900, "note": "Starter hodowli królików" },
-    { "id": "minecraft:pig_spawn_egg", "alias": "pig", "category": "livestock", "stage": 1, "buy_price": 1000, "note": "Starter hodowli świń (bekon, szynka)" },
-    { "id": "minecraft:sheep_spawn_egg", "alias": "sheep", "category": "livestock", "stage": 1, "buy_price": 1000, "note": "Starter hodowli owiec (wełna, baranina)" },
-    { "id": "minecraft:cow_spawn_egg", "alias": "cow", "category": "livestock", "stage": 1, "buy_price": 1200, "note": "Starter hodowli krów (mleko, wołowina, skóra)" },
-    { "id": "minecraft:bee_spawn_egg", "alias": "bee", "category": "livestock", "stage": 1, "buy_price": 1200, "note": "Starter pszczół pod miód (Honey Glazed Ham)" },
-    { "id": "minecraft:bee_nest", "alias": "bee_nest", "category": "livestock", "stage": 1, "buy_price": 1500, "note": "Startowy ul pod farmę miodu" },
-    { "id": "minecraft:cod_bucket", "alias": "cod_bucket", "category": "livestock", "stage": 1, "buy_price": 600, "note": "Starter dorsza do stawu / zupy rybnej" },
-    { "id": "minecraft:salmon_bucket", "alias": "salmon_bucket", "category": "livestock", "stage": 1, "buy_price": 700, "note": "Starter łososia pod Grilled Salmon" },
-    { "id": "minecraft:squid_spawn_egg", "alias": "squid", "category": "livestock", "stage": 1, "buy_price": 1400, "note": "Starter farmy kałamarnic (Squid Ink Pasta)" },
-    { "id": "minecraft:glow_squid_spawn_egg", "alias": "glow_squid", "category": "livestock", "stage": 1, "buy_price": 1800, "note": "Starter świecącego atramentu i znaków" },
-    { "id": "minecraft:wolf_spawn_egg", "alias": "wolf", "category": "livestock", "stage": 1, "buy_price": 1200, "note": "Towarzysz na wyspę" },
-    { "id": "minecraft:cat_spawn_egg", "alias": "cat", "category": "livestock", "stage": 1, "buy_price": 1200, "note": "Towarzysz odstraszający Creepery" },
-    { "id": "minecraft:villager_spawn_egg", "alias": "villager", "category": "livestock", "stage": 2, "buy_price": 8000, "note": "Starter osadnika pod Create: Trading Floor" },
-
-    { "id": "minecraft:grass_block", "alias": "grass_block", "category": "skyblock", "stage": 0, "buy_price": 250, "note": "Awaryjny blok trawy na rozbudowę wyspy" },
-    { "id": "minecraft:ice", "alias": "ice", "category": "skyblock", "stage": 0, "buy_price": 200, "note": "Awaryjne źródło wody i ślizgawki itemów" },
-    { "id": "minecraft:podzol", "alias": "podzol", "category": "skyblock", "stage": 0, "buy_price": 250, "note": "Podłoże pod grzyby i gigantyczne świerki" },
-    { "id": "minecraft:moss_block", "alias": "moss_block", "category": "skyblock", "stage": 0, "buy_price": 300, "note": "Starter farmy mchu i azalii z mączki kostnej" },
-    { "id": "minecraft:mycelium", "alias": "mycelium", "category": "skyblock", "stage": 1, "buy_price": 500, "note": "Podłoże pod automatyczną farmę grzybów" },
-    { "id": "minecraft:blue_ice", "alias": "blue_ice", "category": "skyblock", "stage": 1, "buy_price": 1200, "note": "Generator bazaltu i szybki transport itemów" },
-    { "id": "minecraft:pointed_dripstone", "alias": "dripstone", "category": "skyblock", "stage": 1, "buy_price": 500, "note": "Wczesna generacja lawy w kotłach" },
-    { "id": "minecraft:lava_bucket", "alias": "lava_bucket", "category": "skyblock", "stage": 1, "buy_price": 1500, "note": "Awaryjne źródło lawy przed Netherem" },
-    { "id": "minecraft:soul_sand", "alias": "soul_sand", "category": "skyblock", "stage": 1, "buy_price": 450, "note": "Starter pod Soul Campfire i Bulk Haunting przed Netherem" },
-    { "id": "minecraft:slime_ball", "alias": "slime_ball", "category": "skyblock", "stage": 1, "buy_price": 450, "note": "Starter pod Super Glue i mechanizmy" },
-    { "id": "minecraft:ink_sac", "alias": "ink_sac", "category": "skyblock", "stage": 1, "buy_price": 350, "note": "Starter atramentu przed farmą kałamarnic" },
-    { "id": "minecraft:sponge", "alias": "sponge", "category": "skyblock", "stage": 1, "buy_price": 800, "note": "Osuszanie wody podczas budowy wysp" },
-    { "id": "minecraft:calcite", "alias": "calcite", "category": "skyblock", "stage": 1, "buy_price": 400, "note": "Blok dekoracyjny (brak naturalnych geod)" },
-    { "id": "minecraft:prismarine_shard", "alias": "prismarine_shard", "category": "skyblock", "stage": 1, "buy_price": 400, "note": "Starter pod Sea Lantern i budownictwo" },
-    { "id": "minecraft:budding_amethyst", "alias": "budding_amethyst", "category": "skyblock", "stage": 2, "buy_price": 3500, "note": "Farma kryształów ametystu bez geod" },
-    { "id": "minecraft:heart_of_the_sea", "alias": "heart_of_the_sea", "category": "skyblock", "stage": 2, "buy_price": 4000, "note": "Rdzeń pod Conduit" },
-
-    { "id": "create:blaze_burner", "alias": "blaze_burner", "category": "tech", "stage": 1, "buy_price": 3500, "note": "Startowy Blaze Burner przed Netherem" },
-    { "id": "waystones:warp_stone", "alias": "warp_stone", "category": "tech", "stage": 1, "buy_price": 2000, "note": "Przenośny kamień teleportacji między wyspami" },
-    { "id": "lightmanscurrency:terminal", "alias": "trading_terminal", "category": "tech", "stage": 2, "buy_price": 2500, "note": "Dodatkowy Trading Terminal do hali fabrycznej" },
-    { "id": "lightmanscurrency:portable_terminal", "alias": "portable_terminal", "category": "tech", "stage": 2, "buy_price": 4500, "note": "Przenośny Trading Terminal do ręki" },
-    { "id": "lightmanscurrency:atm", "alias": "atm", "category": "tech", "stage": 2, "buy_price": 2500, "note": "Dodatkowy bankomat ATM do bazy drużyny" },
-    { "id": "waystones:waystone", "alias": "waystone", "category": "tech", "stage": 2, "buy_price": 3000, "note": "Dodatkowy Waystone na ekspansję wysp" },
-    { "id": "ae2:sky_stone_block", "alias": "sky_stone", "category": "tech", "stage": 3, "buy_price": 5000, "note": "Starter Sky Stone (powielany w AE2/Create)" },
-    { "id": "ae2:flawless_budding_quartz", "alias": "budding_quartz", "category": "tech", "stage": 3, "buy_price": 15000, "note": "Starter kryształów Certus Quartz dla AE2" },
-    { "id": "ae2:logic_processor_press", "alias": "logic_press", "category": "tech", "stage": 3, "buy_price": 4000, "note": "Matryca Inscriber Logic Press (brak meteorytów w Skyblocku)" },
-    { "id": "ae2:calculation_processor_press", "alias": "calculation_press", "category": "tech", "stage": 3, "buy_price": 4000, "note": "Matryca Inscriber Calculation Press (brak meteorytów w Skyblocku)" },
-    { "id": "ae2:engineering_processor_press", "alias": "engineering_press", "category": "tech", "stage": 3, "buy_price": 4000, "note": "Matryca Inscriber Engineering Press (brak meteorytów w Skyblocku)" },
-    { "id": "ae2:silicon_press", "alias": "silicon_press", "category": "tech", "stage": 3, "buy_price": 4000, "note": "Matryca Inscriber Silicon Press (brak meteorytów w Skyblocku)" },
-    { "id": "mekanism:ingot_osmium", "alias": "osmium", "category": "tech", "stage": 3, "buy_price": 4000, "note": "Starter Osmium pod maszyny Mekanism" },
-    { "id": "mekanism:ingot_tin", "alias": "tin", "category": "tech", "stage": 3, "buy_price": 2500, "note": "Starter Cyny (Tin) pod Mekanism" },
-    { "id": "mekanism:ingot_lead", "alias": "lead", "category": "tech", "stage": 3, "buy_price": 3000, "note": "Starter Ołowiu (Lead) pod Mekanism i reaktory" },
-    { "id": "mekanism:fluorite_gem", "alias": "fluorite", "category": "tech", "stage": 3, "buy_price": 3000, "note": "Starter Fluorytu dla chemii Mekanism" },
-    { "id": "mekanism:ingot_uranium", "alias": "uranium", "category": "tech", "stage": 3, "buy_price": 4500, "note": "Starter Uranu pod paliwo jądrowe Mekanism" },
-    { "id": "minecraft:end_portal_frame", "alias": "end_portal_frame", "category": "tech", "stage": 4, "buy_price": 6000, "team_limit": 12, "note": "Rama portalu Endu (brak twierdz w Skyblocku — limit 12 szt./drużynę)" },
-    { "id": "minecraft:ender_eye", "alias": "ender_eye", "category": "tech", "stage": 4, "buy_price": 2000, "team_limit": 12, "note": "Oko Endu do aktywacji portalu (limit 12 szt./drużynę; alternatywnie crafting: Perła Endu + proszek płomyka)" }
+    {
+      "id": "minecraft:oak_sapling",
+      "alias": "oak_sapling",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 60,
+      "note": "Zapasowa sadzonka dębu"
+    },
+    {
+      "id": "minecraft:spruce_sapling",
+      "alias": "spruce_sapling",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 80,
+      "note": "Drewno świerkowe"
+    },
+    {
+      "id": "minecraft:birch_sapling",
+      "alias": "birch_sapling",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 80,
+      "note": "Drewno brzozowe"
+    },
+    {
+      "id": "minecraft:acacia_sapling",
+      "alias": "acacia_sapling",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 100,
+      "note": "Drewno akacjowe"
+    },
+    {
+      "id": "minecraft:jungle_sapling",
+      "alias": "jungle_sapling",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 120,
+      "note": "Drewno dżunglowe (pod kakao)"
+    },
+    {
+      "id": "minecraft:dark_oak_sapling",
+      "alias": "dark_oak_sapling",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 120,
+      "note": "Drewno ciemnego dębu"
+    },
+    {
+      "id": "minecraft:cherry_sapling",
+      "alias": "cherry_sapling",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 150,
+      "note": "Drewno wiśniowe"
+    },
+    {
+      "id": "minecraft:mangrove_propagule",
+      "alias": "mangrove_propagule",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 150,
+      "note": "Sadzonka namorzynów"
+    },
+    {
+      "id": "minecraft:wheat_seeds",
+      "alias": "wheat_seeds",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 30,
+      "note": "Zapasowe nasiona pszenicy"
+    },
+    {
+      "id": "minecraft:sugar_cane",
+      "alias": "sugar_cane",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 80,
+      "note": "Starter trzciny cukrowej"
+    },
+    {
+      "id": "minecraft:kelp",
+      "alias": "kelp",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 100,
+      "note": "Starter pod Mechanical Belts"
+    },
+    {
+      "id": "minecraft:bamboo",
+      "alias": "bamboo",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 80,
+      "note": "Starter bambusa i rusztowań"
+    },
+    {
+      "id": "minecraft:cactus",
+      "alias": "cactus",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 60,
+      "note": "Starter kaktusa i zielonego barwnika"
+    },
+    {
+      "id": "minecraft:potato",
+      "alias": "potato",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 80,
+      "note": "Starter ziemniaków pod FD"
+    },
+    {
+      "id": "minecraft:carrot",
+      "alias": "carrot",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 80,
+      "note": "Starter marchewek pod FD"
+    },
+    {
+      "id": "minecraft:beetroot_seeds",
+      "alias": "beetroot_seeds",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 80,
+      "note": "Starter buraków i czerwonego barwnika"
+    },
+    {
+      "id": "minecraft:pumpkin_seeds",
+      "alias": "pumpkin_seeds",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 120,
+      "note": "Starter dyń pod Stuffed Pumpkin"
+    },
+    {
+      "id": "minecraft:melon_seeds",
+      "alias": "melon_seeds",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 120,
+      "note": "Starter arbuzów pod Melon Popsicle"
+    },
+    {
+      "id": "minecraft:vine",
+      "alias": "vine",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 60,
+      "note": "Pnącza pod dekoracje i mossy cobble"
+    },
+    {
+      "id": "minecraft:lily_pad",
+      "alias": "lily_pad",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 60,
+      "note": "Lilie wodne pod stawy i farmy"
+    },
+    {
+      "id": "farmersdelight:tomato_seeds",
+      "alias": "tomato_seeds",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 100,
+      "note": "Starter pomidorów FD"
+    },
+    {
+      "id": "farmersdelight:cabbage_seeds",
+      "alias": "cabbage_seeds",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 100,
+      "note": "Starter kapusty FD"
+    },
+    {
+      "id": "farmersdelight:onion",
+      "alias": "onion",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 100,
+      "note": "Starter cebuli FD"
+    },
+    {
+      "id": "farmersdelight:rice",
+      "alias": "rice",
+      "category": "plants",
+      "stage": 0,
+      "buy_price": 120,
+      "note": "Starter ryżu FD"
+    },
+    {
+      "id": "minecraft:brown_mushroom",
+      "alias": "brown_mushroom",
+      "category": "plants",
+      "stage": 1,
+      "buy_price": 150,
+      "note": "Grzyby pod dania FD i fermentację"
+    },
+    {
+      "id": "minecraft:red_mushroom",
+      "alias": "red_mushroom",
+      "category": "plants",
+      "stage": 1,
+      "buy_price": 150,
+      "note": "Grzyby pod farmę i zupy FD"
+    },
+    {
+      "id": "minecraft:sea_pickle",
+      "alias": "sea_pickle",
+      "category": "plants",
+      "stage": 1,
+      "buy_price": 200,
+      "note": "Podwodne światło i limonkowy barwnik"
+    },
+    {
+      "id": "minecraft:sweet_berries",
+      "alias": "sweet_berries",
+      "category": "plants",
+      "stage": 1,
+      "buy_price": 200,
+      "note": "Starter słodkich jagód"
+    },
+    {
+      "id": "minecraft:glow_berries",
+      "alias": "glow_berries",
+      "category": "plants",
+      "stage": 1,
+      "buy_price": 200,
+      "note": "Świecące jagody pod cukiernię i wystrój"
+    },
+    {
+      "id": "minecraft:cocoa_beans",
+      "alias": "cocoa_beans",
+      "category": "plants",
+      "stage": 1,
+      "buy_price": 300,
+      "note": "Starter pod czekoladę i cukiernię"
+    },
+    {
+      "id": "minecraft:chicken_spawn_egg",
+      "alias": "chicken",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 800,
+      "note": "Starter hodowli kur (jajka, drób, pióra)"
+    },
+    {
+      "id": "minecraft:rabbit_spawn_egg",
+      "alias": "rabbit",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 900,
+      "note": "Starter hodowli królików"
+    },
+    {
+      "id": "minecraft:pig_spawn_egg",
+      "alias": "pig",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1000,
+      "note": "Starter hodowli świń (bekon, szynka)"
+    },
+    {
+      "id": "minecraft:sheep_spawn_egg",
+      "alias": "sheep",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1000,
+      "note": "Starter hodowli owiec (wełna, baranina)"
+    },
+    {
+      "id": "minecraft:cow_spawn_egg",
+      "alias": "cow",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1200,
+      "note": "Starter hodowli krów (mleko, wołowina, skóra)"
+    },
+    {
+      "id": "minecraft:bee_spawn_egg",
+      "alias": "bee",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1200,
+      "note": "Starter pszczół pod miód (Honey Glazed Ham)"
+    },
+    {
+      "id": "minecraft:bee_nest",
+      "alias": "bee_nest",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1500,
+      "note": "Startowy ul pod farmę miodu"
+    },
+    {
+      "id": "minecraft:cod_bucket",
+      "alias": "cod_bucket",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 600,
+      "note": "Starter dorsza do stawu / zupy rybnej"
+    },
+    {
+      "id": "minecraft:salmon_bucket",
+      "alias": "salmon_bucket",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 700,
+      "note": "Starter łososia pod Grilled Salmon"
+    },
+    {
+      "id": "minecraft:squid_spawn_egg",
+      "alias": "squid",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1400,
+      "note": "Starter farmy kałamarnic (Squid Ink Pasta)"
+    },
+    {
+      "id": "minecraft:glow_squid_spawn_egg",
+      "alias": "glow_squid",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1800,
+      "note": "Starter świecącego atramentu i znaków"
+    },
+    {
+      "id": "minecraft:wolf_spawn_egg",
+      "alias": "wolf",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1200,
+      "note": "Towarzysz na wyspę"
+    },
+    {
+      "id": "minecraft:cat_spawn_egg",
+      "alias": "cat",
+      "category": "livestock",
+      "stage": 1,
+      "buy_price": 1200,
+      "note": "Towarzysz odstraszający Creepery"
+    },
+    {
+      "id": "minecraft:villager_spawn_egg",
+      "alias": "villager",
+      "category": "livestock",
+      "stage": 2,
+      "buy_price": 8000,
+      "note": "Starter osadnika pod Create: Trading Floor"
+    },
+    {
+      "id": "minecraft:grass_block",
+      "alias": "grass_block",
+      "category": "skyblock",
+      "stage": 0,
+      "buy_price": 150,
+      "note": "Awaryjny blok trawy na rozbudowę wyspy"
+    },
+    {
+      "id": "minecraft:ice",
+      "alias": "ice",
+      "category": "skyblock",
+      "stage": 0,
+      "buy_price": 100,
+      "note": "Awaryjne źródło wody i ślizgawki itemów"
+    },
+    {
+      "id": "minecraft:podzol",
+      "alias": "podzol",
+      "category": "skyblock",
+      "stage": 0,
+      "buy_price": 150,
+      "note": "Podłoże pod grzyby i gigantyczne świerki"
+    },
+    {
+      "id": "minecraft:moss_block",
+      "alias": "moss_block",
+      "category": "skyblock",
+      "stage": 0,
+      "buy_price": 200,
+      "note": "Starter farmy mchu i azalii z mączki kostnej"
+    },
+    {
+      "id": "minecraft:mycelium",
+      "alias": "mycelium",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 300,
+      "note": "Podłoże pod automatyczną farmę grzybów"
+    },
+    {
+      "id": "minecraft:blue_ice",
+      "alias": "blue_ice",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 800,
+      "note": "Generator bazaltu i szybki transport itemów"
+    },
+    {
+      "id": "minecraft:pointed_dripstone",
+      "alias": "dripstone",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 300,
+      "note": "Wczesna generacja lawy w kotłach"
+    },
+    {
+      "id": "minecraft:lava_bucket",
+      "alias": "lava_bucket",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 1000,
+      "note": "Awaryjne źródło lawy przed Netherem"
+    },
+    {
+      "id": "minecraft:soul_sand",
+      "alias": "soul_sand",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 300,
+      "note": "Starter pod Soul Campfire i Bulk Haunting przed Netherem"
+    },
+    {
+      "id": "minecraft:slime_ball",
+      "alias": "slime_ball",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 300,
+      "note": "Starter pod Super Glue i mechanizmy"
+    },
+    {
+      "id": "minecraft:ink_sac",
+      "alias": "ink_sac",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 200,
+      "note": "Starter atramentu przed farmą kałamarnic"
+    },
+    {
+      "id": "minecraft:sponge",
+      "alias": "sponge",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 500,
+      "note": "Osuszanie wody podczas budowy wysp"
+    },
+    {
+      "id": "minecraft:calcite",
+      "alias": "calcite",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 300,
+      "note": "Blok dekoracyjny (brak naturalnych geod)"
+    },
+    {
+      "id": "minecraft:prismarine_shard",
+      "alias": "prismarine_shard",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 300,
+      "note": "Starter pod Sea Lantern i budownictwo"
+    },
+    {
+      "id": "minecraft:budding_amethyst",
+      "alias": "budding_amethyst",
+      "category": "skyblock",
+      "stage": 2,
+      "buy_price": 3500,
+      "note": "Farma kryształów ametystu bez geod"
+    },
+    {
+      "id": "minecraft:heart_of_the_sea",
+      "alias": "heart_of_the_sea",
+      "category": "skyblock",
+      "stage": 2,
+      "buy_price": 4000,
+      "note": "Rdzeń pod Conduit"
+    },
+    {
+      "id": "create:blaze_burner",
+      "alias": "blaze_burner",
+      "category": "tech",
+      "stage": 1,
+      "buy_price": 2500,
+      "note": "Startowy Blaze Burner przed Netherem"
+    },
+    {
+      "id": "waystones:warp_stone",
+      "alias": "warp_stone",
+      "category": "tech",
+      "stage": 1,
+      "buy_price": 2000,
+      "note": "Przenośny kamień teleportacji między wyspami"
+    },
+    {
+      "id": "lightmanscurrency:terminal",
+      "alias": "trading_terminal",
+      "category": "tech",
+      "stage": 2,
+      "buy_price": 2500,
+      "note": "Dodatkowy Trading Terminal do hali fabrycznej"
+    },
+    {
+      "id": "lightmanscurrency:portable_terminal",
+      "alias": "portable_terminal",
+      "category": "tech",
+      "stage": 2,
+      "buy_price": 4500,
+      "note": "Przenośny Trading Terminal do ręki"
+    },
+    {
+      "id": "lightmanscurrency:atm",
+      "alias": "atm",
+      "category": "tech",
+      "stage": 2,
+      "buy_price": 2500,
+      "note": "Dodatkowy bankomat ATM do bazy drużyny"
+    },
+    {
+      "id": "waystones:waystone",
+      "alias": "waystone",
+      "category": "tech",
+      "stage": 2,
+      "buy_price": 3000,
+      "note": "Dodatkowy Waystone na ekspansję wysp"
+    },
+    {
+      "id": "ae2:sky_stone_block",
+      "alias": "sky_stone",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 2500,
+      "note": "Starter Sky Stone (powielany w AE2/Create)"
+    },
+    {
+      "id": "ae2:flawless_budding_quartz",
+      "alias": "budding_quartz",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 12000,
+      "note": "Starter kryształów Certus Quartz dla AE2"
+    },
+    {
+      "id": "ae2:logic_processor_press",
+      "alias": "logic_press",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 3000,
+      "note": "Matryca Inscriber Logic Press (brak meteorytów w Skyblocku)"
+    },
+    {
+      "id": "ae2:calculation_processor_press",
+      "alias": "calculation_press",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 3000,
+      "note": "Matryca Inscriber Calculation Press (brak meteorytów w Skyblocku)"
+    },
+    {
+      "id": "ae2:engineering_processor_press",
+      "alias": "engineering_press",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 3000,
+      "note": "Matryca Inscriber Engineering Press (brak meteorytów w Skyblocku)"
+    },
+    {
+      "id": "ae2:silicon_press",
+      "alias": "silicon_press",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 3000,
+      "note": "Matryca Inscriber Silicon Press (brak meteorytów w Skyblocku)"
+    },
+    {
+      "id": "mekanism:ingot_osmium",
+      "alias": "osmium",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 600,
+      "note": "Starter Osmium pod maszyny Mekanism"
+    },
+    {
+      "id": "mekanism:ingot_tin",
+      "alias": "tin",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 400,
+      "note": "Starter Cyny (Tin) pod Mekanism"
+    },
+    {
+      "id": "mekanism:ingot_lead",
+      "alias": "lead",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 400,
+      "note": "Starter Ołowiu (Lead) pod Mekanism i reaktory"
+    },
+    {
+      "id": "mekanism:fluorite_gem",
+      "alias": "fluorite",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 500,
+      "note": "Starter Fluorytu dla chemii Mekanism"
+    },
+    {
+      "id": "mekanism:ingot_uranium",
+      "alias": "uranium",
+      "category": "tech",
+      "stage": 3,
+      "buy_price": 2000,
+      "note": "Starter Uranu pod paliwo jądrowe Mekanism"
+    },
+    {
+      "id": "minecraft:end_portal_frame",
+      "alias": "end_portal_frame",
+      "category": "tech",
+      "stage": 4,
+      "buy_price": 4000,
+      "team_limit": 12,
+      "note": "Rama portalu Endu (brak twierdz w Skyblocku — limit 12 szt./drużynę)"
+    },
+    {
+      "id": "minecraft:ender_eye",
+      "alias": "ender_eye",
+      "category": "tech",
+      "stage": 4,
+      "buy_price": 1000,
+      "team_limit": 12,
+      "note": "Oko Endu do aktywacji portalu (limit 12 szt./drużynę; alternatywnie crafting: Perła Endu + proszek płomyka)"
+    },
+    {
+      "id": "minecraft:redstone",
+      "alias": "redstone",
+      "category": "skyblock",
+      "stage": 1,
+      "buy_price": 40,
+      "team_limit": 256,
+      "note": "Startowy redstone pod Electron Tube / Deployer / Mechanical Crafter (przed myciem Crushed Iron nie ma innego źródła)"
+    },
+    {
+      "id": "minecraft:diamond",
+      "alias": "diamond",
+      "category": "tech",
+      "stage": 4,
+      "buy_price": 5000,
+      "team_limit": 16,
+      "note": "Bootstrap łańcucha jądrowego Mekanism (elite/ultimate circuit, port i pręty reaktora) — brak odnawialnych diamentów przed antymaterią"
+    },
+    {
+      "id": "create:shaft",
+      "alias": "shaft",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 105,
+      "count": 16,
+      "note": "Kinetyka (16 szt.)"
+    },
+    {
+      "id": "create:cogwheel",
+      "alias": "cogwheel",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 160,
+      "count": 8,
+      "note": "Kinetyka (8 szt.)"
+    },
+    {
+      "id": "create:large_cogwheel",
+      "alias": "large_cogwheel",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 200,
+      "count": 8,
+      "note": "Kinetyka (8 szt.)"
+    },
+    {
+      "id": "create:gearbox",
+      "alias": "gearbox",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 180,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:vertical_gearbox",
+      "alias": "vertical_gearbox",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 180,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:encased_chain_drive",
+      "alias": "encased_chain_drive",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 110,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:clutch",
+      "alias": "clutch",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 485,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:gearshift",
+      "alias": "gearshift",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 550,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:belt_connector",
+      "alias": "belt_connector",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 620,
+      "count": 8,
+      "note": "Kinetyka (8 szt.)"
+    },
+    {
+      "id": "create:chain_conveyor",
+      "alias": "chain_conveyor",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 180,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:hand_crank",
+      "alias": "hand_crank",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 55,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:water_wheel",
+      "alias": "water_wheel",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 57,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:large_water_wheel",
+      "alias": "large_water_wheel",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 110,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:windmill_bearing",
+      "alias": "windmill_bearing",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 22,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:sail_frame",
+      "alias": "sail_frame",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 310,
+      "count": 8,
+      "note": "Kinetyka (8 szt.)"
+    },
+    {
+      "id": "create:white_sail",
+      "alias": "white_sail",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 245,
+      "count": 8,
+      "note": "Kinetyka (8 szt.)"
+    },
+    {
+      "id": "create:mechanical_bearing",
+      "alias": "mechanical_bearing",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 105,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:flywheel",
+      "alias": "flywheel",
+      "category": "machines",
+      "stage": 1,
+      "buy_price": 1700,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:steam_engine",
+      "alias": "steam_engine",
+      "category": "machines",
+      "stage": 1,
+      "buy_price": 1700,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:rotation_speed_controller",
+      "alias": "rotation_speed_controller",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 3800,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:sequenced_gearshift",
+      "alias": "sequenced_gearshift",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 2000,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:speedometer",
+      "alias": "speedometer",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1300,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:stressometer",
+      "alias": "stressometer",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1400,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create_connected:parallel_gearbox",
+      "alias": "parallel_gearbox",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 230,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create_connected:six_way_gearbox",
+      "alias": "six_way_gearbox",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 240,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create_connected:freewheel_clutch",
+      "alias": "freewheel_clutch",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 245,
+      "note": "Kinetyka"
+    },
+    {
+      "id": "create:millstone",
+      "alias": "millstone",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 115,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:crushing_wheel",
+      "alias": "crushing_wheel",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1200,
+      "count": 2,
+      "note": "Przetwórstwo (2 szt.)"
+    },
+    {
+      "id": "create:encased_fan",
+      "alias": "encased_fan",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 575,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:nozzle",
+      "alias": "nozzle",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 160,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:mechanical_press",
+      "alias": "mechanical_press",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 935,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:mechanical_mixer",
+      "alias": "mechanical_mixer",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 780,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:basin",
+      "alias": "basin",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 165,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:empty_blaze_burner",
+      "alias": "empty_blaze_burner",
+      "category": "machines",
+      "stage": 1,
+      "buy_price": 490,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:mechanical_saw",
+      "alias": "mechanical_saw",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 475,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:mechanical_drill",
+      "alias": "mechanical_drill",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 295,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:deployer",
+      "alias": "deployer",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 3400,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:mechanical_harvester",
+      "alias": "mechanical_harvester",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 450,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:mechanical_plough",
+      "alias": "mechanical_plough",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 510,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:mechanical_crafter",
+      "alias": "mechanical_crafter",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 2600,
+      "count": 4,
+      "note": "Przetwórstwo (4 szt.)"
+    },
+    {
+      "id": "create:spout",
+      "alias": "spout",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 125,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:item_drain",
+      "alias": "item_drain",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 160,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:mechanical_roller",
+      "alias": "mechanical_roller",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 2200,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create_mechanical_extruder:mechanical_extruder",
+      "alias": "mechanical_extruder",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 130,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create_mechanical_extruder:mechanical_brass_extruder",
+      "alias": "mechanical_brass_extruder",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 3000,
+      "note": "Przetwórstwo"
+    },
+    {
+      "id": "create:fluid_pipe",
+      "alias": "fluid_pipe",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 660,
+      "count": 16,
+      "note": "Płyny (16 szt.)"
+    },
+    {
+      "id": "create:mechanical_pump",
+      "alias": "mechanical_pump",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 88,
+      "note": "Płyny"
+    },
+    {
+      "id": "create:fluid_tank",
+      "alias": "fluid_tank",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 745,
+      "count": 4,
+      "note": "Płyny (4 szt.)"
+    },
+    {
+      "id": "create:fluid_valve",
+      "alias": "fluid_valve",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 170,
+      "note": "Płyny"
+    },
+    {
+      "id": "create:smart_fluid_pipe",
+      "alias": "smart_fluid_pipe",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1800,
+      "note": "Płyny"
+    },
+    {
+      "id": "create:hose_pulley",
+      "alias": "hose_pulley",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 350,
+      "note": "Płyny"
+    },
+    {
+      "id": "create:portable_fluid_interface",
+      "alias": "portable_fluid_interface",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 205,
+      "note": "Płyny"
+    },
+    {
+      "id": "create_connected:fluid_vessel",
+      "alias": "fluid_vessel",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 745,
+      "count": 4,
+      "note": "Płyny (4 szt.)"
+    },
+    {
+      "id": "create:depot",
+      "alias": "depot",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 115,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:weighted_ejector",
+      "alias": "weighted_ejector",
+      "category": "machines",
+      "stage": 1,
+      "buy_price": 1100,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:chute",
+      "alias": "chute",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 240,
+      "count": 4,
+      "note": "Logistyka (4 szt.)"
+    },
+    {
+      "id": "create:smart_chute",
+      "alias": "smart_chute",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1900,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:andesite_funnel",
+      "alias": "andesite_funnel",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 110,
+      "count": 4,
+      "note": "Logistyka (4 szt.)"
+    },
+    {
+      "id": "create:brass_funnel",
+      "alias": "brass_funnel",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 3200,
+      "count": 4,
+      "note": "Logistyka (4 szt.)"
+    },
+    {
+      "id": "create:andesite_tunnel",
+      "alias": "andesite_tunnel",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 205,
+      "count": 4,
+      "note": "Logistyka (4 szt.)"
+    },
+    {
+      "id": "create:brass_tunnel",
+      "alias": "brass_tunnel",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 4000,
+      "count": 4,
+      "note": "Logistyka (4 szt.)"
+    },
+    {
+      "id": "create:item_vault",
+      "alias": "item_vault",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 935,
+      "count": 4,
+      "note": "Logistyka (4 szt.)"
+    },
+    {
+      "id": "create_connected:item_silo",
+      "alias": "item_silo",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 935,
+      "count": 4,
+      "note": "Logistyka (4 szt.)"
+    },
+    {
+      "id": "create:portable_storage_interface",
+      "alias": "portable_storage_interface",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 175,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:mechanical_arm",
+      "alias": "mechanical_arm",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 5200,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:packager",
+      "alias": "packager",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1600,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:repackager",
+      "alias": "repackager",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1700,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:package_frogport",
+      "alias": "package_frogport",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 510,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:stock_link",
+      "alias": "stock_link",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 2000,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:stock_ticker",
+      "alias": "stock_ticker",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 3800,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:redstone_requester",
+      "alias": "redstone_requester",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 2800,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:factory_gauge",
+      "alias": "factory_gauge",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 2900,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:display_link",
+      "alias": "display_link",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1700,
+      "note": "Logistyka"
+    },
+    {
+      "id": "create:display_board",
+      "alias": "display_board",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 2300,
+      "count": 4,
+      "note": "Logistyka (4 szt.)"
+    },
+    {
+      "id": "create:redstone_link",
+      "alias": "redstone_link",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1500,
+      "count": 2,
+      "note": "Logistyka (2 szt.)"
+    },
+    {
+      "id": "create:mechanical_piston",
+      "alias": "mechanical_piston",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 105,
+      "note": "Kontrapcje"
+    },
+    {
+      "id": "create:sticky_mechanical_piston",
+      "alias": "sticky_mechanical_piston",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 280,
+      "note": "Kontrapcje"
+    },
+    {
+      "id": "create:piston_extension_pole",
+      "alias": "piston_extension_pole",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 100,
+      "count": 16,
+      "note": "Kontrapcje (16 szt.)"
+    },
+    {
+      "id": "create:gantry_carriage",
+      "alias": "gantry_carriage",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 120,
+      "note": "Kontrapcje"
+    },
+    {
+      "id": "create:gantry_shaft",
+      "alias": "gantry_shaft",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 820,
+      "count": 16,
+      "note": "Kontrapcje (16 szt.)"
+    },
+    {
+      "id": "create:linear_chassis",
+      "alias": "linear_chassis",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 185,
+      "count": 4,
+      "note": "Kontrapcje (4 szt.)"
+    },
+    {
+      "id": "create:sticker",
+      "alias": "sticker",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 690,
+      "note": "Kontrapcje"
+    },
+    {
+      "id": "create:rope_pulley",
+      "alias": "rope_pulley",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 220,
+      "note": "Kontrapcje"
+    },
+    {
+      "id": "create:elevator_pulley",
+      "alias": "elevator_pulley",
+      "category": "machines",
+      "stage": 1,
+      "buy_price": 870,
+      "note": "Kontrapcje"
+    },
+    {
+      "id": "create:cart_assembler",
+      "alias": "cart_assembler",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 500,
+      "note": "Kontrapcje"
+    },
+    {
+      "id": "create:track_station",
+      "alias": "track_station",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 1100,
+      "note": "Kolej"
+    },
+    {
+      "id": "create:track_signal",
+      "alias": "track_signal",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 530,
+      "note": "Kolej"
+    },
+    {
+      "id": "create:controls",
+      "alias": "controls",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 4200,
+      "note": "Kolej"
+    },
+    {
+      "id": "createaddition:electric_motor",
+      "alias": "electric_motor",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 5400,
+      "note": "Elektryka"
+    },
+    {
+      "id": "createaddition:alternator",
+      "alias": "alternator",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 3500,
+      "note": "Elektryka"
+    },
+    {
+      "id": "createaddition:rolling_mill",
+      "alias": "rolling_mill",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 485,
+      "note": "Elektryka"
+    },
+    {
+      "id": "createaddition:tesla_coil",
+      "alias": "tesla_coil",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 6900,
+      "note": "Elektryka"
+    },
+    {
+      "id": "createaddition:modular_accumulator",
+      "alias": "modular_accumulator",
+      "category": "machines",
+      "stage": 2,
+      "buy_price": 4000,
+      "note": "Elektryka"
+    },
+    {
+      "id": "createaddition:connector",
+      "alias": "connector",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 345,
+      "count": 4,
+      "note": "Elektryka (4 szt.)"
+    },
+    {
+      "id": "createaddition:copper_spool",
+      "alias": "copper_spool",
+      "category": "machines",
+      "stage": 0,
+      "buy_price": 730,
+      "count": 4,
+      "note": "Elektryka (4 szt.)"
+    },
+    {
+      "id": "createaddition:portable_energy_interface",
+      "alias": "portable_energy_interface",
+      "category": "machines",
+      "stage": 1,
+      "buy_price": 870,
+      "note": "Elektryka"
+    },
+    {
+      "id": "minecraft:iron_ingot",
+      "alias": "iron_ingot",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 1100,
+      "count": 16,
+      "note": "Sztabki (16 szt.)"
+    },
+    {
+      "id": "minecraft:copper_ingot",
+      "alias": "copper_ingot",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 695,
+      "count": 16,
+      "note": "Sztabki (16 szt.)"
+    },
+    {
+      "id": "create:zinc_ingot",
+      "alias": "zinc_ingot",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 2400,
+      "count": 16,
+      "note": "Sztabki (16 szt.)"
+    },
+    {
+      "id": "minecraft:gold_ingot",
+      "alias": "gold_ingot",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 8500,
+      "count": 16,
+      "note": "Sztabki (16 szt.)"
+    },
+    {
+      "id": "create:andesite_alloy",
+      "alias": "andesite_alloy",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 485,
+      "count": 16,
+      "note": "Sztabki (16 szt.)"
+    },
+    {
+      "id": "create:brass_ingot",
+      "alias": "brass_ingot",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 2900,
+      "count": 16,
+      "note": "Sztabki (16 szt.)"
+    },
+    {
+      "id": "createaddition:electrum_ingot",
+      "alias": "electrum_ingot",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 13000,
+      "count": 16,
+      "note": "Sztabki (16 szt.)"
+    },
+    {
+      "id": "create:iron_sheet",
+      "alias": "iron_sheet",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 1300,
+      "count": 16,
+      "note": "Półprodukty (16 szt.)"
+    },
+    {
+      "id": "create:copper_sheet",
+      "alias": "copper_sheet",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 845,
+      "count": 16,
+      "note": "Półprodukty (16 szt.)"
+    },
+    {
+      "id": "create:brass_sheet",
+      "alias": "brass_sheet",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 3200,
+      "count": 16,
+      "note": "Półprodukty (16 szt.)"
+    },
+    {
+      "id": "create:golden_sheet",
+      "alias": "golden_sheet",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 4500,
+      "count": 8,
+      "note": "Półprodukty (8 szt.)"
+    },
+    {
+      "id": "createaddition:copper_wire",
+      "alias": "copper_wire",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 505,
+      "count": 16,
+      "note": "Półprodukty (16 szt.)"
+    },
+    {
+      "id": "create:andesite_casing",
+      "alias": "andesite_casing",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 565,
+      "count": 8,
+      "note": "Półprodukty (8 szt.)"
+    },
+    {
+      "id": "create:copper_casing",
+      "alias": "copper_casing",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 720,
+      "count": 8,
+      "note": "Półprodukty (8 szt.)"
+    },
+    {
+      "id": "create:brass_casing",
+      "alias": "brass_casing",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 2100,
+      "count": 8,
+      "note": "Półprodukty (8 szt.)"
+    },
+    {
+      "id": "create:electron_tube",
+      "alias": "electron_tube",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 6500,
+      "count": 8,
+      "note": "Półprodukty (8 szt.)"
+    },
+    {
+      "id": "create:precision_mechanism",
+      "alias": "precision_mechanism",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 11000,
+      "count": 4,
+      "note": "Półprodukty (4 szt.)"
+    },
+    {
+      "id": "create:polished_rose_quartz",
+      "alias": "polished_rose_quartz",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 3900,
+      "count": 8,
+      "note": "Półprodukty (8 szt.)"
+    },
+    {
+      "id": "create:sturdy_sheet",
+      "alias": "sturdy_sheet",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 945,
+      "count": 8,
+      "note": "Półprodukty (8 szt.)"
+    },
+    {
+      "id": "create:cardboard",
+      "alias": "cardboard",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 445,
+      "count": 16,
+      "note": "Półprodukty (16 szt.)"
+    },
+    {
+      "id": "minecraft:coal",
+      "alias": "coal",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 9300,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:charcoal",
+      "alias": "charcoal",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 1600,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:quartz",
+      "alias": "quartz",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 1800,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:lapis_lazuli",
+      "alias": "lapis_lazuli",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 3500,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:glowstone_dust",
+      "alias": "glowstone_dust",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 2400,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:amethyst_shard",
+      "alias": "amethyst_shard",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 2400,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:emerald",
+      "alias": "emerald",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 4700,
+      "count": 8,
+      "note": "Surowce (8 szt.)"
+    },
+    {
+      "id": "minecraft:ender_pearl",
+      "alias": "ender_pearl",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 5800,
+      "count": 4,
+      "note": "Surowce (4 szt.)"
+    },
+    {
+      "id": "minecraft:blaze_rod",
+      "alias": "blaze_rod",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 3500,
+      "count": 4,
+      "note": "Surowce (4 szt.)"
+    },
+    {
+      "id": "minecraft:string",
+      "alias": "string",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 580,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:leather",
+      "alias": "leather",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 1200,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:bone_meal",
+      "alias": "bone_meal",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 465,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:gunpowder",
+      "alias": "gunpowder",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 1200,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:flint",
+      "alias": "flint",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 225,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:clay_ball",
+      "alias": "clay_ball",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 550,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:sand",
+      "alias": "sand",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 1800,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:red_sand",
+      "alias": "red_sand",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 3000,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:gravel",
+      "alias": "gravel",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 485,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:obsidian",
+      "alias": "obsidian",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 1800,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:netherrack",
+      "alias": "netherrack",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 350,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:soul_soil",
+      "alias": "soul_soil",
+      "category": "materials",
+      "stage": 1,
+      "buy_price": 910,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:end_stone",
+      "alias": "end_stone",
+      "category": "materials",
+      "stage": 4,
+      "buy_price": 1400,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:nether_wart",
+      "alias": "nether_wart",
+      "category": "materials",
+      "stage": 2,
+      "buy_price": 580,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:paper",
+      "alias": "paper",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 330,
+      "count": 64,
+      "note": "Surowce (64 szt.)"
+    },
+    {
+      "id": "minecraft:book",
+      "alias": "book",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 630,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "minecraft:white_wool",
+      "alias": "white_wool",
+      "category": "materials",
+      "stage": 0,
+      "buy_price": 580,
+      "count": 16,
+      "note": "Surowce (16 szt.)"
+    },
+    {
+      "id": "create:asurine",
+      "alias": "asurine",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 3100,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:crimsite",
+      "alias": "crimsite",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 1600,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:ochrum",
+      "alias": "ochrum",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 7400,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:veridium",
+      "alias": "veridium",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 2600,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:cut_andesite_bricks",
+      "alias": "cut_andesite_bricks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1400,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:cut_granite_bricks",
+      "alias": "cut_granite_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 2200,
+      "count": 16,
+      "note": "Kamień Create (16 szt.)"
+    },
+    {
+      "id": "create:cut_diorite_bricks",
+      "alias": "cut_diorite_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 2200,
+      "count": 16,
+      "note": "Kamień Create (16 szt.)"
+    },
+    {
+      "id": "create:cut_deepslate_bricks",
+      "alias": "cut_deepslate_bricks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 4500,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:cut_tuff_bricks",
+      "alias": "cut_tuff_bricks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1300,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:cut_asurine_bricks",
+      "alias": "cut_asurine_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 4000,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:cut_crimsite_bricks",
+      "alias": "cut_crimsite_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 2200,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:cut_ochrum_bricks",
+      "alias": "cut_ochrum_bricks",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 2200,
+      "count": 16,
+      "note": "Kamień Create (16 szt.)"
+    },
+    {
+      "id": "create:cut_veridium_bricks",
+      "alias": "cut_veridium_bricks",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 3600,
+      "count": 64,
+      "note": "Kamień Create (64 szt.)"
+    },
+    {
+      "id": "create:framed_glass",
+      "alias": "framed_glass",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1400,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:industrial_iron_block",
+      "alias": "industrial_iron_block",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 2500,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:andesite_scaffolding",
+      "alias": "andesite_scaffolding",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1300,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:brass_scaffolding",
+      "alias": "brass_scaffolding",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 6300,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:copper_scaffolding",
+      "alias": "copper_scaffolding",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1700,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:copper_shingles",
+      "alias": "copper_shingles",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1700,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:copper_tiles",
+      "alias": "copper_tiles",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1700,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:metal_girder",
+      "alias": "metal_girder",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 3200,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:ornate_iron_window",
+      "alias": "ornate_iron_window",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1600,
+      "count": 64,
+      "note": "Bloki Create (64 szt.)"
+    },
+    {
+      "id": "create:rose_quartz_tiles",
+      "alias": "rose_quartz_tiles",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 4200,
+      "count": 16,
+      "note": "Bloki Create (16 szt.)"
+    },
+    {
+      "id": "create:rose_quartz_lamp",
+      "alias": "rose_quartz_lamp",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 5600,
+      "count": 4,
+      "note": "Bloki Create (4 szt.)"
+    },
+    {
+      "id": "create:copycat_panel",
+      "alias": "copycat_panel",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 650,
+      "count": 16,
+      "note": "Bloki Create (16 szt.)"
+    },
+    {
+      "id": "create:copycat_step",
+      "alias": "copycat_step",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 650,
+      "count": 16,
+      "note": "Bloki Create (16 szt.)"
+    },
+    {
+      "id": "copycats:copycat_block",
+      "alias": "copycat_block",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 2600,
+      "count": 16,
+      "note": "Bloki Create (16 szt.)"
+    },
+    {
+      "id": "copycats:copycat_slope",
+      "alias": "copycat_slope",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1300,
+      "count": 16,
+      "note": "Bloki Create (16 szt.)"
+    },
+    {
+      "id": "createdeco:blue_bricks",
+      "alias": "blue_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 3800,
+      "count": 64,
+      "note": "Create Deco (64 szt.)"
+    },
+    {
+      "id": "createdeco:dean_bricks",
+      "alias": "dean_bricks",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 6300,
+      "count": 64,
+      "note": "Create Deco (64 szt.)"
+    },
+    {
+      "id": "createdeco:scarlet_bricks",
+      "alias": "scarlet_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 3400,
+      "count": 64,
+      "note": "Create Deco (64 szt.)"
+    },
+    {
+      "id": "createdeco:verdant_bricks",
+      "alias": "verdant_bricks",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 4700,
+      "count": 64,
+      "note": "Create Deco (64 szt.)"
+    },
+    {
+      "id": "createdeco:iron_catwalk",
+      "alias": "iron_catwalk",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 305,
+      "count": 16,
+      "note": "Create Deco (16 szt.)"
+    },
+    {
+      "id": "createdeco:brass_catwalk",
+      "alias": "brass_catwalk",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 785,
+      "count": 16,
+      "note": "Create Deco (16 szt.)"
+    },
+    {
+      "id": "createdeco:industrial_iron_catwalk",
+      "alias": "industrial_iron_catwalk",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 51,
+      "count": 16,
+      "note": "Create Deco (16 szt.)"
+    },
+    {
+      "id": "createdeco:iron_sheet_metal",
+      "alias": "iron_sheet_metal",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 5200,
+      "count": 64,
+      "note": "Create Deco (64 szt.)"
+    },
+    {
+      "id": "createdeco:copper_sheet_metal",
+      "alias": "copper_sheet_metal",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 3700,
+      "count": 64,
+      "note": "Create Deco (64 szt.)"
+    },
+    {
+      "id": "createdeco:brass_sheet_metal",
+      "alias": "brass_sheet_metal",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 3300,
+      "count": 16,
+      "note": "Create Deco (16 szt.)"
+    },
+    {
+      "id": "createdeco:yellow_iron_lamp",
+      "alias": "yellow_iron_lamp",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1900,
+      "count": 16,
+      "note": "Create Deco (16 szt.)"
+    },
+    {
+      "id": "createdeco:blue_copper_lamp",
+      "alias": "blue_copper_lamp",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 2800,
+      "count": 16,
+      "note": "Create Deco (16 szt.)"
+    },
+    {
+      "id": "createdeco:yellow_andesite_lamp",
+      "alias": "yellow_andesite_lamp",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1600,
+      "count": 16,
+      "note": "Create Deco (16 szt.)"
+    },
+    {
+      "id": "createdeco:red_shipping_container",
+      "alias": "red_shipping_container",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1100,
+      "count": 4,
+      "note": "Create Deco (4 szt.)"
+    },
+    {
+      "id": "minecraft:glass",
+      "alias": "glass",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 870,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:tinted_glass",
+      "alias": "tinted_glass",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 6100,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:stone_bricks",
+      "alias": "stone_bricks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 215,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:mossy_stone_bricks",
+      "alias": "mossy_stone_bricks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 2100,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:smooth_stone",
+      "alias": "smooth_stone",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 485,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:bricks",
+      "alias": "bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 5700,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:mud_bricks",
+      "alias": "mud_bricks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1800,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:deepslate_bricks",
+      "alias": "deepslate_bricks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 4800,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:deepslate_tiles",
+      "alias": "deepslate_tiles",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 5100,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:polished_deepslate",
+      "alias": "polished_deepslate",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 4500,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:polished_blackstone_bricks",
+      "alias": "polished_blackstone_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 670,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:quartz_block",
+      "alias": "quartz_block",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 7400,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:quartz_bricks",
+      "alias": "quartz_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 7800,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:smooth_quartz",
+      "alias": "smooth_quartz",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 7900,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:end_stone_bricks",
+      "alias": "end_stone_bricks",
+      "category": "decor",
+      "stage": 4,
+      "buy_price": 1800,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:purpur_block",
+      "alias": "purpur_block",
+      "category": "decor",
+      "stage": 4,
+      "buy_price": 2300,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:sandstone",
+      "alias": "sandstone",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 2100,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:smooth_sandstone",
+      "alias": "smooth_sandstone",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 2400,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:red_sandstone",
+      "alias": "red_sandstone",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 3200,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:terracotta",
+      "alias": "terracotta",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 2200,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:white_concrete",
+      "alias": "white_concrete",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 440,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:nether_bricks",
+      "alias": "nether_bricks",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 4400,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:red_nether_bricks",
+      "alias": "red_nether_bricks",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 2100,
+      "count": 16,
+      "note": "Bloki (16 szt.)"
+    },
+    {
+      "id": "minecraft:polished_andesite",
+      "alias": "polished_andesite",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1100,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:tuff",
+      "alias": "tuff",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 830,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:packed_mud",
+      "alias": "packed_mud",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1600,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:packed_ice",
+      "alias": "packed_ice",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1600,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:oak_planks",
+      "alias": "oak_planks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 265,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:bamboo_planks",
+      "alias": "bamboo_planks",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1600,
+      "count": 64,
+      "note": "Bloki (64 szt.)"
+    },
+    {
+      "id": "minecraft:lantern",
+      "alias": "lantern",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1400,
+      "count": 16,
+      "note": "Światło i detale (16 szt.)"
+    },
+    {
+      "id": "minecraft:soul_lantern",
+      "alias": "soul_lantern",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 2200,
+      "count": 16,
+      "note": "Światło i detale (16 szt.)"
+    },
+    {
+      "id": "minecraft:glowstone",
+      "alias": "glowstone",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 2500,
+      "count": 4,
+      "note": "Światło i detale (4 szt.)"
+    },
+    {
+      "id": "minecraft:end_rod",
+      "alias": "end_rod",
+      "category": "decor",
+      "stage": 4,
+      "buy_price": 6400,
+      "count": 16,
+      "note": "Światło i detale (16 szt.)"
+    },
+    {
+      "id": "minecraft:chain",
+      "alias": "chain",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 1500,
+      "count": 16,
+      "note": "Światło i detale (16 szt.)"
+    },
+    {
+      "id": "minecraft:iron_bars",
+      "alias": "iron_bars",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 420,
+      "count": 16,
+      "note": "Światło i detale (16 szt.)"
+    },
+    {
+      "id": "minecraft:bookshelf",
+      "alias": "bookshelf",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 2700,
+      "count": 16,
+      "note": "Światło i detale (16 szt.)"
+    },
+    {
+      "id": "minecraft:white_carpet",
+      "alias": "white_carpet",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 440,
+      "count": 64,
+      "note": "Światło i detale (64 szt.)"
+    },
+    {
+      "id": "minecraft:scaffolding",
+      "alias": "scaffolding",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 710,
+      "count": 64,
+      "note": "Światło i detale (64 szt.)"
+    },
+    {
+      "id": "minecraft:flower_pot",
+      "alias": "flower_pot",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 1100,
+      "count": 16,
+      "note": "Światło i detale (16 szt.)"
+    },
+    {
+      "id": "minecraft:white_dye",
+      "alias": "white_dye",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 110,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:light_gray_dye",
+      "alias": "light_gray_dye",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 175,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:gray_dye",
+      "alias": "gray_dye",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 450,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:black_dye",
+      "alias": "black_dye",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 540,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:brown_dye",
+      "alias": "brown_dye",
+      "category": "decor",
+      "stage": 1,
+      "buy_price": 285,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:red_dye",
+      "alias": "red_dye",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 170,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:orange_dye",
+      "alias": "orange_dye",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 480,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:yellow_dye",
+      "alias": "yellow_dye",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 1100,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:lime_dye",
+      "alias": "lime_dye",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 85,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:green_dye",
+      "alias": "green_dye",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 105,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:cyan_dye",
+      "alias": "cyan_dye",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 430,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:light_blue_dye",
+      "alias": "light_blue_dye",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 450,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:blue_dye",
+      "alias": "blue_dye",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 1100,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:purple_dye",
+      "alias": "purple_dye",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 480,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:magenta_dye",
+      "alias": "magenta_dye",
+      "category": "decor",
+      "stage": 2,
+      "buy_price": 290,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "minecraft:pink_dye",
+      "alias": "pink_dye",
+      "category": "decor",
+      "stage": 0,
+      "buy_price": 105,
+      "count": 16,
+      "note": "Barwniki (16 szt.)"
+    },
+    {
+      "id": "create:wrench",
+      "alias": "wrench",
+      "category": "tools",
+      "stage": 1,
+      "buy_price": 2200,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:goggles",
+      "alias": "goggles",
+      "category": "tools",
+      "stage": 1,
+      "buy_price": 775,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:brown_toolbox",
+      "alias": "brown_toolbox",
+      "category": "tools",
+      "stage": 1,
+      "buy_price": 1900,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:clipboard",
+      "alias": "clipboard",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 55,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:copper_backtank",
+      "alias": "copper_backtank",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 745,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:copper_diving_helmet",
+      "alias": "copper_diving_helmet",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 270,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:copper_diving_boots",
+      "alias": "copper_diving_boots",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 290,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:extendo_grip",
+      "alias": "extendo_grip",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 5400,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:schematic_table",
+      "alias": "schematic_table",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 35,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:schematicannon",
+      "alias": "schematicannon",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 3800,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:empty_schematic",
+      "alias": "empty_schematic",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 64,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "create:linked_controller",
+      "alias": "linked_controller",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 1100,
+      "note": "Narzędzia Create"
+    },
+    {
+      "id": "sophisticatedbackpacks:backpack",
+      "alias": "backpack",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 595,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:iron_backpack",
+      "alias": "iron_backpack",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 1400,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:gold_backpack",
+      "alias": "gold_backpack",
+      "category": "tools",
+      "stage": 1,
+      "buy_price": 8700,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:upgrade_base",
+      "alias": "upgrade_base",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 555,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:pickup_upgrade",
+      "alias": "pickup_upgrade",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 3400,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:magnet_upgrade",
+      "alias": "magnet_upgrade",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 9000,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:crafting_upgrade",
+      "alias": "crafting_upgrade",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 950,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:refill_upgrade",
+      "alias": "refill_upgrade",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 4600,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:feeding_upgrade",
+      "alias": "feeding_upgrade",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 15000,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:void_upgrade",
+      "alias": "void_upgrade",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 4200,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedbackpacks:compacting_upgrade",
+      "alias": "compacting_upgrade",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 4300,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedstorage:barrel",
+      "alias": "barrel",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 215,
+      "count": 4,
+      "note": "Plecaki i magazyn (4 szt.)"
+    },
+    {
+      "id": "sophisticatedstorage:iron_barrel",
+      "alias": "iron_barrel",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 710,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedstorage:chest",
+      "alias": "chest",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 215,
+      "count": 4,
+      "note": "Plecaki i magazyn (4 szt.)"
+    },
+    {
+      "id": "sophisticatedstorage:iron_chest",
+      "alias": "iron_chest",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 690,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedstorage:basic_to_iron_tier_upgrade",
+      "alias": "basic_to_iron_tier_upgrade",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 595,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "sophisticatedstorage:stack_upgrade_tier_1",
+      "alias": "stack_upgrade_tier_1",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 535,
+      "note": "Plecaki i magazyn"
+    },
+    {
+      "id": "buildinggadgets2:gadget_copy_paste",
+      "alias": "gadget_copy_paste",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 2900,
+      "note": "Gadżety"
+    },
+    {
+      "id": "buildinggadgets2:gadget_cut_paste",
+      "alias": "gadget_cut_paste",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 2100,
+      "note": "Gadżety"
+    },
+    {
+      "id": "buildinggadgets2:gadget_destruction",
+      "alias": "gadget_destruction",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 5000,
+      "note": "Gadżety"
+    },
+    {
+      "id": "buildinggadgets2:template_manager",
+      "alias": "template_manager",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 1600,
+      "note": "Gadżety"
+    },
+    {
+      "id": "minecraft:bucket",
+      "alias": "bucket",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 215,
+      "note": "Gadżety"
+    },
+    {
+      "id": "minecraft:name_tag",
+      "alias": "name_tag",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 145,
+      "note": "Gadżety"
+    },
+    {
+      "id": "minecraft:lead",
+      "alias": "minecraft_lead",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 115,
+      "note": "Gadżety"
+    },
+    {
+      "id": "minecraft:experience_bottle",
+      "alias": "experience_bottle",
+      "category": "tools",
+      "stage": 1,
+      "buy_price": 5000,
+      "count": 16,
+      "note": "Gadżety (16 szt.)"
+    },
+    {
+      "id": "minecraft:hopper",
+      "alias": "hopper",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 460,
+      "note": "Gadżety"
+    },
+    {
+      "id": "minecraft:ender_chest",
+      "alias": "ender_chest",
+      "category": "tools",
+      "stage": 2,
+      "buy_price": 3300,
+      "note": "Gadżety"
+    },
+    {
+      "id": "minecraft:anvil",
+      "alias": "anvil",
+      "category": "tools",
+      "stage": 0,
+      "buy_price": 2300,
+      "note": "Gadżety"
+    }
   ],
   "anti_arbitrage_checks": [
     {
-      "name": "Czekolada nie może być tańsza w zakupie ziaren kakao niż w sprzedaży",
-      "output_id": "create_confectionery:bar_of_black_chocolate",
-      "bought_inputs": [{ "id": "minecraft:cocoa_beans", "count": 1 }]
-    },
-    {
-      "name": "Biała czekolada nie może dawać arbitrażu z kupowanego kakao",
-      "output_id": "create_confectionery:bar_of_white_chocolate",
-      "bought_inputs": [{ "id": "minecraft:cocoa_beans", "count": 1 }]
-    },
-    {
-      "name": "Rubinowa czekolada nie może dawać arbitrażu z kupowanego kakao",
-      "output_id": "create_confectionery:bar_of_ruby_chocolate",
-      "bought_inputs": [{ "id": "minecraft:cocoa_beans", "count": 1 }]
-    },
-    {
-      "name": "Tort czekoladowy nie może dawać arbitrażu z kupowanego kakao",
-      "output_id": "createaddition:chocolate_cake",
-      "bought_inputs": [{ "id": "minecraft:cocoa_beans", "count": 1 }]
-    },
-    {
-      "name": "Sernik z jagodami (kawałek) nie może dawać arbitrażu z kupowanych jagód",
-      "output_id": "farmersdelight:sweet_berry_cheesecake_slice",
-      "bought_inputs": [{ "id": "minecraft:sweet_berries", "count": 1 }]
-    },
-    {
-      "name": "Cały sernik z jagodami nie może dawać arbitrażu z kupowanych jagód",
-      "output_id": "farmersdelight:sweet_berry_cheesecake",
-      "bought_inputs": [{ "id": "minecraft:sweet_berries", "count": 1 }]
-    },
-    {
-      "name": "Berry Milkshake nie może dawać arbitrażu z kupowanych jagód",
-      "output_id": "createfood:berry_milkshake_bottle",
-      "bought_inputs": [{ "id": "minecraft:sweet_berries", "count": 1 }]
-    },
-    {
-      "name": "Glazurowane jagody nie mogą dawać arbitrażu z kupowanych jagód i kakao",
-      "output_id": "create:chocolate_glazed_berries",
-      "bought_inputs": [
-        { "id": "minecraft:sweet_berries", "count": 1 },
-        { "id": "minecraft:cocoa_beans", "count": 1 }
-      ]
-    },
-    {
-      "name": "Makaron z atramentem nie może dawać arbitrażu z kupowanego atramentu",
-      "output_id": "farmersdelight:squid_ink_pasta",
-      "bought_inputs": [{ "id": "minecraft:ink_sac", "count": 1 }]
-    },
-    {
-      "name": "Hamburger nie może dawać arbitrażu z kupowanych warzyw FD",
-      "output_id": "farmersdelight:hamburger",
-      "bought_inputs": [
-        { "id": "farmersdelight:tomato_seeds", "count": 1 },
-        { "id": "farmersdelight:cabbage_seeds", "count": 1 },
-        { "id": "farmersdelight:onion", "count": 1 }
-      ]
-    },
-    {
-      "name": "Smażony ryż nie może dawać arbitrażu z kupowanego ryżu i cebuli",
-      "output_id": "farmersdelight:fried_rice",
-      "bought_inputs": [
-        { "id": "farmersdelight:rice", "count": 1 },
-        { "id": "farmersdelight:onion", "count": 1 }
-      ]
-    },
-    {
-      "name": "Stek z ziemniakami nie może dawać arbitrażu z kupowanych ziemniaków",
-      "output_id": "farmersdelight:steak_and_potatoes",
-      "bought_inputs": [{ "id": "minecraft:potato", "count": 1 }]
-    },
-    {
-      "name": "Nadzewana dynia nie może dawać arbitrażu z kupowanych nasion dyni i ziemniaków",
-      "output_id": "farmersdelight:stuffed_pumpkin",
-      "bought_inputs": [
-        { "id": "minecraft:pumpkin_seeds", "count": 1 },
-        { "id": "minecraft:potato", "count": 1 }
-      ]
-    },
-    {
-      "name": "Blaze Cake nie może dawać arbitrażu z kupowanej lawy",
+      "name": "Wiadro lawy (4 Blaze Cake po 250 mB) nie może się zwrócić",
       "output_id": "create:blaze_cake",
-      "bought_inputs": [{ "id": "minecraft:lava_bucket", "count": 1 }]
+      "bought_inputs": [
+        {
+          "id": "minecraft:lava_bucket",
+          "count": 1
+        }
+      ],
+      "output_count": 4
     },
     {
-      "name": "Advanced Control Circuit nie może dawać arbitrażu z kupowanego Osmium",
+      "name": "Kupiony lód (2 szt. na Melon Popsicle) nie może się zwrócić",
+      "output_id": "farmersdelight:melon_popsicle",
+      "bought_inputs": [
+        {
+          "id": "minecraft:ice",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "name": "Kupiony redstone (8 szt. na Electron Tube, paczka 4 szt.) nie może się zwrócić",
+      "output_id": "create:electron_tube",
+      "bought_inputs": [
+        {
+          "id": "minecraft:redstone",
+          "count": 32
+        }
+      ],
+      "output_count": 4
+    },
+    {
+      "name": "Atrament (1 szt.) nie może się zwrócić w Squid Ink Pasta",
+      "output_id": "farmersdelight:squid_ink_pasta",
+      "bought_inputs": [
+        {
+          "id": "minecraft:ink_sac",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "name": "Slime Ball (1 szt.) nie może się zwrócić we Frogporcie",
+      "output_id": "create:package_frogport",
+      "bought_inputs": [
+        {
+          "id": "minecraft:slime_ball",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "name": "Sztabka osmu nie może się zwrócić w Advanced Control Circuit",
       "output_id": "mekanism:advanced_control_circuit",
-      "bought_inputs": [{ "id": "mekanism:ingot_osmium", "count": 1 }]
+      "bought_inputs": [
+        {
+          "id": "mekanism:ingot_osmium",
+          "count": 1
+        }
+      ]
     },
     {
-      "name": "Pellet Polonium nie może dawać arbitrażu z kupowanego Uranu (min. 4 sztabki na paliwo)",
+      "name": "Sztabka uranu (~0,5 granulki) nie może się zwrócić w Polonium Pellet",
       "output_id": "mekanism:pellet_polonium",
-      "bought_inputs": [{ "id": "mekanism:ingot_uranium", "count": 4 }]
+      "bought_inputs": [
+        {
+          "id": "mekanism:ingot_uranium",
+          "count": 2
+        }
+      ]
     }
   ]
 }
