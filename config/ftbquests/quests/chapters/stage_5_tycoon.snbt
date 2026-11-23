@@ -99,7 +99,7 @@
 		{
 			dependencies: ["B500000000000001"]
 			description: [
-				"Udowodnij, że Twoje Imperium Tycoona opanowało wszystkie główne gałęzie gospodarki naraz — od kuchni przemysłowej po elektronikę Mekanism!"
+				"Udowodnij, że Twoje Imperium Tycoona opanowało wszystkie główne gałęzie gospodarki naraz — od kuchni przemysłowej po izotopy jądrowe Mekanism (&fPellet Plutonium&r)!"
 			]
 			icon: {
 				id: "create:precision_mechanism"
@@ -146,7 +146,7 @@
 					id: "C500000000000304"
 					item: {
 						count: 1
-						id: "mekanism:ultimate_control_circuit"
+						id: "mekanism:pellet_plutonium"
 					}
 					type: "item"
 				}
@@ -160,9 +160,9 @@
 			description: [
 				"&6Survivalowy Cel Końcowy — Wielki Finał Tycoona:&r"
 				""
-				"Zamiast kupować kreatywne przedmioty, udowodnij pełne mistrzostwo inżynieryjne paczki! Wpisz &f/kontrakt final&r, skompletuj dostawę łączącą &bwszystkie 5 filarów HalucynacjeGTP2&r (&f64x Hamburger&r, &f64x Ruby Chocolate&r, &f32x Precision Mechanism&r, &f4x 256k Storage Component&r, &f4x Polonium Pellet&r) i zrealizuj ją na &bWyspie-Rynku (152, 64, 0)&r komendą &f/kontrakt final oddaj&r!"
+				"Zamiast kupować kreatywne przedmioty, udowodnij pełne mistrzostwo inżynieryjne paczki! Wpisz &f/kontrakt final&r, skompletuj dostawę łączącą &bwszystkie 5 filarów HalucynacjeGTP2&r (&f64x Hamburger&r, &f16x Ruby Chocolate&r, &f32x Precision Mechanism&r, &f2x 256k Storage Component&r, &f4x Polonium Pellet&r) i zrealizuj ją na &bWyspie-Rynku (152, 64, 0)&r komendą &f/kontrakt final oddaj&r!"
 				""
-				"W nagrodę otrzymasz unikalne &6Trofeum Imperium Tycoona&r oraz &e500 000 monet&r premii!"
+				"W nagrodę otrzymasz unikalne &6Trofeum Imperium Tycoona&r oraz jednorazową nagrodę &e750 000 monet&r!"
 			]
 			icon: {
 				id: "kubejs:tycoon_empire_trophy"
